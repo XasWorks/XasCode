@@ -7,7 +7,7 @@
 
 #include "TWIHandler.h"
 
-TWI_Handler TWI_Handler::IO = TWI_Handler();
+TWI_Handler * TWI_Handler::IO = 0;
 
 void TWI_Handler::beginJob(TWI_M_Job *jobPointer) {
 	if(this->currentMasterJob != 0) {

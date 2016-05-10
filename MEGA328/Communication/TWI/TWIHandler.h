@@ -35,7 +35,7 @@ private:
 	void fireSlaveJobs();
 
 public:
-	static TWI_Handler IO;
+	static TWI_Handler *IO;
 
 	TWI_Handler();
 
