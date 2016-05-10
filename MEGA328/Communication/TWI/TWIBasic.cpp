@@ -17,6 +17,9 @@ TWI_Basic::TWI_Basic() {
 	// Fixed speed to ~100kHz
 	TWBR = 100;
 
+	// Enable Pullups
+	PORTC |= (0b00110000);
+
 	sei();
 }
 

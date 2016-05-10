@@ -101,6 +101,7 @@ void TWI_Handler::fireSlaveJobs() {
 }
 
 TWI_Handler::TWI_Handler() {
+	TWI_Handler::IO = this;
 	TWI_Basic::TWISys = this;
 	TWAR = 0;
 }
