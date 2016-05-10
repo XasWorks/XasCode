@@ -9,11 +9,12 @@
 #define CODE_3X_Locomotor_H_
 
 #include <math.h>
-#include "3X-Movable.h"
-#include "3X-Motor.h"
 
-namespace 3X {
-	class Locomotor : public Movable, Updatable {
+#include "../X3/X3-Motor.h"
+#include "../X3/X3-Movable.h"
+
+namespace X3 {
+	class Locomotor : public Movable {
 	private:
 
 		//Distance that the motors have to cover per Calculation
@@ -35,7 +36,7 @@ namespace 3X {
 
 	public:
 		//Constructor for the 3X-Locomotor. It requires three pointers to instances of the Translative Stepper class with appropriately set values, as well as the ISR Speed the Update function will be executed at.
-		Locomotor(TranslativeStepper *A, TranslativeStepper *B, TranslativeStepper *C, uint16_t ISRSpeed);
+		Locomotor(uint16_t ISRSpeed);
 
 		//Set the rotation speed of the robot in degrees / second
 		void setRotationSpeed(float newSpeed);

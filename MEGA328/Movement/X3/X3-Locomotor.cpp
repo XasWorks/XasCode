@@ -5,17 +5,13 @@
  *      Author: xasin
  */
 
-#include "3X-Locomotor.h"
+#include "../X3/X3-Locomotor.h"
 #include <util/delay.h>
 
-namespace 3X {
+namespace X3 {
 
 		//Constructor of the Locomotor object
-		Locomotor::Locomotor(TranslativeStepper *A, TranslativeStepper *B,
-				TranslativeStepper *C, uint16_t ISRFreq) {
-			this->A = A;
-			this->B = B;
-			this->C = C;
+		Locomotor::Locomotor(uint16_t ISRFreq) {
 
 			this->ISRFreq = ISRFreq;
 
@@ -160,9 +156,9 @@ namespace 3X {
 			float xRotated = cCos * xThisISR - cSin * yThisISR;
 			float yRotated = cSin * xThisISR + cCos * yThisISR;
 
-			Motor cMotor = Motor::getHeadMotor();
+			Motor *cMotor = Motor::getHeadMotor();
 			while(cMotor != 0) {
-				cMotor.moveBy(xRotated, yRotated, rThisISR);
+				cMotor->moveBy(xRotated, yRotated, rThisISR);
 			}
 
 			//Reset acceleration if at target and not having received a new command for ACCEL_DEBOUNCE_CYCLES updates

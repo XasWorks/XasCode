@@ -7,7 +7,7 @@
 
 #include "OmniwheelStepper.h"
 
-namespace 3X {
+namespace X3 {
 
 	//Constructor for a translative stepper.
 	//It requires the PORT of the motors, the pins (step then direction pin)

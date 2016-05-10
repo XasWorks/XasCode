@@ -9,7 +9,7 @@
 #ifndef _3X_MOTOR_H
 #define _3X_MOTOR_H
 
-namespace 3X {
+namespace X3 {
 
   class Motor {
   private:

@@ -13,7 +13,7 @@
 
 #define DEG_TO_RAD 0.017453293
 
-namespace 3X {
+namespace X3 {
 
 	// Interfacing class for all Three-Axis movement robots, meaning X, Y and Rotation
 	class Movable {

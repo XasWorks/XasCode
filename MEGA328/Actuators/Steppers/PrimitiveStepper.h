@@ -4,10 +4,9 @@
 #include <avr/io.h>
 #include <util/atomic.h>
 #include <math.h>
-#include "../Updatable.h"
 
 
-class PrimitiveStepper : Updatable {
+class PrimitiveStepper {
 protected:
 	//Constructor for derived classes. Does not initialise any values!!
 	PrimitiveStepper();

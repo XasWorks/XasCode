@@ -5,9 +5,9 @@
  *      Author: xasin
  */
 
-#include "3X-Movable.h"
+#include "../X3/X3-Movable.h"
 
-namespace 3X {
+namespace X3 {
 	Movable::Movable() {
 		xPos = 0;
 		xTarget = 0;

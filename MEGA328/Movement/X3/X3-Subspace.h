@@ -1,14 +1,14 @@
 #ifndef _SUBSPACE_H
 #define _SUBSPACE_H
 
-#include "3X-Movable.h"
+#include "../X3/X3-Movable.h"
 
 struct Coordinates {
 	float xCoord;
 	float yCoord;
 };
 
-namespace 3X {
+namespace X3 {
 
 	class Subspace : public Movable {
 	private:

@@ -9,7 +9,7 @@
 #define CODE_OmniwheelStepper_H_
 
 #include "PrimitiveStepper.h"
-#include "../../Movement/3X/3X-Motor"
+#include "../../Movement/X3/X3-Motor.h"
 
 #include <avr/io.h>
 #include <util/atomic.h>
@@ -17,7 +17,7 @@
 
 #define DEG_TO_RAD 0.017453293
 
-namespace 3X {
+namespace X3 {
 	class OmniwheelStepper : public PrimitiveStepper, public Motor {
 
 	private:

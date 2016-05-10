@@ -2,7 +2,6 @@
 #define _LCD_H
 
 #include <avr/io.h>
-#include "../Updatable.h"
 
 #define CURSOR_OFF 0
 #define CURSOR_ON 1
@@ -27,7 +26,7 @@
 //Command to set the LCD Memory address (character).
 #define SETDDRAM(aDDRESS) (0b10000000 | (aDDRESS))
 
-class LCD : Updatable {
+class LCD  {
 
 private:
 	volatile uint8_t dispData[32] = {0};

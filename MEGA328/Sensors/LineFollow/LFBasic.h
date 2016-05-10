@@ -9,7 +9,6 @@
 #define CODE_LINEFOLLOW_LFBASIC_H_
 
 #include <avr/io.h>
-#include "../Updatable.h"
 
 #define LF_OK 		0	//The line is under the sensors and tracked
 #define LF_AMBIG 	1	//The line is currently in an ambiguous state, no clear decision can be made
@@ -19,7 +18,7 @@
 #define LF_RIGHT 	127
 #define LF_LEFT 	-127
 
-class LFBasic : Updatable {
+class LFBasic {
 public:
 	volatile uint8_t	lineStatus = 0;
 	volatile int8_t 	lineOffset = 0;

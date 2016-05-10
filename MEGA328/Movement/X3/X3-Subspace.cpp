@@ -1,7 +1,7 @@
 
-#include "3X-Subspace.h"
+#include "../X3/X3-Subspace.h"
 
-namespace 3X {
+namespace X3 {
 
 	Coordinates Subspace::rotate(Coordinates coords, float angle) {
 		Coordinates newCoords;
