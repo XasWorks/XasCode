@@ -29,16 +29,16 @@ namespace IR {
 	uint8_t outputStage = 0;
 	uint8_t outputChecksum = 0;
 
-	volatile uint8_t *PORT;
+	volatile uint8_t *PINx;
 	uint8_t pin;
 
 	void init(volatile uint8_t *PORT, uint8_t pin, IR_LED *led) {
 		IR::led = led;
 
-		IR::PORT = PORT;
+		IR::PINx = (PORT - 2);
 		IR::pin = pin;
 
-		*(PORT - 1) |= (1<< pin);
+		*PORT |= (1<< pin); // Initialise Pullup
 	}
 
 	void send() {
@@ -73,7 +73,7 @@ namespace IR {
 
 		case IR_STAGE_DATA:
 			led->on();
-			if(outputPosition == (0b100 << outputLength)) { 	//Check if the output position equals the amount of data to be sent.
+			if(outputPosition == (0b1000000 << outputLength)) { 	//Check if the output position equals the amount of data to be sent.
 				if((outputChecksum & 0b1) == 0)
 					led->off();
 
@@ -99,6 +99,61 @@ namespace IR {
 			}
 			else if((outputChecksum & (1 << outputPosition)) == 0)
 				led->on();
+		}
+	}
+
+	void read() {
+		switch(readStage) {
+		case IR_STAGE_IDLE:
+			if((IR::PINx & (1<< IR::pin)) != 0) {
+				if(++readPosition == IR_START_LEN) {
+					readPosition = 0;
+					readStage = IR_STAGE_LENGTH;
+				}
+			}
+			else {
+				readPosition = 1;
+			}
+		break;
+
+		case IR_STAGE_LENGTH:
+			if((IR::PINx & (1<< IR::pin)) != 0) {
+				readPosition++;
+			}
+			else {
+				mLength = readPosition;
+
+				readStage = IR_STAGE_DATA;
+				readPosition = 0;
+			}
+		break;
+
+		case IR_STAGE_DATA:
+			if((IR::PINx & (1<< IR::pin)) != 0) {
+				message |= (1<< readPosition++);
+				readChecksum++;
+			}
+			if(readPosition == (0b1000000 << mLength)) {
+				readStage = IR_STAGE_CHECKSUM;
+				readPosition = 0;
+			}
+		break;
+
+		case IR_STAGE_CHECKSUM:
+			if((IR::PINx & (1<< IR::pin)) != 0) {
+				readChecksum ^= (1<< readPosition);
+			}
+			if(++readPosition == mLength) {
+				if(readChecksum == 0) {
+					(*on_received)();
+				}
+
+				readStage = IR_STAGE_IDLE;
+				readPosition = 0;
+				readChecksum = 0;
+				mLength = 0;
+				message = 0;
+			}
 		}
 	}
 
