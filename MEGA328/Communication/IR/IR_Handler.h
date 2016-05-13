@@ -25,8 +25,6 @@
 #define IR_STAGE_CHECKSUM	4
 
 namespace IR {
-	extern void (*on_received)();
-
 	extern uint8_t mLen;
 	extern uint32_t message;
 

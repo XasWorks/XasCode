@@ -32,13 +32,15 @@ namespace IR {
 	volatile uint8_t *PINx;
 	uint8_t pin;
 
-	void init(volatile uint8_t *PORT, uint8_t pin, IR_LED *led) {
+	void init(volatile uint8_t *PORT, uint8_t pin, IR_LED *led, void (*received_funct)()) {
 		IR::led = led;
 
 		IR::PINx = (PORT - 2);
 		IR::pin = pin;
 
-		*PORT |= (1<< pin); // Initialise Pullup
+		*PORT |= (1<< pin); // Initialize Pullup
+
+		on_received = received_funct;
 	}
 
 	void send() {
@@ -105,7 +107,7 @@ namespace IR {
 	void read() {
 		switch(readStage) {
 		case IR_STAGE_IDLE:
-			if((IR::PINx & (1<< IR::pin)) != 0) {
+			if((*IR::PINx & (1<< IR::pin)) != 0) {
 				if(++readPosition == IR_START_LEN) {
 					readPosition = 0;
 					readStage = IR_STAGE_LENGTH;
@@ -117,7 +119,7 @@ namespace IR {
 		break;
 
 		case IR_STAGE_LENGTH:
-			if((IR::PINx & (1<< IR::pin)) != 0) {
+			if((*IR::PINx & (1<< IR::pin)) != 0) {
 				readPosition++;
 			}
 			else {
@@ -129,7 +131,7 @@ namespace IR {
 		break;
 
 		case IR_STAGE_DATA:
-			if((IR::PINx & (1<< IR::pin)) != 0) {
+			if((*IR::PINx & (1<< IR::pin)) != 0) {
 				message |= (1<< readPosition++);
 				readChecksum++;
 			}
@@ -140,7 +142,7 @@ namespace IR {
 		break;
 
 		case IR_STAGE_CHECKSUM:
-			if((IR::PINx & (1<< IR::pin)) != 0) {
+			if((*IR::PINx & (1<< IR::pin)) != 0) {
 				readChecksum ^= (1<< readPosition);
 			}
 			if(++readPosition == mLength) {
