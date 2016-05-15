@@ -28,9 +28,11 @@ namespace IR {
 	extern uint8_t mLen;
 	extern uint32_t message;
 
-	void init(volatile uint8_t *PORT, uint8_t pin, IR_LED *led);
+	void init(volatile uint8_t *PORT, uint8_t pin, IR_LED *led, void (*received_funct)());
 
 	void update();
+
+	bool send_8(uint8_t d);
 }
 
 

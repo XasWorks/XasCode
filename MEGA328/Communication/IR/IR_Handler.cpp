@@ -43,6 +43,17 @@ namespace IR {
 		on_received = received_funct;
 	}
 
+	bool send_8(uint8_t data) {
+		if(outputLength != 0)
+			return false;
+
+		outputLength = IR_LENGTH_8;
+		outputMessage = data;
+		outputStage = IR_STAGE_START;
+
+		return true;
+	}
+
 	void send() {
 		switch(outputStage) {
 		case IR_STAGE_IDLE:
@@ -50,7 +61,7 @@ namespace IR {
 
 		case IR_STAGE_START:
 			led->on();
-			if(++outputPosition == IR_START_LEN) {
+			if(outputPosition++ == IR_START_LEN) {
 				if(outputLength == IR_LENGTH_8) {
 					led->off();
 
@@ -66,19 +77,18 @@ namespace IR {
 		break;
 
 		case IR_STAGE_LENGTH:
+
 			if(--outputPosition == 0) {
 				led->off();
-
 				outputStage = IR_STAGE_DATA;
 			}
 		break;
 
 		case IR_STAGE_DATA:
 			led->on();
-			if(outputPosition == (0b1000000 << outputLength)) { 	//Check if the output position equals the amount of data to be sent.
+			if(outputPosition == (0b100 << outputLength)) { 	//Check if the output position equals the amount of data to be sent.
 				if((outputChecksum & 0b1) == 0)
 					led->off();
-
 				outputPosition = 0;
 				outputStage = IR_STAGE_CHECKSUM;
 			}
@@ -95,6 +105,7 @@ namespace IR {
 		case IR_STAGE_CHECKSUM:
 			led->off();
 			if(++outputPosition == outputLength) {
+				outputLength = 0;
 				outputChecksum = 0;
 				outputPosition = 0;
 				outputStage = IR_STAGE_IDLE;
@@ -135,7 +146,7 @@ namespace IR {
 				message |= (1<< readPosition++);
 				readChecksum++;
 			}
-			if(readPosition == (0b1000000 << mLength)) {
+			if(readPosition == (0b100 << mLength)) {
 				readStage = IR_STAGE_CHECKSUM;
 				readPosition = 0;
 			}
