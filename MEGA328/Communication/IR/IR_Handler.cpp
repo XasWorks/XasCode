@@ -72,6 +72,8 @@ namespace IR {
 		case IR_STAGE_LENGTH:
 			if(--outputPosition == 0) {
 				led->off();
+
+				outputChecksum = IR_CHECKSUM_START;
 				outputStage = IR_STAGE_DATA;
 			}
 			else
@@ -83,6 +85,7 @@ namespace IR {
 			if(outputPosition == (0b100 << outputLength)) { 	//Check if the output position equals the amount of data to be sent.
 				if((outputChecksum & 0b1) == 0)
 					led->off();
+
 				outputPosition = 0;
 				outputStage = IR_STAGE_CHECKSUM;
 			}
@@ -98,7 +101,7 @@ namespace IR {
 
 		case IR_STAGE_CHECKSUM:
 			led->off();
-			if(++outputPosition == outputLength) {
+			if(++outputPosition == IR_CHECKSUM_LEN) {
 				outputLength = 0;
 				outputChecksum = 0;
 				outputPosition = 0;
@@ -142,6 +145,8 @@ namespace IR {
 			else {
 				mLength = readPosition;
 
+				readChecksum = IR_CHECKSUM_START;
+
 				readStage = IR_STAGE_DATA;
 				readPosition = 0;
 			}
@@ -162,8 +167,8 @@ namespace IR {
 			if((*IR::PINx & (1<< IR::pin)) == 0) {
 				readChecksum ^= (1<< readPosition);
 			}
-			if(++readPosition == mLength) {
-				if((readChecksum & ~(0b11111111 << mLength)) == 0) {	//Mask all bits except for the ones transmitted via checksum
+			if(++readPosition == IR_CHECKSUM_LEN) {
+				if((readChecksum & ~(0b11111111 << IR_CHECKSUM_LEN)) == 0) {	//Mask all bits except for the ones transmitted via checksum
 					(*on_received)();
 				}
 

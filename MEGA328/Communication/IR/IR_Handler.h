@@ -16,7 +16,10 @@
 #define IR_LENGTH_16		2
 #define IR_LENGTH_32		3
 
-#define IR_START_LEN		6
+#define IR_START_LEN		5
+#define IR_CHECKSUM_LEN		4
+
+#define IR_CHECKSUM_START	0b111
 
 #define IR_STAGE_IDLE 		0
 #define IR_STAGE_START		1
