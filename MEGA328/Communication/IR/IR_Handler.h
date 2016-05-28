@@ -16,7 +16,7 @@
 #define IR_LENGTH_16		2
 #define IR_LENGTH_32		3
 
-#define IR_START_LEN		4
+#define IR_START_LEN		6
 
 #define IR_STAGE_IDLE 		0
 #define IR_STAGE_START		1
@@ -30,6 +30,7 @@ namespace IR {
 
 	void init(volatile uint8_t *PORT, uint8_t pin, IR_LED *led, void (*received_funct)());
 
+	void receive();
 	void update();
 
 	bool send_8(uint8_t d);

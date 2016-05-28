@@ -62,26 +62,20 @@ namespace IR {
 		case IR_STAGE_START:
 			led->on();
 			if(outputPosition++ == IR_START_LEN) {
-				if(outputLength == IR_LENGTH_8) {
-					led->off();
+				led->off();
 
-					outputStage = IR_STAGE_DATA;
-					outputPosition = 0;
-				}
-				else {
-
-					outputStage = IR_STAGE_LENGTH;
-					outputPosition = outputLength;	// Set it to output length for slightly more processor-friendly system
-				}
+				outputStage = IR_STAGE_LENGTH;
+				outputPosition = outputLength;	// Set it to output length for slightly more processor-friendly system
 			}
 		break;
 
 		case IR_STAGE_LENGTH:
-
 			if(--outputPosition == 0) {
 				led->off();
 				outputStage = IR_STAGE_DATA;
 			}
+			else
+				led->on();
 		break;
 
 		case IR_STAGE_DATA:
@@ -115,24 +109,32 @@ namespace IR {
 		}
 	}
 
-	void read() {
+	void receive() {
 		switch(readStage) {
 		case IR_STAGE_IDLE:
 			if((*IR::PINx & (1<< IR::pin)) == 0) {
-				if(++readPosition == IR_START_LEN) {
-					readPosition = 0;
-					readStage = IR_STAGE_LENGTH;
-				}
+				readStage = IR_STAGE_START;
+				readPosition = 1;
+			}
+		break;
+
+		case IR_STAGE_START:
+			if((*IR::PINx & (1<< IR::pin)) == 0)
+						readPosition++;
+			else if(readPosition == IR_START_LEN) {
+				readPosition = 0;
+				readStage = IR_STAGE_LENGTH;
 			}
 			else {
-				readPosition = 1;
+				readPosition = 0;
+				readStage = IR_STAGE_IDLE;
 			}
 		break;
 
 		case IR_STAGE_LENGTH:
 			if((*IR::PINx & (1<< IR::pin)) == 0) {
 				readPosition++;
-				if(readPosition > 10) {
+				if(readPosition > 3) {
 					readPosition = 0;
 					readStage = IR_STAGE_IDLE;
 				}
@@ -176,6 +178,6 @@ namespace IR {
 
 	void update() {
 		send();
-		read();
+		receive();
 	}
 }
