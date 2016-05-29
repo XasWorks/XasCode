@@ -70,7 +70,8 @@ namespace IR {
 		break;
 
 		case IR_STAGE_LENGTH:
-			if(outputPosition++ == outputLength) {
+			led->on();
+			if(outputPosition == outputLength) {
 				led->off();
 
 				outputChecksum = 	IR_CHECKSUM_START;
@@ -79,43 +80,42 @@ namespace IR {
 				outputStage = 		IR_STAGE_DATA;
 			}
 			else
-				led->on();
+				outputPosition++;
 		break;
 
 		case IR_STAGE_DATA:
 			led->on();
 
-			if(outputPosition == (0b100 << outputLength)) { 	//Check if the output position equals the amount of data to be sent.
-				if((outputChecksum & 0b1) == 0)
-					led->off();
+			if((outputMessage & (1<< outputPosition)) == 0)
+				led->off();
+			else
+				outputChecksum++;
 
+			outputPosition++;
+
+			if(outputPosition == (0b100 << outputLength)) { 	//Check if the output position equals the amount of data to be sent.
 				outputPosition = 0;
 				outputStage = IR_STAGE_CHECKSUM;
-			}
-			else {
-
-				if((outputMessage & (1<< outputPosition)) == 0)
-					led->off();
-				else
-					outputChecksum++;
-
-				outputPosition++;
 			}
 		break;
 
 
 		case IR_STAGE_CHECKSUM:
-			led->off();
+			led->on();
 			if(outputPosition == IR_CHECKSUM_LEN) {
+				led->off();
+
 				outputLength = 0;
-				outputChecksum = 0;
 				outputPosition = 0;
 				outputStage = IR_STAGE_IDLE;
 			}
-			else if((outputChecksum & (1 << outputPosition)) != 0)
-				led->on();
+			else {
+				if((outputChecksum & (1 << outputPosition)) == 0)
+					led->off();
 
-			outputPosition++;
+				outputPosition++;
+			}
+		break;
 		}
 	}
 
@@ -130,29 +130,22 @@ namespace IR {
 
 		case IR_STAGE_START:
 			if((*IR::PINx & (1<< IR::pin)) == 0)
-						readPosition++;
+				readPosition++;
 			else if(readPosition == IR_START_LEN) {
 				readPosition = 0;
 				readStage = IR_STAGE_LENGTH;
 			}
 			else {
-				readPosition = 0;
 				readStage = IR_STAGE_IDLE;
 			}
 		break;
 
 		case IR_STAGE_LENGTH:
-
 			if((*IR::PINx & (1<< IR::pin)) == 0) {
 				readPosition++;
-
-				if(readPosition > 3) {
-					readPosition = 0;
-					readStage = IR_STAGE_IDLE;
-				}
 			}
 			else {
-				if(readPosition == 0)
+				if((readPosition > 3) || (readPosition == 0))
 					readStage = IR_STAGE_IDLE;
 
 				mLength = readPosition;
@@ -178,6 +171,7 @@ namespace IR {
 		break;
 
 		case IR_STAGE_CHECKSUM:
+
 			if((*IR::PINx & (1<< IR::pin)) == 0) {
 				readChecksum ^= (1<< readPosition);
 			}
