@@ -65,16 +65,18 @@ namespace IR {
 				led->off();
 
 				outputStage = IR_STAGE_LENGTH;
-				outputPosition = outputLength;	// Set it to output length for slightly more processor-friendly system
+				outputPosition = 0;
 			}
 		break;
 
 		case IR_STAGE_LENGTH:
-			if(--outputPosition == 0) {
+			if(outputPosition++ == outputLength) {
 				led->off();
 
-				outputChecksum = IR_CHECKSUM_START;
-				outputStage = IR_STAGE_DATA;
+				outputChecksum = 	IR_CHECKSUM_START;
+
+				outputPosition = 	0;
+				outputStage = 		IR_STAGE_DATA;
 			}
 			else
 				led->on();
@@ -82,6 +84,7 @@ namespace IR {
 
 		case IR_STAGE_DATA:
 			led->on();
+
 			if(outputPosition == (0b100 << outputLength)) { 	//Check if the output position equals the amount of data to be sent.
 				if((outputChecksum & 0b1) == 0)
 					led->off();
@@ -91,17 +94,19 @@ namespace IR {
 			}
 			else {
 
-				if((outputMessage & (1<< outputPosition++)) == 0)
+				if((outputMessage & (1<< outputPosition)) == 0)
 					led->off();
 				else
 					outputChecksum++;
+
+				outputPosition++;
 			}
 		break;
 
 
 		case IR_STAGE_CHECKSUM:
 			led->off();
-			if(++outputPosition == IR_CHECKSUM_LEN) {
+			if(outputPosition == IR_CHECKSUM_LEN) {
 				outputLength = 0;
 				outputChecksum = 0;
 				outputPosition = 0;
@@ -109,6 +114,8 @@ namespace IR {
 			}
 			else if((outputChecksum & (1 << outputPosition)) != 0)
 				led->on();
+
+			outputPosition++;
 		}
 	}
 
@@ -135,14 +142,19 @@ namespace IR {
 		break;
 
 		case IR_STAGE_LENGTH:
+
 			if((*IR::PINx & (1<< IR::pin)) == 0) {
 				readPosition++;
+
 				if(readPosition > 3) {
 					readPosition = 0;
 					readStage = IR_STAGE_IDLE;
 				}
 			}
 			else {
+				if(readPosition == 0)
+					readStage = IR_STAGE_IDLE;
+
 				mLength = readPosition;
 
 				readChecksum = IR_CHECKSUM_START;
@@ -157,7 +169,9 @@ namespace IR {
 				message |= (1<< readPosition);
 				readChecksum++;
 			}
-			if(++readPosition == (0b100 << mLength)) {
+			readPosition++;
+
+			if(readPosition == (0b100 << mLength)) {
 				readStage = IR_STAGE_CHECKSUM;
 				readPosition = 0;
 			}
@@ -167,10 +181,14 @@ namespace IR {
 			if((*IR::PINx & (1<< IR::pin)) == 0) {
 				readChecksum ^= (1<< readPosition);
 			}
-			if(++readPosition == IR_CHECKSUM_LEN) {
+			readPosition++;
+
+			if(readPosition == IR_CHECKSUM_LEN) {
+
 				if((readChecksum & ~(0b11111111 << IR_CHECKSUM_LEN)) == 0) {	//Mask all bits except for the ones transmitted via checksum
 					(*on_received)();
 				}
+
 
 				readStage = IR_STAGE_IDLE;
 				readPosition = 0;
