@@ -16,7 +16,7 @@ module color_appropriately(tagname) {
 module separate_tagging() {
 	$shown = 0;
 	$not_shown = 0;
-	children();
+	render(convexity = 5) children();
 }
 
 // The tagging function, the core of the system.
@@ -24,18 +24,21 @@ module separate_tagging() {
 // -- It is listed in the $shown array
 // -- The $show array is empty and it is not excluded (via $not_shown) AND it is a foreground object
 module tag(tagname, foreground = true) {
-	color_appropriately(tagname)
+	color_appropriately(tagname) {
+		// If the "shown" array has any entries, ONLY the "shown" entries should be displayed.
 		if(len($shown) > 0) {
 			if(contains($shown, tagname))
-				separate_tagging() render(convexity = 5) children();
+				separate_tagging() children();
 		}
 		else if(foreground && !contains($not_shown, tagname))
-			separate_tagging() render(convexity = 5) children();
+			separate_tagging() children();
+	}
+
 
 	if(contains($highlighted, tagname)) {
 		$opacity = 0.2;
 		%color_appropriately(tagname)
-		separate_tagging() render(convexity = 5) children();
+		separate_tagging() children();
 	}
 }
 
@@ -54,7 +57,6 @@ module showTag(tagname) {
 }
 
 module hideTag(tagname) {
-	$managed = true;
 	if(!(contains($not_shown, tagname) || contains($shown, tagname))) {
 		$not_shown = concat($not_shown, tagname);
 		children();
@@ -81,12 +83,7 @@ module taggedUnion(targets, tagname, foreground = true) {
 			showTag(targets) children();
 		}
 
-		if(foreground) {
-			hideTag(targets) children();
-		}
-		else {
-			children();
-		}
+		hideTag((foreground) ? targets : "") children();
 	}
 }
 
@@ -98,12 +95,7 @@ module taggedDifference(positives, negatives, tagname, foreground = true) {
 			showTag(negatives) children();
 		}
 
-		if(foreground) {
-			hideTag(concat(positives, negatives)) children();
-		}
-		else {
-			children();
-		}
+		hideTag((foreground) ? concat(positives, negatives) : "") children();
 	}
 }
 
@@ -114,11 +106,11 @@ module taggedIntersection(targets, tagname, foreground = true) {
 			showTag(i) children();
 		}
 
-		if(foreground) {
-			hideTag(targets) children();
-		}
-		else {
-			children();
-		}
+		hideTag((foreground) ? targets : "") children();
 	}
+}
+
+taggedDifference("positive","negative", "neutral") {
+	tag("positive") sphere(r=10);
+	tag("negative") cube(15, true);
 }
