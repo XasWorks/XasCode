@@ -27,18 +27,20 @@ module tag(tagname, foreground = true) {
 	color_appropriately(tagname) {
 		// If the "shown" array has any entries, ONLY the "shown" entries should be displayed.
 		if(len($shown) > 0) {
-			if(contains($shown, tagname))
+			if(contains($shown, tagname)) {
 				separate_tagging() children();
+			}
 		}
-		else if(foreground && !contains($not_shown, tagname))
+		else if(foreground && !contains($not_shown, tagname)) {
 			separate_tagging() children();
+		}
 	}
 
 
-	if(contains($highlighted, tagname)) {
-		$opacity = 0.2;
+	if(contains($highlighted, tagname) && !contains($shown, tagname)) {
+		$opacity = 0.2;	// The "opacity" tag is shared down the CSG tree, also making any children opaque
 		%color_appropriately(tagname)
-		separate_tagging() children();
+			separate_tagging() children();
 	}
 }
 
