@@ -16,7 +16,7 @@ module color_appropriately(tagname) {
 module separate_tagging() {
 	$shown = 0;
 	$not_shown = 0;
-	render(convexity = 5) children();
+	children();
 }
 
 // The tagging function, the core of the system.
@@ -38,7 +38,7 @@ module tag(tagname, foreground = true) {
 
 
 	if(contains($highlighted, tagname) && !contains($shown, tagname)) {
-		$opacity = 0.2;	// The "opacity" tag is shared down the CSG tree, also making any children opaque
+		$opacity = 0.2;	// The "opacity" tag is shared down the CSG tree, also making any children opaqueco
 		%color_appropriately(tagname)
 			separate_tagging() children();
 	}
@@ -112,7 +112,8 @@ module taggedIntersection(targets, tagname, foreground = true) {
 	}
 }
 
-taggedDifference("positive","negative", "neutral") {
+colorTag("positive", "blue")
+taggedDifference("positive", "negative", "neutral", true) {
 	tag("positive") sphere(r=10);
 	tag("negative") cube(15, true);
 }
