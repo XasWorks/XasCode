@@ -114,7 +114,7 @@ module highlightTag(tagname) {
 }
 
 module taggedUnion(targets, tagname, foreground = true) {
-	shouldRender = len($colortable) == 0;
+	shouldRender = (len($colortable) == undef);
 
 	union() {
 		tag(tagname = tagname, foreground = foreground, rnder = shouldRender)
@@ -127,7 +127,7 @@ module taggedUnion(targets, tagname, foreground = true) {
 }
 
 module taggedDifference(positives, negatives, tagname, foreground = true) {
-	shouldRender = len($colortable) == 0;
+	shouldRender = (len($colortable) == undef);
 
 	union() {
 		tag(tagname = tagname, foreground = foreground, rnder = shouldRender)
@@ -141,7 +141,7 @@ module taggedDifference(positives, negatives, tagname, foreground = true) {
 }
 
 module taggedIntersection(targets, tagname, foreground = true) {
-	shouldRender = len($colortable) == 0;
+	shouldRender = (len($colortable) == undef);
 
 	union() {
 		tag(tagname = tagname, foreground = foreground, rnder = shouldRender)
