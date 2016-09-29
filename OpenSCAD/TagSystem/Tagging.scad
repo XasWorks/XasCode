@@ -1,7 +1,13 @@
 
 // Currently used supervariables are: $shown, $not-shown, $colortable, $highlighted, $opacity
 
-function contains(sArray, cString) = (len(sArray) > 0) ? max( [for(i = [0:len(sArray) -1]) sArray[i] == cString ? 1 : 0 ]) == 1 : false;
+function contains(sArray, fString) = (len(sArray) > 0) ?
+													max( [for(i = [0:len(sArray) -1]) sArray[i] == fString ? 1 : 0 ]) == 1
+													: false;
+function mContrains(sArray, fArray) = (len(sArray) > 0 && len(fArray) > 0) ?
+													max( [for(i = [0:len(fArray) -1]) contains(sArray, fArray[i])]) == 1
+													: false;
+
 
 module color_appropriately(tagname) {
 	if(!contains($colortable, tagname)) {
@@ -23,7 +29,7 @@ module separate_tagging() {
 // It only shows a module under following circumstances:
 // -- It is listed in the $shown array
 // -- The $show array is empty and it is not excluded (via $not_shown) AND it is a foreground object
-module tag(tagname, foreground = true) {
+module tag(tagname, foreground = true, rnder = true) {
 	color_appropriately(tagname) {
 		// If the "shown" array has any entries, ONLY the "shown" entries should be displayed.
 		if(len($shown) > 0) {
