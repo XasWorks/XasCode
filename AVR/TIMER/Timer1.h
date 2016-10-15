@@ -8,6 +8,8 @@
 #ifndef CODE_TIMER_TIMER1_H_
 #define CODE_TIMER_TIMER1_H_
 
+#ifdef TIMER1_ENABLED
+
 #include <avr/io.h>
 
 #define TIMER1_PRESC_OFF 	0b000
@@ -25,4 +27,5 @@ namespace Timer1 {
 	void set_OCR1A(uint16_t value);
 }
 
+#endif
 #endif /* CODE_TIMER_TIMER1_H_ */

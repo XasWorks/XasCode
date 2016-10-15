@@ -8,6 +8,8 @@
 #ifndef LIBCODE_TIMER_TIMER0_H_
 #define LIBCODE_TIMER_TIMER0_H_
 
+#ifdef TIMER0_ENABLED
+
 #include <avr/io.h>
 
 #define TIMER0_PRESC_OFF 	0b000
@@ -33,4 +35,5 @@ namespace Timer0 {
 	void set_OCA0_mode(uint8_t mode);
 }
 
+#endif
 #endif /* LIBCODE_TIMER_TIMER0_H_ */

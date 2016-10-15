@@ -7,6 +7,8 @@
 
 #include "Timer1.h"
 
+#ifdef TIMER1_ENABLED
+
 namespace Timer1 {
 	void set_prescaler(uint8_t prescValue) {
 		TCCR1B &= ~(0b00000111);
@@ -26,4 +28,4 @@ namespace Timer1 {
 	}
 }
 
-
+#endif

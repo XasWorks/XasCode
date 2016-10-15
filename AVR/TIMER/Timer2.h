@@ -8,6 +8,8 @@
 #ifndef LIBCODE_TIMER_TIMER2_H_
 #define LIBCODE_TIMER_TIMER2_H_
 
+#ifdef TIMER2_ENABLED
+
 #include <avr/io.h>
 
 #define TIMER2_PRESC_OFF 	0b000
@@ -44,5 +46,5 @@ namespace Timer2 {
 
 
 
-
+#endif
 #endif /* LIBCODE_TIMER_TIMER2_H_ */

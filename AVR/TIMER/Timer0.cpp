@@ -5,7 +5,10 @@
  *      Author: xasin
  */
 
+
 #include "Timer0.h"
+
+#ifdef TIMER0_ENABLED
 
 namespace Timer0 {
 	void set_prescaler(uint8_t presc) {
@@ -27,3 +30,5 @@ namespace Timer0 {
 		TCCR0A |= mode;
 	}
 }
+
+#endif

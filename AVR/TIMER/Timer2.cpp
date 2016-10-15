@@ -7,6 +7,8 @@
 
 #include "Timer2.h"
 
+#ifdef TIMER2_ENABLED
+
 namespace Timer2 {
 	void set_prescaler(uint8_t presc) {
 		TCCR2B = presc;
@@ -40,3 +42,5 @@ namespace Timer2 {
 		TCCR2A |= mode;
 	}
 }
+
+#endif
