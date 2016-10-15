@@ -5,27 +5,39 @@
 //Step the motor once into specified direction.
 void PrimitiveStepper::step(uint8_t dir) {
 	if (dir == 0) {					//Rotate it backwards
-		*PORT |= (1 << (pin + 1));	//Set the direction pin, then activate the stepping pin and deactivate both immediately
-		*PORT |= (1 << pin);
-		*PORT &= ~(3 << pin);
+		*PORT |= (1 << this->pind);	//Set the direction pin, then activate the stepping pin and deactivate both immediately
+		*PORT |= (1 << this->pins);
+		*PORT &= ~(1 << this->pins | 1 << this->pind);
 		stepsToGo++;				//One step backwards was done; increase the amount of steps to do and decrease the total amount
 		currentSteps--;
 	} else {						//Rotate it forwards
-		*PORT |= (1 << pin);		//Activate the step pin and immediately deactivate
-		*PORT &= ~(1 << pin);
+		*PORT |= (1 << pins);		//Activate the step pin and immediately deactivate
+		*PORT &= ~(1 << pins);
 		stepsToGo--;				//Decrease the steps to do and increase total amount of steps done.
 		currentSteps++;
 	}
 }
 
-//Constructor for the motor stepper. Takes in port pointer, pin and ISR frequency.
+PrimitiveStepper::PrimitiveStepper(volatile uint8_t *P, uint8_t pins, uint8_t pind,
+		uint16_t upSpeed) {
+	this->PORT = P;
+	this->pins = pins;
+	this->pind = pind;
+
+	this->updateFrequency = upSpeed;
+
+	*(P - 1) |= (1 << pins | 1 << pind);
+}
+
+//Deprecated constructor for the motor stepper. Takes in port pointer, pin and ISR frequency.
 PrimitiveStepper::PrimitiveStepper(volatile uint8_t *P, uint8_t pin,
 		uint16_t upSpeed) {
 	this->PORT = P;
-	this->pin = pin;
+	this->pins = pin;
+	this->pind = pin +1;
 	this->updateFrequency = upSpeed;
 
-	*(PORT - 1) |= (3 << pin); 	//Set up the pins to outputs (DDRx address is one below PORTx)
+	*(P - 1) |= (3 << pin); 	//Set up the pins to outputs (DDRx address is one below PORTx)
 }
 
 //Default constructor for derived classes. Does nothing.
@@ -50,7 +62,7 @@ void PrimitiveStepper::update() {
 }
 
 //Set the speed of the motor in steps per second.
-void PrimitiveStepper::setSpeed(uint16_t stepsPerSec) {
+void PrimitiveStepper::setSpeed(float stepsPerSec) {
 	ATOMIC_BLOCK(ATOMIC_FORCEON) {
 		stepSpeed = stepsPerSec / updateFrequency;	//Calculate the required steps per ISR call.
 	}
