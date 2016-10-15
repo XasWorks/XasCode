@@ -23,7 +23,7 @@ namespace Timer1 {
 		switch(mode) {
 		case TIMER1_MODE_CTC:
 			TCCR1B |= (1 << WGM12);
-			TIMSK1 |= (1 << OCIE1A);
+			TINTMASK |= (1 << OCIE1A);
 		}
 	}
 }

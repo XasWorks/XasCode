@@ -8,6 +8,14 @@
 #ifndef CODE_TIMER_TIMER1_H_
 #define CODE_TIMER_TIMER1_H_
 
+#if defined(__AVR_ATmega32__)
+	#define TIMER1_ENABLED
+	#define TINTMASK TIMSK
+#else
+	#define TIMER1_ENABLED
+	#define TINTMASK TIMSK1
+#endif
+
 #ifdef TIMER1_ENABLED
 
 #include <avr/io.h>
