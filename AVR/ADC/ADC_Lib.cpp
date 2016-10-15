@@ -17,7 +17,7 @@ namespace ADC_Lib {
 	void init(uint8_t prescaler) {
 		ADCSRA = (1<< ADEN | 1<< ADIE | (prescaler << ADPS0));
 
-		ADMUX = (1<< REFS1 | 1<< REFS0);
+		ADMUX = (1<< REFS0);
 	}
 
 	uint8_t selectNexPin() {

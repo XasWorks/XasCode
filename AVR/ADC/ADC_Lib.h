@@ -21,7 +21,7 @@
 #define ADC_PRSC_128 	0b111
 
 #define ADC_IDLE			1
-#define ADC_RUNNING		2
+#define ADC_RUNNING			2
 
 namespace ADC_Lib {
 	volatile extern uint16_t 	lastResult;
