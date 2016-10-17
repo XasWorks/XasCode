@@ -14,7 +14,7 @@ protected:
 	//Port of the stepper motor
 	volatile uint8_t *PORT;
 	//Pins of the stepper motor. Stepping is issued at pins, direction at pind
-	uint8_t pind, pins, pin;
+	uint8_t pind, pins;
 
 	//Speed of the ISR. Required to set the stepping speed correctly.
 	uint16_t updateFrequency;
