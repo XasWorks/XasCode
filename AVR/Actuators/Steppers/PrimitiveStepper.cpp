@@ -18,6 +18,11 @@ void PrimitiveStepper::step(uint8_t dir) {
 	}
 }
 
+void PrimitiveStepper::moveBetweenCalls(float steps) {
+	this->stepSpeed = steps / this->updateFrequency;
+	this->stepsToGo += steps;
+}
+
 PrimitiveStepper::PrimitiveStepper(volatile uint8_t *P, uint8_t pins, uint8_t pind,
 		uint16_t upSpeed) {
 	this->PORT = P;
@@ -31,13 +36,7 @@ PrimitiveStepper::PrimitiveStepper(volatile uint8_t *P, uint8_t pins, uint8_t pi
 
 //Deprecated constructor for the motor stepper. Takes in port pointer, pin and ISR frequency.
 PrimitiveStepper::PrimitiveStepper(volatile uint8_t *P, uint8_t pin,
-		uint16_t upSpeed) {
-	this->PORT = P;
-	this->pins = pin;
-	this->pind = pin +1;
-	this->updateFrequency = upSpeed;
-
-	*(P - 1) |= (3 << pin); 	//Set up the pins to outputs (DDRx address is one below PORTx)
+		uint16_t upSpeed) : PrimitiveStepper(P, pin, pin + 1, upSpeed) {
 }
 
 //Default constructor for derived classes. Does nothing.
@@ -46,16 +45,16 @@ PrimitiveStepper::PrimitiveStepper() {
 
 //ISR Routine for the motor, updates it when required.
 void PrimitiveStepper::update() {
-	if ((stepsToGo <= -1) || (stepsToGo >= 1)) {	//If there are any steps to do at all
+	if (fabs(stepsToGo) >= 1) {	//If there are any steps to do at all
 
 		stepBuffer += stepSpeed;	//Increase the "Buffer step" value by the Steps/ISR value
 
 		if (stepBuffer >= 1) {		//Is there a step to be done?
 			stepBuffer -= 1;
 
-			if (stepsToGo <= -1)		//Backwards movement
+			if (signbit(stepsToGo))	//Backwards movement
 				step(0);
-			else if(stepsToGo >= 1)		//Forwards movement
+			else 					//Forwards movement
 				step(1);
 		}
 	}

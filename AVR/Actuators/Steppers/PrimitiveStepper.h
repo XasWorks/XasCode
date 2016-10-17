@@ -32,10 +32,13 @@ protected:
 	//Step the motor ONCE into the specified direction (0 == backwards, else forwards)
 	void step(uint8_t dir);
 
+	//Makes the motor move "steps", over a total time of "updateSpeed" ISR calls. Especially useful for more advanced systems (Omniwheel movement).
+	void moveBetweenCalls(float steps);
+
 public:
 
 	//Main constructor of the Stepper motor. P is the port, p the first of the two pins required for the motor.
-	//updateFrequency specifies the ISR speed that the motor runs on.
+	//updateFrequency specifies the ISR speed that the motor runs on OR! the amount of ISR calls between lower-speed calculation calls.
 	PrimitiveStepper(volatile uint8_t *P, uint8_t pins, uint8_t pind,
 			volatile uint16_t updateFrequency);
 
