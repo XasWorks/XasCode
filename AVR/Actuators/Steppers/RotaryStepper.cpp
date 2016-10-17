@@ -11,14 +11,11 @@
 //Constructor of the stepper motor.
 //Takes in PORT Pointer, PIN, ISR Frequency and Steps/Rotation
 RotaryStepper::RotaryStepper(volatile uint8_t *P, uint8_t pinMotor,
-		uint16_t upSp, int16_t stepsPerRotation) {
-	this->PORT = P;
-	this->pin = pinMotor;
+		uint16_t upSp, int16_t stepsPerRotation)
+		: PrimitiveStepper(P, pinMotor, upSp) {
 	this->updateFrequency = upSp;
 
 	this->stepsPerRotation = stepsPerRotation;
-
-	*(PORT - 1) |= (3 << pin);
 }
 
 //Set the speed of the motor to the given amount of degrees/sec

@@ -14,14 +14,10 @@ namespace X3 {
 	//The difference between ISR Frequency and Calculation Frequency
 	//The microstepping of the motor (assumed that it is a standard stepper motor with 200 steps per revolution)
 	//The radius of the wheel used, the rotation of the wheel relative to the X-Axis of the robot, and the distance of the wheel to the center.
-	OmniwheelStepper::OmniwheelStepper(volatile uint8_t *PORT, uint8_t pins, float ISRPerCal, uint8_t microstepping, float radius, float rotation, float distance, float yRComp) {
+	OmniwheelStepper::OmniwheelStepper(volatile uint8_t *PORT, uint8_t pins, float ISRPerCal, uint8_t microstepping, float radius, float rotation, float distance, float yRComp)
+		: PrimitiveStepper(PORT, pins, 0) {
 		//Save these values
-		this->PORT = PORT;
-		this->pin = pins;
 		this->ISRPerCal = ISRPerCal;
-
-		//Set the two pins to output (DDRx one below PORTx)
-		*(PORT - 1) |= (0b11 << this->pin);
 
 		//Rotation per Y-Movement compensation value.
 		this->yRCompensation = yRComp;
