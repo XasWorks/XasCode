@@ -14,11 +14,16 @@ namespace ADC_Lib {
 	volatile uint16_t 	lastResult = 0;
 	volatile uint8_t 		measuredPin = 0;
 
-	void init(uint8_t prescaler) {
+	void init(uint8_t prescaler, uint8_t ref_mode) {
 		ADCSRA = (1<< ADEN | 1<< ADIE | (prescaler << ADPS0));
 
-		ADMUX = (1<< REFS0);
+		ADMUX = (ref_mode & 0b11) << REFS0;
 	}
+
+	void init(uint8_t prescaler) {
+		init(prescaler, ADC_REF_DEFAULT_MODE);
+	}
+
 
 	uint8_t selectNexPin() {
 		for(uint8_t i=7; i >= 0; i--) {

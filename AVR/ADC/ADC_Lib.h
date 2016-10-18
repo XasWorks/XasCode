@@ -20,6 +20,12 @@
 #define ADC_PRSC_64  	0b110
 #define ADC_PRSC_128 	0b111
 
+#define ADC_REF_INTERNAL 	(0b11)
+#define ADC_REF_AVCC			(0b01)
+#define ADC_REF_AREF			(0b0)
+
+#define ADC_REF_DEFAULT_MODE ADC_REF_AREF
+
 #define ADC_IDLE			1
 #define ADC_RUNNING			2
 
@@ -27,6 +33,7 @@ namespace ADC_Lib {
 	volatile extern uint16_t 	lastResult;
 	volatile extern uint8_t 	measuredPin;
 
+	void init(uint8_t prescaler, uint8_t ref_mode);
 	void init(uint8_t prescaler);
 
 	void update();
