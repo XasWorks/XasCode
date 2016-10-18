@@ -8,6 +8,8 @@
 #ifndef LIBCODE_TIMER_TIMER2_H_
 #define LIBCODE_TIMER_TIMER2_H_
 
+#include "TimerDefs.h"
+
 #ifdef TIMER2_ENABLED
 
 #include <avr/io.h>
