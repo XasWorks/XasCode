@@ -21,8 +21,8 @@
 #define ADC_PRSC_128 	0b111
 
 #define ADC_REF_INTERNAL 	(0b11)
-#define ADC_REF_AVCC			(0b01)
-#define ADC_REF_AREF			(0b0)
+#define ADC_REF_AVCC		(0b01)
+#define ADC_REF_AREF		(0b0)
 
 #define ADC_REF_DEFAULT_MODE ADC_REF_AREF
 
