@@ -47,17 +47,24 @@ public:
 			volatile uint16_t updateFrequency);
 
 	//ISR Function to update the stepper motor (Stepping it when required)
-	void update();
+	virtual void update();
+
+	//Return the speed of the motor in steps/second
+	virtual float getSpeed();
+	//Return the current position of the motor as given in currentSteps
+	virtual float getPosition();
 
 	//Set the speed in steps per second.
-	void setSpeed(float stepsPerSecond);
-	//Reset the motor and abort all movements.
-	void reset();
+	virtual void setSpeed(float stepsPerSecond);
 
 	// Move the stepper motor by a certain amount of steps
-	void move(int32_t steps);
+	virtual void move(float steps);
+	virtual void disregardAndMove(float steps);
+
 	//Wait for every motor move of this motor to finish.
-	void flush();
+	virtual void flush();
+	//Reset the motor and abort all movements.
+	virtual void reset();
 };
 
 #endif

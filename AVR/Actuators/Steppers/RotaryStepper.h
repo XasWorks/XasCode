@@ -34,7 +34,6 @@ public:
 	//Move the motor by the specified amount of degrees, relative to the current position.
 	//Optionally takes in a software comma for finer positioning.
 	void move(float amount);
-	void move(int32_t amount, uint8_t precision);
 };
 
 #endif /* CODE_ROTARYSTEPPER_H_ */

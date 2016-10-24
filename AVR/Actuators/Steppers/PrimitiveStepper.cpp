@@ -60,6 +60,13 @@ void PrimitiveStepper::update() {
 	}
 }
 
+float PrimitiveStepper::getSpeed() {
+	return this->stepSpeed;
+}
+float PrimitiveStepper::getPosition() {
+	return this->currentSteps;
+}
+
 //Set the speed of the motor in steps per second.
 void PrimitiveStepper::setSpeed(float stepsPerSec) {
 	ATOMIC_BLOCK(ATOMIC_FORCEON) {
@@ -68,11 +75,18 @@ void PrimitiveStepper::setSpeed(float stepsPerSec) {
 }
 
 //Move the stepper motor by the specified amount of steps.
-void PrimitiveStepper::move(int32_t steps) {
+void PrimitiveStepper::move(float steps) {
 	ATOMIC_BLOCK(ATOMIC_FORCEON) {
 		stepsToGo += steps;
 	}
 }
+//Move the stepper motor, disregarding any previous movement
+void PrimitiveStepper::disregardAndMove(float steps) {
+	ATOMIC_BLOCK(ATOMIC_FORCEON) {
+		stepsToGo = steps;
+	}
+}
+
 
 //Wait for the motor movements to finish.
 void PrimitiveStepper::flush() {
@@ -80,7 +94,6 @@ void PrimitiveStepper::flush() {
 		_delay_ms(1);
 	}
 }
-
 //Reset all the values back to 0, except PORT and PIN configurations.
 void PrimitiveStepper::reset() {
 	stepsToGo = 0;
