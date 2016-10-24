@@ -4,15 +4,14 @@
 
 //Step the motor once into specified direction.
 void PrimitiveStepper::step(uint8_t dir) {
+	*PORT &= ~(1 << this->pins | 1 << this->pind);	// Deactivate both pins
 	if (dir == 0) {					//Rotate it backwards
-		*PORT |= (1 << this->pind);	//Set the direction pin, then activate the stepping pin and deactivate both immediately
+		*PORT |= (1 << this->pind);	//Set the direction pin, then activate the stepping pin
 		*PORT |= (1 << this->pins);
-		*PORT &= ~(1 << this->pins | 1 << this->pind);
 		stepsToGo++;				//One step backwards was done; increase the amount of steps to do and decrease the total amount
 		currentSteps--;
 	} else {						//Rotate it forwards
-		*PORT |= (1 << this->pins);		//Activate the step pin and immediately deactivate
-		*PORT &= ~(1 << this->pins | 1 << this->pind);
+		*PORT |= (1 << this->pins);	//Activate the step pin
 		stepsToGo--;				//Decrease the steps to do and increase total amount of steps done.
 		currentSteps++;
 	}
@@ -45,6 +44,8 @@ PrimitiveStepper::PrimitiveStepper() {
 
 //ISR Routine for the motor, updates it when required.
 void PrimitiveStepper::update() {
+	*PORT &= ~(1 << this->pins | 1 << this->pind);	// Deactivate pind and pins for the step routine
+
 	if (fabs(stepsToGo) >= 1) {	//If there are any steps to do at all
 
 		stepBuffer += stepSpeed;	//Increase the "Buffer step" value by the Steps/ISR value
