@@ -7,7 +7,7 @@
 
 
 class PrimitiveStepper {
-protected:
+private:
 	//Constructor for derived classes. Does not initialise any values!!
 	PrimitiveStepper();
 
@@ -32,6 +32,7 @@ protected:
 	//Step the motor ONCE into the specified direction (0 == backwards, else forwards)
 	void step(uint8_t dir);
 
+protected:
 	//Makes the motor move "steps", over a total time of "updateSpeed" ISR calls. Especially useful for more advanced systems (Omniwheel movement).
 	void moveBetweenCalls(float steps);
 

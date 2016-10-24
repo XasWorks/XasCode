@@ -13,7 +13,6 @@
 RotaryStepper::RotaryStepper(volatile uint8_t *P, uint8_t pinMotor,
 		uint16_t upSp, int16_t stepsPerRotation)
 		: PrimitiveStepper(P, pinMotor, upSp) {
-	this->updateFrequency = upSp;
 
 	this->stepsPerRotation = stepsPerRotation;
 }
@@ -30,7 +29,7 @@ float RotaryStepper::getPosition() {
 
 //Rotate the stepper to an absolute position in degrees.
 void RotaryStepper::rotateTo(float target) {
-	this->PrimitiveStepper::disregardAndMove((target * stepsPerRotation)/360 - currentSteps);
+	this->PrimitiveStepper::disregardAndMove((target * stepsPerRotation)/360 - this->PrimitiveStepper::getPosition());
 	//Get the required steps it has to perform,
 	//Then set the difference of current and wanted position into the toGo variable.
 }
