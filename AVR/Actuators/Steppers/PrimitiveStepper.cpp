@@ -66,6 +66,9 @@ float PrimitiveStepper::getSpeed() {
 float PrimitiveStepper::getPosition() {
 	return this->currentSteps;
 }
+uint16_t PrimitiveStepper::getFrequency() {
+	return this->updateFrequency;
+}
 
 //Set the speed of the motor in steps per second.
 void PrimitiveStepper::setSpeed(float stepsPerSec) {

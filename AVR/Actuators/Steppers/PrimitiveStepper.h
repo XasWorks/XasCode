@@ -54,6 +54,8 @@ public:
 	virtual float getSpeed();
 	//Return the current position of the motor as given in currentSteps
 	virtual float getPosition();
+	//Return the updating speed of the stepper motor - can be useful for some calculations
+	virtual uint16_t getFrequency();
 
 	//Set the speed in steps per second.
 	virtual void setSpeed(float stepsPerSecond);
