@@ -11,16 +11,16 @@ void PrimitiveStepper::step(uint8_t dir) {
 		stepsToGo++;				//One step backwards was done; increase the amount of steps to do and decrease the total amount
 		currentSteps--;
 	} else {						//Rotate it forwards
-		*PORT |= (1 << pins);		//Activate the step pin and immediately deactivate
-		*PORT &= ~(1 << pins);
+		*PORT |= (1 << this->pins);		//Activate the step pin and immediately deactivate
+		*PORT &= ~(1 << this->pins | 1 << this->pind);
 		stepsToGo--;				//Decrease the steps to do and increase total amount of steps done.
 		currentSteps++;
 	}
 }
 
 void PrimitiveStepper::moveBetweenCalls(float steps) {
-	this->stepSpeed = steps / this->updateFrequency;
 	this->stepsToGo += steps;
+	this->stepSpeed = fabs(stepsToGo) / this->updateFrequency;
 }
 
 PrimitiveStepper::PrimitiveStepper(volatile uint8_t *P, uint8_t pins, uint8_t pind,
