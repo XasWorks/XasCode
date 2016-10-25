@@ -70,8 +70,8 @@ void Movable::update() {
 	switch(mode) {
 
 		case relative:
-		xThisCal = clamp(fabs(mSpeed), mDistance);
-		rThisCal = clamp(fabs(rSpeed), rAngle);
+		xThisCal = clamp(mDistance, fabs(mSpeed));
+		rThisCal = clamp(rAngle, fabs(rSpeed));
 
 		mDistance -= xThisCal;
 		rAngle -= rThisCal;
