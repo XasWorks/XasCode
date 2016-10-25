@@ -18,7 +18,8 @@ void PrimitiveStepper::step(uint8_t dir) {
 }
 
 void PrimitiveStepper::moveBetweenCalls(float steps) {
-	this->stepsToGo += steps;
+	this->stepsToGo = steps;
+	this->stepBuffer = 0;
 	this->stepSpeed = fabs(stepsToGo) / this->updateFrequency;
 }
 
