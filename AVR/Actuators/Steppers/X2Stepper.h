@@ -14,12 +14,14 @@
 
 namespace X2 {
 
-class Stepper: public PrimitiveStepper, public Actuator {
+class Stepper: private PrimitiveStepper, public Actuator {
 private:
 	// Constants for calculating how many steps the system has to do for forwards/backwards movement, as well as rotation.
 	float stepsPerMM, stepsPerDeg;
-	
+
 public:
+	using PrimitiveStepper::update;
+
 	// Main constructor, initializes values.
 	Stepper(volatile uint8_t *P, uint8_t pins, uint8_t pind,
 			uint16_t CPISR, float stepsPerMM, float stepsPerDeg);
