@@ -94,7 +94,7 @@ void PrimitiveStepper::disregardAndMove(float steps) {
 
 //Wait for the motor movements to finish.
 void PrimitiveStepper::flush() {
-	while ((stepsToGo != 0) && (stepSpeed != 0)) {
+	while ((fabs(stepsToGo) >= 1) && (stepSpeed != 0)) {
 		_delay_ms(1);
 	}
 }
