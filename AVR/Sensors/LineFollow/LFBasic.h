@@ -19,14 +19,17 @@
 #define LF_RIGHT 	127
 #define LF_LEFT 	-127
 
-class LFBasic {
-public:
+namespace LF {
+
 	enum Status : uint8_t {OK, AMBIGUOUS, LOST, INTSEC};
 
-	volatile Status	lineStatus = OK;
-	volatile int8_t lineOffset = 0;
+	class Basic {
+	public:
+		volatile Status	lineStatus = OK;
+		volatile int8_t lineOffset = 0;
 
-	LFBasic();
-};
+		Basic();
+	};
+}
 
 #endif /* CODE_LINEFOLLOW_LFBASIC_H_ */

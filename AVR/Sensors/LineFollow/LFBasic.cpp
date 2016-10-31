@@ -7,7 +7,10 @@
 
 #include "LFBasic.h"
 
-LFBasic::LFBasic() {
+namespace LF {
+
+Basic::Basic() {
 
 }
 
+}
