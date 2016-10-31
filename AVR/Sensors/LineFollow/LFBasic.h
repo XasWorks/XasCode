@@ -10,18 +10,21 @@
 
 #include <avr/io.h>
 
-#define LF_OK 		0	//The line is under the sensors and tracked
-#define LF_AMBIG 	1	//The line is currently in an ambiguous state, no clear decision can be made
-#define LF_LOST 	2	//No sensors have the line and it could be lost
-#define LF_INTSEC	3	//A intersection has been found!
+
+// LF_OK 		//The line is under the sensors and tracked
+//LF_AMBIG 	//The line is currently in an ambiguous state, no clear decision can be made
+//LF_LOST 	//No sensors have the line and it could be lost
+//LF_INTSEC	//A intersection has been found!
 
 #define LF_RIGHT 	127
 #define LF_LEFT 	-127
 
 class LFBasic {
 public:
-	volatile uint8_t	lineStatus = 0;
-	volatile int8_t 	lineOffset = 0;
+	enum Status : uint8_t {OK, AMBIGUOUS, LOST, INTSEC};
+
+	volatile Status	lineStatus = OK;
+	volatile int8_t lineOffset = 0;
 
 	LFBasic();
 };
