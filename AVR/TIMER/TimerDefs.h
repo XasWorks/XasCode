@@ -7,7 +7,7 @@
 	#define TIMER1_ENABLED
 	#define TINTMASK TIMSK
 
-#elif defined(__AVR_ATMega328p__)
+#elif defined(__AVR_ATmega328P__)
 	#define TIMER0_ENABLED
 
 	#define TIMER1_ENABLED
