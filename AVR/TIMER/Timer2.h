@@ -44,6 +44,8 @@ namespace Timer2 {
 
 	void set_OC2A_mode(uint8_t mode);
 	void set_OC2B_mode(uint8_t mode);
+
+	void set_OC2A_frequency(uint16_t freq);
 }
 
 
