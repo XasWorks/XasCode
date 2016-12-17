@@ -13,6 +13,7 @@
 #ifdef TIMER1_ENABLED
 
 #include <avr/io.h>
+#include <avr/interrupt.h>
 
 #define TIMER1_PRESC_OFF 	0b000
 #define TIMER1_PRESC_1		0b001
@@ -27,6 +28,8 @@ namespace Timer1 {
 	void set_prescaler(uint8_t prescValue);
 	void set_mode(uint8_t mode);
 	void set_OCR1A(uint16_t value);
+
+	void enable_CTC(uint16_t frequency);
 }
 
 #endif
