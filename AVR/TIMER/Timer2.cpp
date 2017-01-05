@@ -46,8 +46,10 @@ namespace Timer2 {
 	const uint16_t prescs[7] = {1, 8, 32, 64, 128, 256, 1024};
 
 	void set_OC2A_frequency(uint16_t freq) {
-		if(freq == 0)
+		if(freq == 0) {
 			set_OC2A_mode(TIMER2_OC2A_OFF);
+			return;
+		}
 		else
 			set_OC2A_mode(TIMER2_OC2A_TOGGLE);
 
