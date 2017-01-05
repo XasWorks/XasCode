@@ -56,7 +56,7 @@ namespace Timer2 {
 		uint16_t CPU_Ticks = F_CPU/2/freq;
 
 		for(uint8_t i=0; i<7; i++) {
-			if(CPU_Ticks < (255*prescs[i])) {
+			if(CPU_Ticks < (255*(uint32_t)prescs[i])) {
 				set_prescaler(i + 1);
 				set_OCR2A(CPU_Ticks/prescs[i] - 1);
 
