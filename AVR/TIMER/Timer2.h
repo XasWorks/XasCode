@@ -32,7 +32,7 @@
 #define TIMER2_OC2A_SET		0b11000000
 
 #define TIMER2_OC2B_OFF				0
-#define TIMER2_OC2B_NPWM_TOGGLE			0b00010000
+#define TIMER2_OC2B_NPWM_TOGGLE		0b00010000
 #define TIMER2_OC2B_FPWM_NONINV		0b00100000
 
 namespace Timer2 {
@@ -44,6 +44,8 @@ namespace Timer2 {
 
 	void set_OC2A_mode(uint8_t mode);
 	void set_OC2B_mode(uint8_t mode);
+
+	void set_OC2A_frequency(uint16_t freq);
 }
 
 

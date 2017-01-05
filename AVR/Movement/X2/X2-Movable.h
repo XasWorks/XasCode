@@ -15,7 +15,7 @@
 #include "X2-Actuator.h"
 
 #define SANE_RSPEED_MAX 360
-#define SANE_MSPEED_MAX 300
+#define SANE_MSPEED_MAX 500
 
 namespace X2 {
 

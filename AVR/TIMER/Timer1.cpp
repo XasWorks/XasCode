@@ -26,6 +26,26 @@ namespace Timer1 {
 			TINTMASK |= (1 << OCIE1A);
 		}
 	}
+
+
+	const uint16_t prescs[5] = {1, 8, 64, 256, 1024};
+	void enable_CTC(uint16_t frequency) {
+		set_mode(TIMER1_MODE_CTC);
+
+		uint32_t CPU_Ticks = F_CPU / frequency;
+
+		for(uint8_t i=0; i<5; i++) {
+			if(CPU_Ticks < (65536*(uint32_t)prescs[i])) {
+
+				set_prescaler(i + 1);
+				set_OCR1A(CPU_Ticks/prescs[i] - 1);
+
+				break;
+			}
+		}
+
+		sei();
+	}
 }
 
 #endif
