@@ -22,7 +22,6 @@ private:
 	const float convFactor;
 
 	volatile uint16_t measuredVoltage = 0;
-
 	void (*onBatteryCritical)() = 0;
 
 public:
@@ -31,6 +30,8 @@ public:
 	float getVoltage();
 
 	void setCriticalFunction(void (*onCritical)());
+	bool criticalEnabled = false;
+
 	void update();
 	void ADC_update();
 };

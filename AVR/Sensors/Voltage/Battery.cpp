@@ -30,8 +30,9 @@ void Battery::ADC_update() {
 	if(ADC_Lib::measuredPin == this->pin) {
 		this->measuredVoltage = ADC_Lib::lastResult;
 
-		if((measuredVoltage >= maxVoltage || measuredVoltage <= minVoltage) && this->onBatteryCritical != 0)
-			this->onBatteryCritical();
+		if(this->criticalEnabled)
+			if((measuredVoltage >= maxVoltage || measuredVoltage <= minVoltage))
+				this->onBatteryCritical();
 	}
 }
 
