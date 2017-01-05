@@ -10,13 +10,9 @@
 
 namespace Voltage {
 
-Battery::Battery(uint8_t pin, float maxMeasured, float min, float max) {
-	this->pin = pin;
-
-	this->convFactor = (maxMeasured/1023);
-
-	this->minVoltage = (uint16_t)(min/maxMeasured * 1023);
-	this->maxVoltage = (uint16_t)(max/maxMeasured * 1023);
+Battery::Battery(uint8_t pin, float maxMeasured, float min, float max) :
+		pin(pin), minVoltage((uint16_t)(min/maxMeasured * 1023)), maxVoltage((uint16_t)(max/maxMeasured * 1023)),
+		convFactor(maxMeasured/1023) {
 }
 
 float Battery::getVoltage() {

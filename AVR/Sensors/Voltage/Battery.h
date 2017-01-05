@@ -14,13 +14,14 @@ namespace Voltage {
 
 class Battery {
 private:
-	uint8_t pin;
+	const uint8_t pin;
 
-	uint16_t minVoltage;
-	uint16_t maxVoltage;
+	const uint16_t minVoltage;
+	const uint16_t maxVoltage;
+
+	const float convFactor;
+
 	volatile uint16_t measuredVoltage = 0;
-
-	float convFactor;
 
 	void (*onBatteryCritical)() = 0;
 
