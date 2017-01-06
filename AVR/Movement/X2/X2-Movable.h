@@ -34,12 +34,12 @@ protected:
 		volatile float mDistance = 0;
 		float mSpeed = 0;
 
-		uint16_t updateFrequency;
+		uint16_t const updateFrequency;
 
 		MovementMode mode = relative;
 
 public:
-	// Standard constructor. Needs no arguments
+	// Standard constructor, taking in only the ISR frequency
 	Movable(uint16_t updateFrequency);
 
 	// Set rotation speed of the robot in deg/second

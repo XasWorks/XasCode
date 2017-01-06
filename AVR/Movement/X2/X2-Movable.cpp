@@ -18,9 +18,8 @@ float clamp(float in, float max) {
 namespace X2 {
 
 // Empty constructor
-Movable::Movable(uint16_t updateFrequency) {
-	this->updateFrequency = updateFrequency;
-};
+Movable::Movable(uint16_t updateFrequency) : updateFrequency(updateFrequency) {
+}
 
 // Set the rotation speed
 void Movable::setRotationSpeed(float speed) {
