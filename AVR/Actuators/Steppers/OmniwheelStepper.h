@@ -23,7 +23,7 @@ namespace X3 {
 	private:
 		//Conversion factors for 1mm of X/Y movement or 1 degree rotation into the amount of steps the robot has to do.
 		float xFact, yFact, rFact;
-		float yRCompensation;
+		float const yRCompensation;
 
 	public:
 		//Contstructor for a new Translative Stepper.

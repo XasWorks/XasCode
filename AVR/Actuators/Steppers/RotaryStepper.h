@@ -13,7 +13,7 @@
 class RotaryStepper: public PrimitiveStepper {
 private:
 	//Config value for how many steps have to be done for a full rotation (Usually 200 * 2^x)
-	int16_t stepsPerRotation;
+	int16_t const stepsPerRotation;
 
 public:
 	//Constructor for the Rotary Motor class.

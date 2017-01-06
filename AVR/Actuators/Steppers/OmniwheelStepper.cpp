@@ -15,11 +15,8 @@ namespace X3 {
 	//The microstepping of the motor (assumed that it is a standard stepper motor with 200 steps per revolution)
 	//The radius of the wheel used, the rotation of the wheel relative to the X-Axis of the robot, and the distance of the wheel to the center.
 	OmniwheelStepper::OmniwheelStepper(volatile uint8_t *PORT, uint8_t pins, uint16_t ISRPerCal, uint8_t microstepping, float radius, float rotation, float distance, float yRComp)
-		: PrimitiveStepper(PORT, pins, ISRPerCal) {
-
-		//Rotation per Y-Movement compensation value.
-		this->yRCompensation = yRComp;
-
+		: PrimitiveStepper(PORT, pins, ISRPerCal), yRCompensation(yRComp)
+		{
 		//Atomic block to ensure that calculation is finished.
 		ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
 			//Calculate how many steps per mm the wheel will have to do.

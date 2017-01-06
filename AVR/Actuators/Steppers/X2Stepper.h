@@ -17,7 +17,7 @@ namespace X2 {
 class Stepper: private PrimitiveStepper, public Actuator {
 private:
 	// Constants for calculating how many steps the system has to do for forwards/backwards movement, as well as rotation.
-	float stepsPerMM, stepsPerDeg;
+	float const stepsPerMM, stepsPerDeg;
 
 public:
 	using PrimitiveStepper::update;
