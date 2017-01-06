@@ -26,8 +26,8 @@ private:
 	//Update the sensors.
 	void setStatus(uint8_t sensors);
 
-	volatile uint8_t *PINx;
-	uint8_t pins;
+	volatile uint8_t * const PINx;
+	uint8_t const pins;
 
 public:
 	Sens3(volatile uint8_t *PINx, uint8_t pins);
