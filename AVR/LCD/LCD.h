@@ -34,9 +34,7 @@ private:
 	volatile uint8_t currentCursor;
 	volatile uint8_t cursor;
 
-	volatile uint8_t *PORT;
-	volatile uint8_t *PINP;
-	volatile uint8_t *DDRP;
+	volatile uint8_t * const PORT;
 
 	void mark(uint8_t n, uint8_t y);
 	uint8_t nextMark();

@@ -104,8 +104,7 @@
 		}
 	}
 
-	LCD::LCD(volatile uint8_t *P) {
-		PORT = P;					//Define the pointer for the display port.
+	LCD::LCD(volatile uint8_t *P) : PORT(P) {
 		currentCursor = 0;
 		cursor = 0;
 
@@ -133,7 +132,7 @@
 	//This is suitable for ISR Routine updating without taking too long. Very efficient.
 	void LCD::update() {
 		if(readBusy() == false) {				//Only continue if the display is ready for instructions.
-			uint8_t nMark = nextMark();			//Read out if there is a character to be upadted, and which one.
+			uint8_t nMark = nextMark();			//Read out if there is a character to be updated, and which one.
 			if(nMark != 255) {
 				if(nMark != currentCursor) {	//Only set the currentCursor if it isn't in the correct position already.
 					placeCursor(nMark);
