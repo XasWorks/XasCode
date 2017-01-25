@@ -15,7 +15,7 @@
 #include "X2-Actuator.h"
 
 #define SANE_RSPEED_MAX 360
-#define SANE_MSPEED_MAX 300
+#define SANE_MSPEED_MAX 500
 
 namespace X2 {
 
@@ -34,12 +34,12 @@ protected:
 		volatile float mDistance = 0;
 		float mSpeed = 0;
 
-		uint16_t updateFrequency;
+		uint16_t const updateFrequency;
 
 		MovementMode mode = relative;
 
 public:
-	// Standard constructor. Needs no arguments
+	// Standard constructor, taking in only the ISR frequency
 	Movable(uint16_t updateFrequency);
 
 	// Set rotation speed of the robot in deg/second

@@ -9,9 +9,8 @@
 
 namespace LF {
 
-Sens3::Sens3(volatile uint8_t *PINx, uint8_t pins) {
-	this->PINx = PINx;
-	this->pins = pins;
+Sens3::Sens3(volatile uint8_t *PINx, uint8_t pins) : PINx(PINx), pins(pins) {
+	*(PINx + 2) |= (0b111 << pins);
 }
 
 //Decide on the next status of the outputs

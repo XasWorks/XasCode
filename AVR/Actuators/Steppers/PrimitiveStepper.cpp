@@ -24,12 +24,8 @@ void PrimitiveStepper::moveBetweenCalls(float steps) {
 }
 
 PrimitiveStepper::PrimitiveStepper(volatile uint8_t *P, uint8_t pins, uint8_t pind,
-		uint16_t upSpeed) {
-	this->PORT = P;
-	this->pins = pins;
-	this->pind = pind;
-
-	this->updateFrequency = upSpeed;
+		uint16_t upSpeed)
+		: PORT(P),  pind(pind), pins(pins), updateFrequency(upSpeed) {
 
 	*(P - 1) |= (1 << pins | 1 << pind);
 }
@@ -37,10 +33,6 @@ PrimitiveStepper::PrimitiveStepper(volatile uint8_t *P, uint8_t pins, uint8_t pi
 //Deprecated constructor for the motor stepper. Takes in port pointer, pin and ISR frequency.
 PrimitiveStepper::PrimitiveStepper(volatile uint8_t *P, uint8_t pin,
 		uint16_t upSpeed) : PrimitiveStepper(P, pin, pin + 1, upSpeed) {
-}
-
-//Default constructor for derived classes. Does nothing.
-PrimitiveStepper::PrimitiveStepper() {
 }
 
 //ISR Routine for the motor, updates it when required.
