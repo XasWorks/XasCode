@@ -66,11 +66,14 @@ void Sens3::update() {
 		oSens = sensors;
 		uDelay = DELAY_VAL;
 	}
+
 	//If the sensors have not changed for a while, update them.
-	else if(uDelay == 0)
+	if(uDelay == 0) {
 		setStatus(sensors);
-	//Count down.
+		uDelay = 255;
+	}
 	else
+		//Count down.
 		uDelay--;
 }
 

@@ -9,7 +9,7 @@
 #define CODE_LINEFOLLOW_LF3SENS_H_
 
 #define INTSEC_DEFAULT_DIR LF_RIGHT
-#define DELAY_VAL 5
+#define DELAY_VAL 1
 
 #include <avr/io.h>
 #include "LFBasic.h"
