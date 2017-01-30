@@ -9,6 +9,7 @@
 #define AVR_COMMUNICATION_RGBSTATUS_H_
 
 #include <avr/io.h>
+#include <util/delay.h>
 
 namespace Communication {
 
@@ -30,12 +31,13 @@ private:
 	const uint8_t pinR, pinG, pinB;
 	volatile uint8_t * const PORT;
 
-	uint8_t sequencePosition = 0;
+	volatile uint8_t sequencePosition = 0;
 
 public:
 	RGBStatus(volatile uint8_t *PORT, uint8_t pinR, uint8_t pinG, uint8_t pinB);
 
 	void setModes(uint16_t rMode, uint16_t gMode, uint16_t bMode);
+	void signal(uint16_t red, uint16_t green, uint16_t blue, uint8_t length);
 
 	void update();
 };
