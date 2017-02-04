@@ -3,16 +3,16 @@
 
 namespace LF {
 
-	LFA2Sens::LFA2Sens(uint8_t const pin) : pin(pin) {
+	ASens2::ASens2(uint8_t const pin) : pin(pin) {
 	}
 
-	void LFA2Sens::update() {
+	void ASens2::update() {
 		ADC_Lib::start_measurement(pin);
 		ADC_Lib::start_measurement(pin +1);
 		updating = 2;
 	}
 
-	void LFA2Sens::ADCUpdate() {
+	void ASens2::ADCUpdate() {
 		if(ADC_Lib::measuredPin == pin) {
 			updating--;
 			readings[0] = ADC_Lib::lastResult;
@@ -26,7 +26,7 @@ namespace LF {
 			uint16_t totalReading = readings[0] + readings[1];
 			if(totalReading >= READING_THRESHOLD) {
 				this->lineStatus = OK;
-				this->lineOffset = (uint8_t)(((uint32_t)(readings[0] - readings[1]) * 127) / totalReading);
+				this->lineOffset = (int8_t)((((int32_t)readings[0] - readings[1]) * 127) / totalReading);
 			}
 			else {
 				this->lineStatus = LOST;
@@ -34,7 +34,7 @@ namespace LF {
 		}
 	}
 
-	bool LFA2Sens::isUpdated() {
+	bool ASens2::isUpdated() {
 		return this->updating == 0;
 	}
 }

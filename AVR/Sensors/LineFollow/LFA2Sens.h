@@ -9,7 +9,7 @@
 
 namespace LF {
 
-	class LFA2Sens : Basic {
+	class ASens2 : public Basic {
 	private:
 		uint8_t const pin;
 		uint16_t readings[2] = {0, 0};
@@ -17,7 +17,7 @@ namespace LF {
 		volatile uint8_t updating = 0;
 
 	public:
-		LFA2Sens(uint8_t const pin);
+		ASens2(uint8_t const pin);
 
 		void update();
 		void ADCUpdate();
