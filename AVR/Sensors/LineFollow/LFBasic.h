@@ -11,7 +11,7 @@
 #include <avr/io.h>
 
 
-// LF_OK 		//The line is under the sensors and tracked
+//LF_OK 		//The line is under the sensors and tracked
 //LF_AMBIG 	//The line is currently in an ambiguous state, no clear decision can be made
 //LF_LOST 	//No sensors have the line and it could be lost
 //LF_INTSEC	//A intersection has been found!
