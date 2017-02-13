@@ -9,8 +9,9 @@
 
 namespace LF {
 
-Sens3::Sens3(volatile uint8_t *PINx, uint8_t pins) : PINx(PINx), pins(pins) {
-	*(PINx + 2) |= (0b111 << pins);
+Sens3::Sens3(volatile uint8_t *PORTx, uint8_t pins) : PINx(PORTx -2), pins(pins) {
+	// Initialise the Pull-Ups
+	*(PORTx) |= (0b111 << pins);
 }
 
 //Decide on the next status of the outputs
