@@ -3,21 +3,22 @@
 
 namespace LF {
 
-	ASens2::ASens2(uint8_t const pin) : pin(pin), sigBuffer(0) {
+	ASens2::ASens2(uint8_t const aPin, uint8_t volatile * const ePINx, uint8_t const ePin) :
+		aPin(aPin), ePINx(ePINx), ePin(ePin), sigBuffer(0) {
 	}
 
 	void ASens2::update() {
-		ADC_Lib::start_measurement(pin + 1);
-		ADC_Lib::start_measurement(pin + 2);
+		ADC_Lib::start_measurement(aPin);
+		ADC_Lib::start_measurement(aPin + 1);
 		updating = 2;
 	}
 
 	void ASens2::ADCUpdate() {
-		if(ADC_Lib::measuredPin == pin+1) {
+		if(ADC_Lib::measuredPin == aPin) {
 			updating--;
 			readings[0] = ADC_Lib::lastResult;
 		}
-		else if(ADC_Lib::measuredPin == pin+2) {
+		else if(ADC_Lib::measuredPin == aPin+1) {
 			updating--;
 			readings[1] = ADC_Lib::lastResult;
 		}
@@ -32,12 +33,12 @@ namespace LF {
 			else if(sigBuffer > 0)
 				sigBuffer--;
 
-			if((PINA & 1<<pin) != 0)
+			if((*ePINx & 1<<ePin) != 0)
 				this->sigBuffer = INTSEC_BUFFER_TICKS;
-			else if((PINA & 1 << (pin+3)) != 0)
+			else if((*ePINx & 1 << (ePin+1)) != 0)
 				this->sigBuffer = -INTSEC_BUFFER_TICKS;
 
-			if((PINA & (0b1001 << pin)) == (0b1001 << pin))
+			if((*ePINx & (0b11 << ePin)) == (0b11 << ePin))
 				this->lineStatus = INTSEC;
 			else if(totalReading >= READING_THRESHOLD)
 				this->lineOffset = (int8_t)((((int32_t)readings[0] - readings[1]) * 127) / totalReading);
