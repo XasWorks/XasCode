@@ -4,7 +4,7 @@
 namespace LF {
 
 	ASens2::ASens2(uint8_t const aPin, uint8_t volatile * const ePINx, uint8_t const ePin) :
-		ePINx(ePINx), ePin(ePin), aPin(aPin), sigBuffer(0) {
+		ePINx(ePINx), ePin(ePin), aPin(aPin) {
 	}
 
 	void ASens2::update() {

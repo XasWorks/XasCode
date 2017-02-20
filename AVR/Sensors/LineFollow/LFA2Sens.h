@@ -18,8 +18,6 @@ namespace LF {
 		uint8_t const aPin;
 		uint16_t readings[2] = {0, 0};
 
-		int8_t sigBuffer = 0;
-
 		volatile uint8_t updating = 0;
 
 		void ADCReadin();
