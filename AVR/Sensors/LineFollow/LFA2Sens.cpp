@@ -39,7 +39,6 @@ namespace LF {
 		this->ADCReadin();
 
 		if(updating == 0) {
-			uint16_t totalReading = readings[0] + readings[1];
 			uint8_t eSensors = (*ePINx >> ePin) & (0b11);
 
 			if(eSensors == 0b11) {
@@ -49,20 +48,32 @@ namespace LF {
 			else {
 				this->NormalLF();
 
-				if(this->lineOffset > INTSEC_DISABLE_THRESHOLD)
-					eSensors &= ~(0b01);
-				else if(this->lineOffset < -INTSEC_DISABLE_THRESHOLD)
-					eSensors &= ~(0b10);
+				if(this->lineStatus != OK) {
+					switch(eSensors) {
+						case 0b01:
+							this->lineOffset = 127;
+						break;
+						case 0b10:
+							this->lineOffset = -127;
+						break;
+					}
+				}
+				else {
+					if(this->lineOffset > INTSEC_DISABLE_THRESHOLD)
+						eSensors &= ~(0b01);
+					else if(this->lineOffset < -INTSEC_DISABLE_THRESHOLD)
+						eSensors &= ~(0b10);
 
-				switch(eSensors) {
-				case 0b01:
-					this->lineStatus = INTSEC;
-					this->lineOffset = 127;
-				break;
-				case 0b10:
-					this->lineStatus = INTSEC;
-					this->lineOffset = -127;
-				break;
+					switch(eSensors) {
+					case 0b01:
+						this->lineStatus = INTSEC;
+						this->lineOffset = 127;
+					break;
+					case 0b10:
+						this->lineStatus = INTSEC;
+						this->lineOffset = -127;
+					break;
+					}
 				}
 			}
 		}
