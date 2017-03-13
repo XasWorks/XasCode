@@ -6,7 +6,19 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
+#define TWCR_ON (1<< TWINT | 1<< TWEA | 1<< TWEN | 1<< TWIE)
+
 namespace TWI {
+	enum nextTWIAction : uin8_t {
+		TRANSFER,
+		START,
+		STOP,
+		NACK,
+	};
+
+	extern nextTWIAction nextAction;
+
+
 	enum Status : uint8_t {
 		IDLE 		= 0b11111000,
 		ERROR		= 0b00000000,
@@ -26,14 +38,23 @@ namespace TWI {
 		ST_SLA_ACK		= 0b10101000,
 		ST_DATA_ACK		= 0b10111000,
 		ST_DATA_NACK	= 0b11000000,
-		ST_DATA_LAST	= 0b11001000,
+		ST_DATA_STOP	= 0b11001000,
 
 		SR_SLA_ACK		= 0b01100000,
 		SR_DATA_ACK		= 0b10000000,
 		SR_DATA_NACK	= 0b10001000,
 		SR_DATA_STOP	= 0b10100000,
 
-	}
+		SR_GC_ACK			= 0b01110000,
+		SR_GC_DATA_ACK		= 0b10010000,
+		SR_GC_DATA_NACK	= 0b10011000,
+	};
+
+
+	void stop();
+	void start();
+
+	void fireTWINT();
 }
 
 #endif
