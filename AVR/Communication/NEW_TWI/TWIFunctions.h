@@ -18,7 +18,6 @@ namespace TWI {
 
 	extern nextTWIAction nextAction;
 
-
 	enum Status : uint8_t {
 		IDLE 		= 0b11111000,
 		ERROR		= 0b00000000,
@@ -50,11 +49,12 @@ namespace TWI {
 		SR_GC_DATA_NACK	= 0b10011000,
 	};
 
+	extern uint8_t targetAddr;
 
-	void stop();
-	void start();
+	extern uint8_t dataLength;
+	extern uint8_t *dataPacket;
 
-	void fireTWINT();
+	void updateTWI();
 }
 
 #endif
