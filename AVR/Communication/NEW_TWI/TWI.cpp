@@ -2,15 +2,19 @@
 #include "TWI.h"
 
 namespace TWI {
-	nextTWIAction nextAction = TRANSFER;
+	volatile nextTWIAction nextAction = STOP;
+
+	Job * callbackJob = 0;
 
 	uint8_t targetAddr 	= 0;
-	uint8_t targetReg		= 0;
+	uint8_t targetReg	= 0;
 	uint8_t dataLength 	= 0;
 
-	uint8_t *dataPacket 	= 0;
+	uint8_t *dataPacket = 0;
 
 	void fireTWINT(nextTWIAction nAct) {
+		nextAction = nAct;
+
 		switch(nAct) {
 		case TRANSFER:
 			TWCR = TWCR_ON;
@@ -36,14 +40,42 @@ namespace TWI {
 		return (Status)(TWSR & 0b11111000);
 	}
 
+	bool startNewJob() {
+		Job * jobNode = Job::getHeadJob();
+		while(jobNode != 0) {
+			if(jobNode->masterPrepare()) {
+				nextAction = START;
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	void masterWrapup() {
-		fireTWINT(STOP);
+		// First ensure the next action is stop
+		nextAction = STOP;
+		// Check if there is a callback function. Can happen there's not!
+		if(callbackJob != 0)
+			callbackJob->masterEnd();
+
+		// If the callback job has NOT selected to continue (via REPSTART), see if there is any other job willing to start!
+		if(nextAction == STOP) {
+			startNewJob();
+		}
+
+		// Then, confirm your changes by writing to TWINT.
+		// Should no job have taken up the duty of this, a STOP will be sent consequently.
+		fireTWINT();
 	}
-	void slaPrepare() {
+
+	void slaGetJob() {
 	}
-	void slaRWrapup() {
+	void slaWrapup() {
 	}
+
 	void handleError() {
+		PORTB ^= 1<<5;
 		fireTWINT(STOP);
 	}
 
@@ -103,14 +135,17 @@ namespace TWI {
 				// Then let the Jobs prepare a data pointer to be written in to (Register Concept).
 				if(dataLength == 255) {
 					targetReg = TWDR;
-					slaGetCallback();
+					slaGetJob();
 					// Check if there even was any job that configued itself, otherwise NACK.
 					fireTWINT(dataLength == 255 ? NACK : TRANSFER);
 				}
+				// Should the slave have received all data (thusly dataLength = 0), ask the job what to do
+				else if(dataLength == 0) {
+					slaWrapup();
+				}
 
-				// Should the slave have received all data (thusly dataLength = 0), send a NACK
-				// - no furhter data can be received
-				else if(dataLength == 0)
+				// After the job was able to re-set a data pointer, check if there ACTUALLY is new data!
+				if(dataLength == 0)
 					fireTWINT(NACK);
 				// Otherwise, happily feed in the incoming data bytes into the dataPacket pointer
 				else {
@@ -122,16 +157,21 @@ namespace TWI {
 
 			// Once a SLA+R STOP has been received, let the Job do stuff with the received data!
 			case SR_DATA_STOP:
-				slaRWrapup();
-				fireTWINT(TRANSFER);
+				slaWrapup();
+				fireTWINT(STOP);
 			break;
 
 			// As SLA+W, it is assumed a SLA+R was issued beforehand,
 			// configuring the data pointer from which to read (Register Concept)
 			case ST_SLA_ACK:
 			case ST_DATA_ACK:
-				// If all data has been sent but MASTER requests more, answer with a NACK
-				if(dataLength == 0) fireTWINT(NACK);
+				// If all data has been sent but MASTER requests more, check what the job wants to do
+				if(dataLength == 0) {
+					slaWrapup();
+				}
+
+				if(dataLength == 0)
+					fireTWINT(NACK);
 				// Otherwise happily send data bytes from dataPacket
 				else {
 					TWDR = *(dataPacket++);
@@ -157,27 +197,37 @@ namespace TWI {
 		TWCR = (1<< TWEN | 1<< TWIE | 1<< TWEA);
 
 
-		TWBR = 100;
+		TWBR = 10;
 
 		// Enable Pullups
 #if defined (__AVR_ATmega328P__)
-		PORTC |= (0b00110000);
+		PORTC |= (0b11 << PC4);
 #else
-#error No fitting Pull-Ups defined!
+#error No fitting Pull-Ups defined for this MCU yet!
 #endif
 
 		sei();
 	}
 
-	void sendPacketTo(uint8_t addr, uint8_t reg, uint8_t *dataPacket, uint8_t length) {
-		while(TWI::readSR() != TWI::Status::IDLE) {};
+	void setAddr(uint8_t address) {
+		TWAR = address << 1;
+	}
+
+	bool isBusy() {
+		return nextAction != STOP || readSR() != IDLE;
+	}
+
+	void sendPacketTo(uint8_t addr, uint8_t reg, void *dPacket, uint8_t length) {
+		while(nextAction != STOP) {}
 
 		targetAddr = addr;
 		targetReg = reg;
 
+		dataPacket = (uint8_t *)dPacket;
+		dataLength = length;
+
+		fireTWINT(START);
+
 	}
 
-	void setAddr(uint8_t address) {
-		TWAR = address << 1;
-	}
 }
