@@ -1,5 +1,5 @@
 
-#include "TWIFunctions.h"
+#include "TWI.h"
 
 namespace TWI {
 	nextTWIAction nextAction = TRANSFER;
@@ -32,7 +32,18 @@ namespace TWI {
 	}
 
 	Status readSR() {
-		return TWSR & 0b11111000;
+		return (Status)(TWSR & 0b11111000);
+	}
+
+	void masterWrapup() {
+		fireTWINT(STOP);
+	}
+	void slaPrepare() {
+	}
+	void slaRWrapup() {
+	}
+	void handleError() {
+		fireTWINT(STOP);
 	}
 
 	void updateTWI() {
@@ -41,7 +52,7 @@ namespace TWI {
 			// Send the SLA-R/W addr after any (re)start
 			// This assumes a job has configured itself & the address!
 			case REPSTART:
-			case START:
+			case BUSSTART:
 				TWDR = targetAddr;
 				fireTWINT(TRANSFER);
 			break;
@@ -70,7 +81,7 @@ namespace TWI {
 
 			// SLA+R has been received, prepare for transmission!
 			case SR_SLA_ACK:
-				dataLength == 255;
+				dataLength = 255;
 				fireTWINT(TRANSFER);
 			break;
 
@@ -120,7 +131,9 @@ namespace TWI {
 			
 			// When all data is sent, no furhter action is required.
 			// This should however NOT issue the default operation, so it is captured here.
-			case ST_DATA_STOP: break;
+			case ST_DATA_STOP:
+				fireTWINT(STOP);
+			break;
 
 			default:
 				handleError();
@@ -128,14 +141,32 @@ namespace TWI {
 		}
 	}
 
+	void init() {
+		// Activate TWI and Interrupt
+		TWCR = (1<< TWEN | 1<< TWIE | 1<< TWEA);
 
-	void masterWrapup() {
-		fireTWINT(STOP);
+
+		TWBR = 100;
+
+		// Enable Pullups
+#if defined (__AVR_ATmega328P__)
+		PORTC |= (0b00110000);
+#else
+#error No fitting Pull-Ups defined!
+#endif
+
+		sei();
 	}
-	void slaPrepare() {
+
+	void sendPacketTo(uint8_t addr, uint8_t reg, uint8_t *dataPacket, uint8_t length) {
+		while(TWI::readSR() != TWI::Status::IDLE) {};
+
+		targetAddr = addr;
+		targetReg = reg;
+
 	}
-	void slaRWrapup() {
-	}
-	void handleError() {
+
+	void setAddr(uint8_t address) {
+		TWAR = address << 1;
 	}
 }

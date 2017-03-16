@@ -9,7 +9,7 @@
 #define TWCR_ON (1<< TWINT | 1<< TWEA | 1<< TWEN | 1<< TWIE)
 
 namespace TWI {
-	enum nextTWIAction : uin8_t {
+	enum nextTWIAction : uint8_t {
 		TRANSFER,
 		START,
 		STOP,
@@ -21,7 +21,7 @@ namespace TWI {
 	enum Status : uint8_t {
 		IDLE 		= 0b11111000,
 		ERROR		= 0b00000000,
-		START 	= 0b00001000,
+		BUSSTART 	= 0b00001000,
 		REPSTART	= 0b00010000,
 
 		MT_SLA_ACK		= 0b00011000,
@@ -54,7 +54,12 @@ namespace TWI {
 	extern uint8_t dataLength;
 	extern uint8_t *dataPacket;
 
+	Status readSR();
+
 	void updateTWI();
+	void init();
+
+	void sendPacketTo(uint8_t addr, uint8_t reg, uint8_t *dataPacket, uint8_t length);
 }
 
 #endif
