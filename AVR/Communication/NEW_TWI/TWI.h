@@ -6,6 +6,8 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
+#include "Job.h"
+
 #define TWCR_ON (1<< TWINT | 1<< TWEA | 1<< TWEN | 1<< TWIE)
 
 namespace TWI {
@@ -16,7 +18,7 @@ namespace TWI {
 		NACK,
 	};
 
-	extern nextTWIAction nextAction;
+	extern volatile nextTWIAction nextAction;
 
 	enum Status : uint8_t {
 		IDLE 		= 0b11111000,
@@ -59,7 +61,9 @@ namespace TWI {
 	void updateTWI();
 	void init();
 
-	void sendPacketTo(uint8_t addr, uint8_t reg, uint8_t *dataPacket, uint8_t length);
+	bool isBusy();
+
+	void sendPacketTo(uint8_t addr, uint8_t reg, void *dPacket, uint8_t length);
 }
 
 #endif
