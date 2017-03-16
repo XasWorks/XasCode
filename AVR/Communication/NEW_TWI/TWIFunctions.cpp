@@ -4,10 +4,11 @@
 namespace TWI {
 	nextTWIAction nextAction = TRANSFER;
 
-	uint8_t targetAddr = 0;
-	uint8_t dataLength = 0;
+	uint8_t targetAddr 	= 0;
+	uint8_t targetReg		= 0;
+	uint8_t dataLength 	= 0;
 
-	uint8_t *dataPacket = 0;
+	uint8_t *dataPacket 	= 0;
 
 	void fireTWINT(nextTWIAction nAct) {
 		switch(nAct) {
@@ -46,26 +47,37 @@ namespace TWI {
 				fireTWINT(TRANSFER);
 			break;
 
-			// Continually send data bytes from dataPacket while the Slave returns ACK
+			// Send the target register address (Register Concept)
 			case MT_SLA_ACK:
+				TWDR = targetReg;
+				fireTWINT(TRANSFER);
+			break;
+
+			// Continually send data bytes from dataPacket while the Slave returns ACK
 			case MT_DATA_ACK:
-				TWDR = *(dataPacket++);
-				if(--dataLength == 0)
+				if(dataLength == 0)
 					// If there is no data left to be sent, check what the job wants to do next.
 					// This can also include starting a next job via REPSTART!!
 					masterWrapup();
-				else fireTWINT(TRANSFER);
+				else {
+					TWDR = *(dataPacket++);
+					dataLength--;
+					fireTWINT(TRANSFER);
+				}
 			break;
 
 			// Continually read in data bytes from the SLA-R
 			case MR_SLA_ACK:
 			case MR_DATA_ACK:
-				*(dataPacket++) = TWDR;
-				if(--dataLength == 0)
+				if(dataLength == 0)
 					// Once all data has been filled, see what the job wants to do next!
 					// Otherwise, check if there is a next job that gets a REPSTART
 					masterWrapup();
-				else fireTWINT(TRANSFER);
+				else {
+					*(dataPacket++) = TWDR;
+					dataLength--;
+					fireTWINT(TRANSFER);
+				}
 			break;
 
 			// SLA+R has been received, prepare for transmission!
@@ -79,9 +91,8 @@ namespace TWI {
 				// If this is the first data byte (no Job configured), set targetAddr to the first data byte
 				// Then let the Jobs prepare a data pointer to be written in to (Register Concept).
 				if(dataLength == 255) {
-					targetAddr = TWDR;
-
-					slaPrepare();
+					targetReg = TWDR;
+					slaGetCallback();
 					// Check if there even was any job that configued itself, otherwise NACK.
 					fireTWINT(dataLength == 255 ? NACK : TRANSFER);
 				}
@@ -117,7 +128,7 @@ namespace TWI {
 					fireTWINT(TRANSFER);
 				}
 			break;
-			
+
 			// When all data is sent, no furhter action is required.
 			// This should however NOT issue the default operation, so it is captured here.
 			case ST_DATA_STOP: break;
@@ -136,6 +147,7 @@ namespace TWI {
 	}
 	void slaRWrapup() {
 	}
+
 	void handleError() {
 	}
 }
