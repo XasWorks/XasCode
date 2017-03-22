@@ -37,7 +37,7 @@ int main() {
 	mIO.DDRS &= ~1;
 
 	while(1) {
-		_delay_ms(100);
+		_delay_ms(1);
 		updatePINEX();
 
 	   if((mIO.PINS & 0b10) != 0)

@@ -71,11 +71,13 @@ bool MCP_IOEXP::masterPrepare() {
 	return true;
 }
 
-void MCP_IOEXP::masterEnd() {
+bool MCP_IOEXP::masterEnd() {
 	if(TWI::targetReg == MCP_Next::PINS)
 		cData |= 1;
 	if(TWI::targetReg == MCP_Next::GPPU)
 		cData |= 0b10;
+
+	return false;
 }
 
 void MCP_IOEXP::update() {

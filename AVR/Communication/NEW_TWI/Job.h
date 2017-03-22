@@ -26,7 +26,7 @@ public:
 	virtual bool masterPrepare();
 	virtual bool slavePrepare();
 
-	virtual void masterEnd();
+	virtual bool masterEnd();
 	virtual void slaveEnd();
 
 	virtual void error();

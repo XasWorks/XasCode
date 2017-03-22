@@ -2,14 +2,6 @@
 #include "TWI.h"
 #include <util/delay.h>
 
-#define TWSTATLED_OFF 	PORTD &= ~(0b11<< 6)
-#define TWSTATLED_(N) TWSTATLED_OFF; PORTD |= N<<6
-
-#define TWSTATLED_ERROR	TWSTATLED_OFF; PORTD |= 1<<7
-
-#define TWIMODELED_OFF 	PORTD &= ~(0b1111<<2)
-#define TWIMODELED(N)	TWIMODELED_OFF; PORTD |= (N << 2);
-
 namespace TWI {
 	volatile nextTWIAction nextAction = STOP;
 
@@ -23,33 +15,18 @@ namespace TWI {
 
 	volatile TWIModeEnum currentMode = MODE_IDLE;
 
-	void varClear() {
-		callbackJob = 0;
-		targetAddr = 0;
-		dataLength = 0;
-		dataPacket = 0;
-
-		currentMode = MODE_IDLE;
-		TWCR = (1<< TWEN | 1<< TWIE | 1<< TWEA);
-	}
-
 	void fireTWINT(nextTWIAction nAct) {
-		nextAction = nAct;
-
 		switch(nAct) {
 		case TRANSFER:
-			TWSTATLED_(3);
 			TWCR = TWCR_ON;
 		break;
-		case START:
-			TWSTATLED_(1);
 
+		case START:
 			TWCR = (TWCR_ON | 1<< TWSTA);
 		break;
-		case STOP:
-			TWSTATLED_(2);
 
-			varClear();
+		case STOP:
+			currentMode = MODE_IDLE;
 			TWCR = (TWCR_ON | 1<< TWSTO);
 		break;
 
@@ -59,9 +36,6 @@ namespace TWI {
 		}
 
 		TWCR |= (1<< TWINT);
-	}
-	void fireTWINT() {
-		fireTWINT(nextAction);
 	}
 
 	Status readSR() {
@@ -73,45 +47,32 @@ namespace TWI {
 
 		while(jobNode != 0) {
 			if(jobNode->masterPrepare()) {
-				TWIMODELED(9);
 
 				callbackJob = jobNode;
-
 				currentMode = MODE_STARTING;
-
-				nextAction = START;
 				return true;
 			}
 			jobNode = jobNode->getNextJob();
 		}
 
-		TWIMODELED(8);
 		return false;
 	}
 
 	void masterWrapup() {
-		TWIMODELED(7);
-
-		// First ensure the next action is stop
-		nextAction = STOP;
 		// Check if there is a callback function. Can happen there's not!
-		if(callbackJob != 0) {
-			callbackJob->masterEnd();
-		}
+		if(callbackJob != 0)
+			if(callbackJob->masterEnd()) {
+				fireTWINT(START);
+				return;
+			}
 
+		callbackJob = 0;
 		// If the callback job has NOT selected to continue (via REPSTART), see if there is any other job willing to start!
-		if(nextAction == START) {
-			currentMode = MODE_STARTING;
-		}
-		else if(nextAction == STOP) {
-			callbackJob = 0;
-			startNewJob();
-		}
 
-		// Then, confirm your changes by writing to TWINT.
-		// Should no job have taken up the duty of this, a STOP will be sent consequently.
-
-		fireTWINT(STOP);
+		if(startNewJob())
+			fireTWINT(START);
+		else
+			fireTWINT(STOP);
 	}
 
 	void slaGetJob() {
@@ -124,16 +85,12 @@ namespace TWI {
 	}
 
 	void updateTWI() {
-		TWIMODELED(15);
-
 		// Switch to the main couple of TWI-Codes that can occur
 		switch(readSR()) {
 			// Send the SLA-R/W addr after any (re)start
 			// This assumes a job has configured itself & the address!
 			case REPSTART:
 			case BUSSTART:
-				TWIMODELED(1);
-
 				if((targetAddr & 1) == 0) {
 					TWDR = targetAddr;
 					currentMode = MODE_MT;
@@ -152,8 +109,6 @@ namespace TWI {
 
 			// Send the target register address (Register Concept)
 			case MT_SLA_ACK:
-				TWIMODELED(2);
-
 				TWDR = targetReg;
 				fireTWINT(TRANSFER);
 
@@ -162,8 +117,6 @@ namespace TWI {
 			// Continually send data bytes from dataPacket while the Slave returns ACK
 			case MT_DATA_ACK:
 				if(currentMode == MODE_MR_REG) {
-					TWIMODELED(4);
-
 					currentMode = MODE_MR_RECEIVE;
 					fireTWINT(START);
 				}
@@ -172,8 +125,6 @@ namespace TWI {
 					// This can also include starting a next job via REPSTART!!
 					masterWrapup();
 				else {
-					TWIMODELED(3);
-
 					TWDR = *(dataPacket++);
 					dataLength--;
 					fireTWINT(TRANSFER);
@@ -185,18 +136,10 @@ namespace TWI {
 				*(dataPacket++) = TWDR;
 				dataLength--;
 			case MR_SLA_ACK:
-				TWIMODELED(5);
-
-				fireTWINT(TRANSFER);
-
-				if(dataLength == 1) {
-					// Once all data has been filled, see what the job wants to do next!
-					// Otherwise, check if there is a next job that gets a REPSTART
+				if(dataLength == 1)
 					fireTWINT(NACK);
-				}
-				else {
+				else
 					fireTWINT(TRANSFER);
-				}
 			break;
 
 			case MR_DATA_NACK:
@@ -260,10 +203,15 @@ namespace TWI {
 				}
 			break;
 
+			case ST_DATA_NACK:
+				TWDR = 0;
+				fireTWINT(TRANSFER);
+			break;
+
 			// When all data is sent, no furhter action is required.
 			// This should however NOT issue the default operation, so it is captured here.
 			case ST_DATA_STOP:
-				fireTWINT(STOP);
+				fireTWINT(TRANSFER);
 			break;
 
 			default:

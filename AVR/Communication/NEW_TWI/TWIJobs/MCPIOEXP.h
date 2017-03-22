@@ -41,7 +41,7 @@ public:
 	MCP_IOEXP(uint8_t addr);
 
 	bool masterPrepare();
-	void masterEnd();
+	bool masterEnd();
 
 	void update();
 };

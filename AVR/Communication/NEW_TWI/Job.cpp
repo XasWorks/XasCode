@@ -30,7 +30,9 @@ bool Job::slavePrepare() {
 	return false;
 }
 
-void Job::masterEnd() {}
+bool Job::masterEnd() {
+	return false;
+}
 void Job::slaveEnd()  {}
 
 void Job::error() 	  {}
