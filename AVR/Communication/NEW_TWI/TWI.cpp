@@ -204,7 +204,7 @@ namespace TWI {
 			break;
 
 			case ST_DATA_NACK:
-				TWDR = 0;
+				TWDR = 0xff;
 				fireTWINT(TRANSFER);
 			break;
 
