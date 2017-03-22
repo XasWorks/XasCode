@@ -1,5 +1,14 @@
 
 #include "TWI.h"
+#include <util/delay.h>
+
+#define TWSTATLED_OFF 	PORTD &= ~(0b11<< 6)
+#define TWSTATLED_(N) TWSTATLED_OFF; PORTD |= N<<6
+
+#define TWSTATLED_ERROR	TWSTATLED_OFF; PORTD |= 1<<7
+
+#define TWIMODELED_OFF 	PORTD &= ~(0b1111<<2)
+#define TWIMODELED(N)	TWIMODELED_OFF; PORTD |= (N << 2);
 
 namespace TWI {
 	volatile nextTWIAction nextAction = STOP;
@@ -12,25 +21,44 @@ namespace TWI {
 
 	uint8_t *dataPacket = 0;
 
+	volatile TWIModeEnum currentMode = MODE_IDLE;
+
+	void varClear() {
+		callbackJob = 0;
+		targetAddr = 0;
+		dataLength = 0;
+		dataPacket = 0;
+
+		currentMode = MODE_IDLE;
+		TWCR = (1<< TWEN | 1<< TWIE | 1<< TWEA);
+	}
+
 	void fireTWINT(nextTWIAction nAct) {
 		nextAction = nAct;
 
 		switch(nAct) {
 		case TRANSFER:
+			TWSTATLED_(3);
 			TWCR = TWCR_ON;
 		break;
 		case START:
+			TWSTATLED_(1);
+
 			TWCR = (TWCR_ON | 1<< TWSTA);
 		break;
 		case STOP:
+			TWSTATLED_(2);
+
+			varClear();
 			TWCR = (TWCR_ON | 1<< TWSTO);
 		break;
 
 		case NACK:
 			TWCR = (1<< TWINT | 1<< TWEN | 1<< TWIE);
-			TWCR = TWCR_ON;
 		break;
 		}
+
+		TWCR |= (1<< TWINT);
 	}
 	void fireTWINT() {
 		fireTWINT(nextAction);
@@ -42,31 +70,48 @@ namespace TWI {
 
 	bool startNewJob() {
 		Job * jobNode = Job::getHeadJob();
+
 		while(jobNode != 0) {
 			if(jobNode->masterPrepare()) {
+				TWIMODELED(9);
+
+				callbackJob = jobNode;
+
+				currentMode = MODE_STARTING;
+
 				nextAction = START;
 				return true;
 			}
+			jobNode = jobNode->getNextJob();
 		}
 
+		TWIMODELED(8);
 		return false;
 	}
 
 	void masterWrapup() {
+		TWIMODELED(7);
+
 		// First ensure the next action is stop
 		nextAction = STOP;
 		// Check if there is a callback function. Can happen there's not!
-		if(callbackJob != 0)
+		if(callbackJob != 0) {
 			callbackJob->masterEnd();
+		}
 
 		// If the callback job has NOT selected to continue (via REPSTART), see if there is any other job willing to start!
-		if(nextAction == STOP) {
+		if(nextAction == START) {
+			currentMode = MODE_STARTING;
+		}
+		else if(nextAction == STOP) {
+			callbackJob = 0;
 			startNewJob();
 		}
 
 		// Then, confirm your changes by writing to TWINT.
 		// Should no job have taken up the duty of this, a STOP will be sent consequently.
-		fireTWINT();
+
+		fireTWINT(STOP);
 	}
 
 	void slaGetJob() {
@@ -75,34 +120,60 @@ namespace TWI {
 	}
 
 	void handleError() {
-		PORTB ^= 1<<5;
 		fireTWINT(STOP);
 	}
 
 	void updateTWI() {
-		// Switch to the main couple of TWI-Codes that can occour
+		TWIMODELED(15);
+
+		// Switch to the main couple of TWI-Codes that can occur
 		switch(readSR()) {
 			// Send the SLA-R/W addr after any (re)start
 			// This assumes a job has configured itself & the address!
 			case REPSTART:
 			case BUSSTART:
-				TWDR = targetAddr;
+				TWIMODELED(1);
+
+				if((targetAddr & 1) == 0) {
+					TWDR = targetAddr;
+					currentMode = MODE_MT;
+				}
+				else {
+					if(currentMode == MODE_MR_RECEIVE)
+						TWDR = targetAddr;
+					else {
+						TWDR = targetAddr & 0b11111110;
+						currentMode = MODE_MR_REG;
+					}
+				}
+
 				fireTWINT(TRANSFER);
 			break;
 
 			// Send the target register address (Register Concept)
 			case MT_SLA_ACK:
+				TWIMODELED(2);
+
 				TWDR = targetReg;
 				fireTWINT(TRANSFER);
+
 			break;
 
 			// Continually send data bytes from dataPacket while the Slave returns ACK
 			case MT_DATA_ACK:
-				if(dataLength == 0)
+				if(currentMode == MODE_MR_REG) {
+					TWIMODELED(4);
+
+					currentMode = MODE_MR_RECEIVE;
+					fireTWINT(START);
+				}
+				else if(dataLength == 0)
 					// If there is no data left to be sent, check what the job wants to do next.
 					// This can also include starting a next job via REPSTART!!
 					masterWrapup();
 				else {
+					TWIMODELED(3);
+
 					TWDR = *(dataPacket++);
 					dataLength--;
 					fireTWINT(TRANSFER);
@@ -110,17 +181,26 @@ namespace TWI {
 			break;
 
 			// Continually read in data bytes from the SLA-R
-			case MR_SLA_ACK:
 			case MR_DATA_ACK:
-				if(dataLength == 0)
+				*(dataPacket++) = TWDR;
+				dataLength--;
+			case MR_SLA_ACK:
+				TWIMODELED(5);
+
+				fireTWINT(TRANSFER);
+
+				if(dataLength == 1) {
 					// Once all data has been filled, see what the job wants to do next!
 					// Otherwise, check if there is a next job that gets a REPSTART
-					masterWrapup();
+					fireTWINT(NACK);
+				}
 				else {
-					*(dataPacket++) = TWDR;
-					dataLength--;
 					fireTWINT(TRANSFER);
 				}
+			break;
+
+			case MR_DATA_NACK:
+				masterWrapup();
 			break;
 
 			// SLA+R has been received, prepare for transmission!
@@ -213,21 +293,16 @@ namespace TWI {
 		TWAR = address << 1;
 	}
 
-	bool isBusy() {
-		return nextAction != STOP || readSR() != IDLE;
+	bool isActive() {
+		return currentMode != MODE_IDLE;
 	}
 
-	void sendPacketTo(uint8_t addr, uint8_t reg, void *dPacket, uint8_t length) {
-		while(nextAction != STOP) {}
+	void checkMasterJobs() {
+		if(isActive())
+			return;
 
-		targetAddr = addr;
-		targetReg = reg;
-
-		dataPacket = (uint8_t *)dPacket;
-		dataLength = length;
-
-		fireTWINT(START);
-
+		if(startNewJob())
+			fireTWINT(START);
 	}
 
 }

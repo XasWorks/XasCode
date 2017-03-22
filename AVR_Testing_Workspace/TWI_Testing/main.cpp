@@ -10,14 +10,17 @@
 #include <avr/io.h>
 #include <util/delay.h>
 
-uint16_t PINEXPAND = 0;
+#include "AVR/Communication/NEW_TWI/TWIJobs/MCPIOEXP.h"
+
+TWI::MCP_IOEXP mIO = TWI::MCP_IOEXP(0b01000000);
 
 ISR(TWI_vect) {
 	TWI::updateTWI();
 }
 
 void updatePINEX() {
-	TWI::sendPacketTo(0b01000000, 0x12, &PINEXPAND, 1);
+	mIO.update();
+	TWI::checkMasterJobs();
 }
 
 int main() {
@@ -25,17 +28,22 @@ int main() {
 
 	DDRB |= 1<<5;
 
-	PINEXPAND = 0;
-	TWI::sendPacketTo(0b01000000, 0x00, &PINEXPAND, 2);
+	DDRD |= 0b11111100;
+
+	updatePINEX();
+	_delay_ms(3);
+	updatePINEX();
+
+	mIO.DDRS &= ~1;
 
 	while(1) {
-		_delay_ms(1000);
-
+		_delay_ms(100);
 		updatePINEX();
-		PINEXPAND = 1;
 
-		updatePINEX();
-		PINEXPAND = 0;
+	   if((mIO.PINS & 0b10) != 0)
+			mIO.PORTS = 0b11;
+	   else
+		   mIO.PORTS = 0b10;
 	}
 
 	return 0;

@@ -23,4 +23,17 @@ Job * Job::getNextJob() {
 	return this->nextJob;
 }
 
+bool Job::masterPrepare() {
+	return false;
+}
+bool Job::slavePrepare() {
+	return false;
+}
+
+void Job::masterEnd() {}
+void Job::slaveEnd()  {}
+
+void Job::error() 	  {}
+
+
 } /* namespace TWI */

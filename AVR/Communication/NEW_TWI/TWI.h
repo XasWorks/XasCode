@@ -8,7 +8,7 @@
 
 #include "Job.h"
 
-#define TWCR_ON (1<< TWINT | 1<< TWEA | 1<< TWEN | 1<< TWIE)
+#define TWCR_ON (1<< TWEA | 1<< TWEN | 1<< TWIE)
 
 namespace TWI {
 	enum nextTWIAction : uint8_t {
@@ -16,6 +16,14 @@ namespace TWI {
 		START,
 		STOP,
 		NACK,
+	};
+
+	enum TWIModeEnum : uint8_t {
+		MODE_IDLE,			// Be idle (after a STOP)
+		MODE_STARTING,		// A job is about to start!
+		MODE_MT,			// "Addr" was a SLA+W, go into MT mode.
+		MODE_MR_REG,		// "Addr" was a SLA+R, but we still need to write the register! (via MT)
+		MODE_MR_RECEIVE,	// The Register has been sent, receive data after sending a SLA+R
 	};
 
 	extern volatile nextTWIAction nextAction;
@@ -52,6 +60,7 @@ namespace TWI {
 	};
 
 	extern uint8_t targetAddr;
+	extern uint8_t targetReg;
 
 	extern uint8_t dataLength;
 	extern uint8_t *dataPacket;
@@ -61,7 +70,9 @@ namespace TWI {
 	void updateTWI();
 	void init();
 
-	bool isBusy();
+	bool isActive();
+
+	void checkMasterJobs();
 
 	void sendPacketTo(uint8_t addr, uint8_t reg, void *dPacket, uint8_t length);
 }
