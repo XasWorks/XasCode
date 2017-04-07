@@ -9,6 +9,7 @@
 #define AVR_COMMUNICATION_NEW_TWI_JOB_H_
 
 #include <avr/io.h>
+#include "TWI.h"
 
 namespace TWI {
 

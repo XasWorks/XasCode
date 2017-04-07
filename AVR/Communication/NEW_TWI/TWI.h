@@ -54,21 +54,22 @@ namespace TWI {
 		SR_DATA_NACK	= 0b10001000,
 		SR_DATA_STOP	= 0b10100000,
 
-		SR_GC_ACK			= 0b01110000,
-		SR_GC_DATA_ACK		= 0b10010000,
+		SR_GC_ACK		= 0b01110000,
+		SR_GC_DATA_ACK	= 0b10010000,
 		SR_GC_DATA_NACK	= 0b10011000,
 	};
 
-	extern uint8_t targetAddr;
-	extern uint8_t targetReg;
+	extern volatile uint8_t targetAddr;
+	extern volatile uint8_t targetReg;
 
-	extern uint8_t dataLength;
-	extern uint8_t *dataPacket;
+	extern volatile uint8_t dataLength;
+	extern uint8_t * volatile dataPacket;
 
 	Status readSR();
 
 	void updateTWI();
 	void init();
+	void setAddr(uint8_t address);
 
 	bool isActive();
 
