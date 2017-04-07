@@ -6,6 +6,7 @@
  */
 
 #include "ADC_Lib.h"
+#include <util/delay.h>
 
 namespace ADC_Lib {
 	volatile uint8_t toMeasurePins = 0;
@@ -44,6 +45,8 @@ namespace ADC_Lib {
 	}
 
 	void start_measurement(uint8_t pin) {
+		toMeasurePins |= (1<<pin);
+
 		if(status == ADC_IDLE) {
 			ADMUX &= ~(0b11111);
 			ADMUX |= (pin & 0b11111);
@@ -52,14 +55,12 @@ namespace ADC_Lib {
 
 			status = ADC_RUNNING;
 		}
-		else if(status == ADC_RUNNING) {
-			toMeasurePins |= (1<<pin);
-		}
 	}
 
 	uint16_t measure(uint8_t pin) {
 		start_measurement(pin);
-		while(measuredPin != pin) {}
+
+		while((toMeasurePins & 1<<pin) != 0) {}
 
 		return lastResult;
 	}
