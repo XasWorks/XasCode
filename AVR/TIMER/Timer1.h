@@ -22,7 +22,8 @@
 #define TIMER1_PRESC_256	0b100
 #define TIMER1_PRESC_1024	0b101
 
-#define TIMER1_MODE_CTC 0
+#define TIMER1_MODE_CTC 	0
+#define TIMER1_MODE_FPWM	1
 
 namespace Timer1 {
 	void set_prescaler(uint8_t prescValue);
