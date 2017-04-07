@@ -20,8 +20,10 @@ namespace Timer0 {
 
 	void set_mode(uint8_t mode) {
 		switch(mode) {
+		case TIMER0_MODE_CTC:
+			TIMSK0 |= (1<< OCIE0A);
 		case TIMER0_MODE_FREQ:
-			TCCR0A = (1<< WGM01);
+			TCCR0A |= (1<< WGM01);
 		}
 	}
 
