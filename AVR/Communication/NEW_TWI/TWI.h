@@ -25,9 +25,7 @@ namespace TWI {
 		MODE_MR_REG,		// "Addr" was a SLA+R, but we still need to write the register! (via MT)
 		MODE_MR_RECEIVE,	// The Register has been sent, receive data after sending a SLA+R
 	};
-
-	extern volatile nextTWIAction nextAction;
-
+	
 	enum Status : uint8_t {
 		IDLE 		= 0b11111000,
 		ERROR		= 0b00000000,

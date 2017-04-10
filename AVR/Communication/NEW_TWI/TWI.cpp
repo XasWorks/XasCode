@@ -3,8 +3,6 @@
 #include <util/delay.h>
 
 namespace TWI {
-	volatile nextTWIAction nextAction = STOP;
-
 	Job * callbackJob = 0;
 
 	volatile uint8_t targetAddr 	= 0;
