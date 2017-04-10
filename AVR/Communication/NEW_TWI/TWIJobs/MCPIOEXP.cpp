@@ -9,7 +9,7 @@
 
 namespace TWI {
 
-uint8_t gpREG = 0xffff;
+uint8_t gpREG = 0xff;
 
 MCP_IOEXP::MCP_IOEXP(uint8_t addr) : address(addr) {
 
@@ -34,8 +34,6 @@ void MCP_IOEXP::loadNextAction() {
 	TWI::targetAddr	= this->address;
 	TWI::targetReg 	= (uint8_t)this->nextAction();
 	TWI::dataLength	= 2;
-
-	TWI::nextAction = START;
 
 	switch(this->nextAction()) {
 	case MCP_Next::PORTS:
