@@ -29,21 +29,37 @@ void Movable::setRotationSpeed(float speed) {
 void Movable::setSpeed(float speed) {
 	this->mSpeed = clamp(speed, SANE_MSPEED_MAX)/(float)updateFrequency;
 }
+void Movable::setSpeeds(float mSpeed, float rSpeed) {
+	this->setRotationSpeed(rSpeed);
+	this->setSpeed(mSpeed);
+}
 
 void Movable::rotateBy(float angle) {
 	this->mode = relative;
-	this->rAngle += angle;
+	this->rAngle = angle;
+}
+void Movable::rotateF(float angle) {
+	this->rotateBy(angle);
+	this->flush();
 }
 
 void Movable::moveBy(float distance) {
 	this->mode = relative;
-	this->mDistance += distance;
+	this->mDistance = distance;
+}
+void Movable::moveF(float distance) {
+	this->moveBy(distance);
+	this->flush();
 }
 
 void Movable::continuousMode() {
 	this->mode = continuous;
 	this->mDistance = 0;
 	this->rAngle = 0;
+}
+void Movable::continuousMode(float mSpeed, float rSpeed) {
+	this->setSpeeds(mSpeed, rSpeed);
+	this->continuousMode();
 }
 
 bool Movable::atPosition() {
@@ -60,6 +76,11 @@ void Movable::flush() {
 	while(!this->isReady()) {
 		_delay_ms(1);
 	}
+}
+void Movable::cancel() {
+	this->mDistance = 0;
+	this->rAngle = 0;
+	this->mode = relative;
 }
 
 void Movable::update() {

@@ -46,19 +46,27 @@ public:
 	virtual void setRotationSpeed(float speed);
 	// Set movement speed in mm / second
 	virtual void setSpeed(float speed);
+	// Set both speeds at once
+	void setSpeeds(float mSpeed, float rSpeed);
 
 	// Rotate by a specific amount of degrees
 	virtual void rotateBy(float angle);
+	void rotateF(float angle);
 	// Move the robot forwards by the specified mm
 	virtual void moveBy(float distance);
+	void moveF(float distance);
 
 	// Set the robot into constant rotation/movement mode
 	// This is done by setting the "mode" enum to "continuous"
 	// This also makes the system automatically halt once it receives a "normal" movement command
 	virtual void continuousMode();
+	void continuousMode(float mSpeed, float rSpeed);
 
 	// Waits for all moves to complete (will not wait for continuous movements to finish!)
 	virtual void flush();
+
+	// Cancels all movements and stops the robot
+	virtual void cancel();
 
 	// Returns true if the robot has finished all non-continuous moves
 	virtual bool isReady();
