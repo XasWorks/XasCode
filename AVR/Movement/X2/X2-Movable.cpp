@@ -23,11 +23,11 @@ Movable::Movable(uint16_t updateFrequency) : updateFrequency(updateFrequency) {
 
 // Set the rotation speed
 void Movable::setRotationSpeed(float speed) {
-	this->rSpeed = clamp(speed, SANE_RSPEED_MAX)/updateFrequency;
+	this->rSpeed = clamp(speed, SANE_RSPEED_MAX)/(float)updateFrequency;
 }
 // Set the movement speed
 void Movable::setSpeed(float speed) {
-	this->mSpeed = clamp(speed, SANE_MSPEED_MAX)/updateFrequency;
+	this->mSpeed = clamp(speed, SANE_MSPEED_MAX)/(float)updateFrequency;
 }
 
 void Movable::rotateBy(float angle) {
