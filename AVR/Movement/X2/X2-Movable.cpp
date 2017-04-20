@@ -97,10 +97,14 @@ void Movable::update() {
 		rAngle -= rThisCal;
 
 		Actuator::ISRStepAllBy(xThisCal, rThisCal);
+		movedDistance += xThisCal;
+		movedRotation += rThisCal;
 		break;
 
 		case continuous:
 		Actuator::ISRStepAllBy(mSpeed, rSpeed);
+		movedDistance += mSpeed;
+		movedRotation += rSpeed;
 		break;
 	}
 }

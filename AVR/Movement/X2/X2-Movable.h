@@ -39,6 +39,9 @@ protected:
 		MovementMode mode = relative;
 
 public:
+	float movedDistance = 0;
+	float movedRotation = 0;
+
 	// Standard constructor, taking in only the ISR frequency
 	Movable(uint16_t updateFrequency);
 
