@@ -239,10 +239,10 @@ namespace TWI {
 		// Enable Pullups
 #if defined (__AVR_ATmega328P__)
 		PORTC |= (0b11 << PC4);
-#elif defined (__AVR_ATmega32__)
+#elif defined (__AVR_ATmega32__) || defined (__AVR_ATmega644P__)
 		PORTC |= (0b11 << PC0);
 #else
-#error No fitting Pull-Ups defined for this MCU yet!
+#warning No fitting Pull-Ups defined for this MCU yet!
 #endif
 
 		sei();
