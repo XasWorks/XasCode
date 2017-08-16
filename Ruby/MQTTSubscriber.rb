@@ -39,6 +39,7 @@ class MQTTSubs
 		end
 		@callbackList << {
 			topic: 	MQTTSubs.getTopicSplit(topic),
+			topicString: topic,
 			cb:		callback,
 		}
 	end
@@ -53,19 +54,30 @@ class MQTTSubs
 	def publishTo(topic, data, qos: 0, retain: false)
 		begin
 			@mqtt.publish(topic, data, retain);
-		rescue MQTT::Error
+		rescue MQTT::Exception
+			@publishQueue << {topic: topic, data: data, qos: qos, retain: retain} if qos > 0;
 		end
 	end
 
 	def lockAndListen()
 		while(true)
 			begin
-				topic, message = @mqtt.get
-			rescue MQTT::Error
+				@mqtt.connect() do |c|
+					@callbackList.each do |h|
+						c.subscribe(h[:topicString]);
+					end
+					until @publishQueue.empty? do
+						h = @publishQueue.pop
+						c.publish(h[:topic], h[:data], h[:retain]);
+					end
+					@mqtt.get do |topic, message|
+						callInterested(topic, message);
+					end
+				end
+			rescue MQTT::Exception
+				@mqtt.clean_session=false;
 				sleep 1
 			end
-
-			callInterested(topic, message);
 		end
 	end
 
@@ -73,10 +85,22 @@ class MQTTSubs
 		@callbackList = Array.new();
 		@mqtt = mqttClient;
 
+		@mqtt.client_id = MQTT::Client.generate_client_id("MQTT_Sub_", length = 5) unless @mqtt.client_id;
+		begin
+			@mqtt.clean_session=true;
+			@mqtt.connect();
+			@mqtt.disconnect();
+			@mqtt.clean_session=false;
+		rescue MQTT::Exception
+		end
+
+		@publishQueue = Array.new();
+
 		if autoListen then
-			Thread.new do
+			@listenerThread = Thread.new do
 				lockAndListen
 			end
+			@listenerThread.abort_on_exception = true;
 		end
 	end
 end
