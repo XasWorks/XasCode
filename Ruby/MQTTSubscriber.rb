@@ -1,5 +1,6 @@
 
 require 'mqtt'
+require 'timeout'
 
 class MQTTSubs
 
@@ -33,13 +34,16 @@ class MQTTSubs
 	end
 
 	def subscribeTo(topic, qos = 0, &callback)
-		begin
-			@mqtt.subscribe(topic);
-		rescue MQTT::Exception
+		unless @subscribedTopics[topic] then
+			begin
+				@mqtt.subscribe(topic);
+				@subscribedTopics[topic] = true;
+			rescue MQTT::Exception
+				@subscribeQueue << topic;
+			end
 		end
 		@callbackList << {
 			topic: 	MQTTSubs.getTopicSplit(topic),
-			topicString: topic,
 			cb:		callback,
 		}
 	end
@@ -62,21 +66,28 @@ class MQTTSubs
 	def lockAndListen()
 		while(true)
 			begin
-				@mqtt.connect() do |c|
-					@callbackList.each do |h|
-						c.subscribe(h[:topicString]);
-					end
-					until @publishQueue.empty? do
-						h = @publishQueue.pop
-						c.publish(h[:topic], h[:data], h[:retain]);
-					end
-					@mqtt.get do |topic, message|
-						callInterested(topic, message);
-					end
+				Timeout::timeout(10) {
+					@mqtt.connect()
+				}
+				until @subscribeQueue.empty? do
+					h = @subscribeQueue[-1];
+					c.subscribe(h);
+					@subscribedTopics[h] = true;
+					@subscribeQueue.pop;
+					sleep 0.05
 				end
-			rescue MQTT::Exception
+				until @publishQueue.empty? do
+					h = @publishQueue[-1];
+					c.publish(h[:topic], h[:data], h[:retain]);
+					@publishQueue.pop;
+					sleep 0.05
+				end
+				@mqtt.get do |topic, message|
+					callInterested(topic, message);
+				end
+			rescue MQTT::Exception, Timeout::Error
 				@mqtt.clean_session=false;
-				sleep 1
+				sleep 5
 			end
 		end
 	end
@@ -86,15 +97,15 @@ class MQTTSubs
 		@mqtt = mqttClient;
 
 		@mqtt.client_id = MQTT::Client.generate_client_id("MQTT_Sub_", length = 5) unless @mqtt.client_id;
-		begin
-			@mqtt.clean_session=true;
-			@mqtt.connect();
-			@mqtt.disconnect();
-			@mqtt.clean_session=false;
-		rescue MQTT::Exception
-		end
+
+		@mqtt.clean_session=true;
+		@mqtt.connect();
+		@mqtt.disconnect();
+		@mqtt.clean_session=false;
 
 		@publishQueue = Array.new();
+		@subscribeQueue 	= Array.new();
+		@subscribedTopics = Hash.new();
 
 		if autoListen then
 			@listenerThread = Thread.new do
