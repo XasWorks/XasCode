@@ -71,14 +71,14 @@ class MQTTSubs
 				}
 				until @subscribeQueue.empty? do
 					h = @subscribeQueue[-1];
-					c.subscribe(h);
+					@mqtt.subscribe(h);
 					@subscribedTopics[h] = true;
 					@subscribeQueue.pop;
 					sleep 0.05
 				end
 				until @publishQueue.empty? do
 					h = @publishQueue[-1];
-					c.publish(h[:topic], h[:data], h[:retain]);
+					@mqtt.publish(h[:topic], h[:data], h[:retain]);
 					@publishQueue.pop;
 					sleep 0.05
 				end
