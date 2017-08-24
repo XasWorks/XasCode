@@ -69,10 +69,12 @@ class Color
 		new([(rgb[0]+m) * 255, (rgb[1]+m) * 255, (rgb[2]+m) * 255])
 	end
 
-	def initialize(values)
-		@rgb = values;
-
+	def initialize(rgb)
+		print "Initializing ..."
+		@rgb = rgb;
 		@scaling = 1;
+	
+		print "Fully initialized! Color: #{@rgb} Scaling: #{@scaling}\n";
 	end
 
 	def rgb()
@@ -84,8 +86,9 @@ class Color
 		return oArray;
 	end
 
-	def get_brightness(value)
-		return @rgb.max * @scaling;
+	def get_brightness()
+		print "Attempting to calculate brightness ... Current color: #{@rgb} Scaling: #{@scaling}";
+		return @rgb.max() * @scaling;
 	end
 
 	def set_brightness(value)
