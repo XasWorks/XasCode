@@ -36,6 +36,13 @@ class Color
 		self.new([r*brightness, g*brightness, b*brightness]);
 	end
 
+	def self.daylight(brightness = 1, time = nil)
+		time ||= Time.now();
+
+		m = (time.min() + time.hour()*60) / 1440.0;
+		self.temperature(8500 + 4500*Math.sin(2*Math::PI*(m - 1/4)), brightness);
+	end
+
 	def self.from_s(s)
 		cArray = Array.new();
 		3.times do |i|
