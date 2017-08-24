@@ -79,6 +79,14 @@ class Color
 		return oArray;
 	end
 
+	def black?
+		return @rgb.min == 0;
+	end
+
+	def white?
+		return ((not black?) and (@rgb.min == @rgb.max))
+	end
+
 	def get_brightness()
 		return @rgb.max() * @scaling;
 	end
