@@ -1,8 +1,6 @@
 
 
 class Color
-	attr_reader :k
-
 	def self.RGB(r, g, b)
 		self.new([r, g, b]);
 	end
@@ -68,11 +66,8 @@ class Color
 	end
 
 	def initialize(rgb)
-		print "Initializing ..."
-		@rgb = rgb;
 		@scaling = 1;
-	
-		print "Fully initialized! Color: #{@rgb} Scaling: #{@scaling}\n";
+		@rgb = rgb;
 	end
 
 	def rgb()
@@ -85,7 +80,6 @@ class Color
 	end
 
 	def get_brightness()
-		print "Attempting to calculate brightness ... Current color: #{@rgb} Scaling: #{@scaling}";
 		return @rgb.max() * @scaling;
 	end
 
@@ -93,9 +87,9 @@ class Color
 		value = [0, value].max;
 		value = [255, value].min;
 
-		@scaling = value/@rgb.max;
+		@scaling = value.to_f/@rgb.max();
 
-		rgb();
+		self
 	end
 
 	def to_s
