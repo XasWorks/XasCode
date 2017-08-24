@@ -4,12 +4,10 @@ class Color
 	attr_reader :k
 
 	def self.RGB(r, g, b)
-		new([r, g, b]);
+		self.new([r, g, b]);
 	end
 
 	def self.temperature(c, brightness = 1)
-		@k = c;
-
 		c /= 100;
 		if c <= 66 then
 			r = 255;
@@ -37,7 +35,7 @@ class Color
 		b = 0 if b < 0;
 		b = 255 if b > 255;
 
-		new([r*brightness, g*brightness, b*brightness]);
+		self.new([r*brightness, g*brightness, b*brightness]);
 	end
 
 	def self.from_s(s)
@@ -46,7 +44,7 @@ class Color
 			cArray << s[(1+2*i)..(2+2*i)].to_i(16);
 		end
 
-		new(cArray);
+		self.new(cArray);
 	end
 
 	def self.HSV(h, s = 1.0, v = 1.0)
@@ -66,7 +64,7 @@ class Color
 		rgb[(1-swap + seg/2)%3] = x;
 		rgb[((2 + seg/2)%3)]		= 0;
 
-		new([(rgb[0]+m) * 255, (rgb[1]+m) * 255, (rgb[2]+m) * 255])
+		self.new([(rgb[0]+m) * 255, (rgb[1]+m) * 255, (rgb[2]+m) * 255])
 	end
 
 	def initialize(values)
