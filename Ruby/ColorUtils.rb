@@ -66,7 +66,7 @@ class Color
 	end
 
 	def initialize(rgb)
-		@scaling = 1;
+		@scaling = 1.0;
 		@rgb = rgb;
 	end
 
@@ -84,6 +84,8 @@ class Color
 	end
 
 	def set_brightness(value)
+		return self if @rgb.max == 0;
+
 		value = [0, value].max;
 		value = [255, value].min;
 
