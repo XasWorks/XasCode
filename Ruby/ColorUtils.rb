@@ -1,8 +1,6 @@
 
 
 class Color
-	attr_reader :rgb
-
 	attr_reader :k
 
 	def self.RGB(r, g, b)
@@ -73,9 +71,33 @@ class Color
 
 	def initialize(values)
 		@rgb = values;
+
+		@scaling = 1;
+	end
+
+	def rgb()
+		oArray = Array.new();
+		3.times do |i|
+			oArray[i] = @rgb[i]*@scaling;
+		end
+
+		return oArray;
+	end
+
+	def get_brightness(value)
+		return @rgb.max * @scaling;
+	end
+
+	def set_brightness(value)
+		value = [0, value].max;
+		value = [255, value].min;
+
+		@scaling = value/@rgb.max;
+
+		rgb();
 	end
 
 	def to_s
-		"\#%02X%02X%02X" % @rgb;
+		"\#%02X%02X%02X" % rgb();
 	end
 end
