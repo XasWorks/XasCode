@@ -1,4 +1,4 @@
-
+require 'interpolate'
 
 class Color
 	def self.RGB(r, g, b)
@@ -39,8 +39,24 @@ class Color
 	def self.daylight(brightness = 1, time = nil)
 		time ||= Time.now();
 
-		m = (time.min() + time.hour()*60) / 1440.0;
-		self.temperature(8500 + 4500*Math.sin(2*Math::PI*(m - 1/4)), brightness);
+		m = time.min()/60.0 + time.hour()
+
+		colorTempPoints = {
+			0  => 2000,
+			1  => 1400,
+			5  => 1400,
+			6  => 2300,
+			7  => 4500,
+			8  => 5500,
+			15 => 5500,
+			17 => 3000,
+			19 => 3000,
+			21 => 2600,
+			24 => 2000,
+		}
+
+		tempGraph = Interpolate::Points.new(colorTempPoints)
+		self.temperature(tempGraph.at(m), brightness);
 	end
 
 	def self.from_s(s)
