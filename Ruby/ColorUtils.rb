@@ -40,7 +40,7 @@ class Color
 		time ||= Time.now();
 
 		m = time.min()/60.0 + time.hour()
-
+		
 		colorTempPoints = {
 			0  => 2000,
 			1  => 1400,
@@ -49,14 +49,17 @@ class Color
 			7  => 4500,
 			8  => 5500,
 			15 => 5500,
-			17 => 3000,
-			19 => 3000,
-			21 => 2600,
-			24 => 2000,
+			16.75 => 3000,
+			17    => 2600,
+			17.25 => 2600,
+			17.5  => 3500,
+			21 => 3000,
+			24 => 2300,
 		}
 
 		tempGraph = Interpolate::Points.new(colorTempPoints)
-		self.temperature(tempGraph.at(m), brightness)
+		temperature = tempGraph.at(m);
+		self.temperature(temperature, brightness)
 	end
 
 	def self.from_s(s)
