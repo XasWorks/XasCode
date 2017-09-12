@@ -56,7 +56,7 @@ class Color
 		}
 
 		tempGraph = Interpolate::Points.new(colorTempPoints)
-		self.temperature(tempGraph.at(m), brightness);
+		self.temperature(tempGraph.at(m), brightness)
 	end
 
 	def self.from_s(s)
@@ -103,7 +103,7 @@ class Color
 	end
 
 	def black?
-		return @rgb.min == 0;
+		return @rgb.max == 0;
 	end
 
 	def white?
