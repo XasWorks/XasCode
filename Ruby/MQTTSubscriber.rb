@@ -33,21 +33,6 @@ class MQTTSubs
 		return nil;
 	end
 
-	def subscribeTo(topic, qos = 0, &callback)
-		unless @subscribedTopics[topic] then
-			begin
-				@mqtt.subscribe(topic);
-				@subscribedTopics[topic] = true;
-			rescue MQTT::Exception
-				@subscribeQueue << topic;
-			end
-		end
-		@callbackList << {
-			topic: 	MQTTSubs.getTopicSplit(topic),
-			cb:		callback,
-		}
-	end
-
 	def callInterested(topic, data)
 		@callbackList.each do |h|
 			tMatch = MQTTSubs.getTopicMatch(topic, h[:topic]);
@@ -55,40 +40,85 @@ class MQTTSubs
 		end
 	end
 
+	def subscribeTo(topic, qos: 0, &callback)
+		begin
+			@conChangeMutex.lock
+			if not @connected then
+				@subscribeQueue << topic;
+				@conChangeMutex.unlock
+			else
+				@conChangeMutex.unlock
+				@mqtt.subscribe(topic);
+			end
+		rescue MQTT::Exception, SocketError
+			sleep 0.05;
+			retry
+		end
+
+		@callbackList << {
+			topic: 	MQTTSubs.getTopicSplit(topic),
+			cb:		callback,
+		}
+	end
+
 	def publishTo(topic, data, qos: 0, retain: false)
 		begin
-			@mqtt.publish(topic, data, retain);
-		rescue MQTT::Exception
-			@publishQueue << {topic: topic, data: data, qos: qos, retain: retain} if qos > 0;
+			@conChangeMutex.lock
+			if not @connected then
+				@publishQueue << {topic: topic, data: data, qos: qos, retain: retain} unless qos == 0
+				@conChangeMutex.unlock
+			else
+				@conChangeMutex.unlock
+				@mqtt.publish(topic, data, retain);
+			end
+		rescue MQTT::Exception, SocketError
+			sleep 0.05;
+			retry
 		end
 	end
 
-	def lockAndListen()
+	def mqttResubThread
 		while(true)
 			begin
 				Timeout::timeout(10) {
 					@mqtt.connect()
+				}
+				@conChangeMutex.synchronize {
+					@connected = true;
 				}
 				until @subscribeQueue.empty? do
 					h = @subscribeQueue[-1];
 					@mqtt.subscribe(h);
 					@subscribedTopics[h] = true;
 					@subscribeQueue.pop;
-					sleep 0.05
+					sleep 0.01
 				end
 				until @publishQueue.empty? do
 					h = @publishQueue[-1];
 					@mqtt.publish(h[:topic], h[:data], h[:retain]);
 					@publishQueue.pop;
-					sleep 0.05
+					sleep 0.01
 				end
 				@mqtt.get do |topic, message|
 					callInterested(topic, message);
 				end
-			rescue MQTT::Exception, Timeout::Error
+			rescue MQTT::Exception, Timeout::Error, SocketError
+				@connected = false;
+
+				@conChangeMutex.unlock if @conChangeMutex.owned?
 				@mqtt.clean_session=false;
 				sleep 5
 			end
+		end
+	end
+
+	def lockAndListen()
+		@listenerThread.join
+	end
+
+	def flush_pubqueue()
+		until @publishQueue.empty? do
+			sleep 0.05;
 		end
 	end
 
@@ -96,22 +126,36 @@ class MQTTSubs
 		@callbackList = Array.new();
 		@mqtt = mqttClient;
 
-		@mqtt.client_id = MQTT::Client.generate_client_id("MQTT_Sub_", length = 5) unless @mqtt.client_id;
+		@conChangeMutex = Mutex.new();
+		@connected 		= false;
 
-		@mqtt.clean_session=true;
-		@mqtt.connect();
-		@mqtt.disconnect();
-		@mqtt.clean_session=false;
+		@mqtt.client_id = MQTT::Client.generate_client_id("MQTT_Sub_", length = 5) unless @mqtt.client_id
 
-		@publishQueue = Array.new();
+		@publishQueue 		= Array.new();
 		@subscribeQueue 	= Array.new();
-		@subscribedTopics = Hash.new();
+		@subscribedTopics 	= Hash.new();
 
-		if autoListen then
-			@listenerThread = Thread.new do
-				lockAndListen
+		@listenerThread = Thread.new do
+			if @mqtt.clean_session
+				begin
+					@mqtt.connect();
+					@mqtt.disconnect();
+				rescue MQTT::Exception
+					sleep 1;
+					retry
+				rescue SocketError
+					sleep 5
+					retry
+				end
+				@mqtt.clean_session=false;
 			end
-			@listenerThread.abort_on_exception = true;
+
+			mqttResubThread
 		end
+		@listenerThread.abort_on_exception = true;
+
+		at_exit {
+			flush_pubqueue
+		}
 	end
 end
