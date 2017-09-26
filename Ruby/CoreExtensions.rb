@@ -1,5 +1,5 @@
 
-class Integer
+class Numeric
 	def minutes
 		return self * 60;
 	end
