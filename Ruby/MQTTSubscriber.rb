@@ -48,7 +48,7 @@ class MQTTSubs
 				@conChangeMutex.unlock
 			else
 				@conChangeMutex.unlock
-				@mqtt.subscribe(topic);
+				@mqtt.subscribe(topic);		
 			end
 		rescue MQTT::Exception, SocketError
 			sleep 0.05;
@@ -88,7 +88,7 @@ class MQTTSubs
 				}
 				until @subscribeQueue.empty? do
 					h = @subscribeQueue[-1];
-					@mqtt.subscribe(h);
+					@mqtt.subscribe(h);	
 					@subscribedTopics[h] = true;
 					@subscribeQueue.pop;
 					sleep 0.01
@@ -157,5 +157,12 @@ class MQTTSubs
 		at_exit {
 			flush_pubqueue
 		}
+
+		begin
+		Timeout::timeout(10) {
+			until(@connected) do sleep 0.5; end
+		}
+		rescue Timeout::Error
+		end
 	end
 end
