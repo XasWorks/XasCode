@@ -48,9 +48,9 @@ class MQTTSubs
 				@conChangeMutex.unlock
 			else
 				@conChangeMutex.unlock
-				@mqtt.subscribe(topic);		
+				@mqtt.subscribe(topic);
 			end
-		rescue MQTT::Exception, SocketError
+		rescue MQTT::Exception, SocketError, SystemCallError
 			sleep 0.05;
 			retry
 		end
@@ -62,6 +62,8 @@ class MQTTSubs
 	end
 
 	def publishTo(topic, data, qos: 0, retain: false)
+		raise ArgumentError, "Wrong symbol in topic: #{topic}" if topic =~ /[#\+]/
+
 		begin
 			@conChangeMutex.lock
 			if not @connected then
@@ -71,7 +73,7 @@ class MQTTSubs
 				@conChangeMutex.unlock
 				@mqtt.publish(topic, data, retain);
 			end
-		rescue MQTT::Exception, SocketError
+		rescue MQTT::Exception, SocketError, SystemCallError
 			sleep 0.05;
 			retry
 		end
@@ -88,7 +90,7 @@ class MQTTSubs
 				}
 				until @subscribeQueue.empty? do
 					h = @subscribeQueue[-1];
-					@mqtt.subscribe(h);	
+					@mqtt.subscribe(h);
 					@subscribedTopics[h] = true;
 					@subscribeQueue.pop;
 					sleep 0.01
@@ -102,7 +104,7 @@ class MQTTSubs
 				@mqtt.get do |topic, message|
 					callInterested(topic, message);
 				end
-			rescue MQTT::Exception, Timeout::Error, SocketError
+			rescue MQTT::Exception, Timeout::Error, SocketError, SystemCallError
 				@connected = false;
 
 				@conChangeMutex.unlock if @conChangeMutex.owned?
@@ -143,7 +145,7 @@ class MQTTSubs
 				rescue MQTT::Exception
 					sleep 1;
 					retry
-				rescue SocketError
+				rescue SocketError, SystemCallError
 					sleep 5
 					retry
 				end
