@@ -2,8 +2,9 @@
 require 'mqtt'
 require 'timeout'
 
-class MQTTSubs
+require_relative 'Waitpoint.rb'
 
+class MQTTSubs
 	def self.getTopicSplit(topicName)
 		return topicName.scan(/[^\/]+/);
 	end
@@ -33,35 +34,66 @@ class MQTTSubs
 		return nil;
 	end
 
-	def callInterested(topic, data)
+	def call_interested(topic, data)
+		topicHasReceivers = false;
 		@callbackList.each do |h|
-			tMatch = MQTTSubs.getTopicMatch(topic, h[:topic]);
-			h[:cb].call(tMatch, data) if tMatch;
+			tMatch = MQTTSubs.getTopicMatch(topic, h.topic_split);
+			if tMatch
+				h.offer(tMatch, data)
+				topicHasReceivers = true;
+			end
 		end
+
+		@mqtt.unsubscribe(topic) unless topicHasReceivers;
 	end
 
-	def subscribeTo(topic, qos: 0, &callback)
+	def raw_subscribe_to(topic, qos: 1)
 		begin
 			@conChangeMutex.lock
 			if not @connected then
-				@subscribeQueue << topic;
+				@subscribeQueue << [topic, qos];
 				@conChangeMutex.unlock
 			else
 				@conChangeMutex.unlock
-				@mqtt.subscribe(topic);
+				@mqtt.subscribe(topic => qos);
 			end
 		rescue MQTT::Exception, SocketError, SystemCallError
 			sleep 0.05;
 			retry
 		end
-
-		@callbackList << {
-			topic: 	MQTTSubs.getTopicSplit(topic),
-			cb:		callback,
-		}
 	end
 
-	def publishTo(topic, data, qos: 0, retain: false)
+	def unregister_subscription(subObject)
+		return unless @callbackList.include? subObject;
+
+		@callbackList.delete(subObject);
+	end
+	def register_subscription(subObject)
+		return if @callbackList.include? subObject;
+
+		@callbackList << subObject;
+		raw_subscribe_to(subObject.topic, qos: subObject.qos);
+	end
+	def wait_for(topic, qos: 1, timeout: nil)
+		subObject = MQTT::WaitpointSubscription.new(topic, qos);
+		register_subscription(subObject);
+
+		return_data = subObject.waitpoint.wait(timeout);
+
+		unregister_subscription(subObject);
+
+		return return_data;
+	end
+	def subscribe_to(topic, qos: 1, &callback)
+		subObject = MQTT::Subscription.new(topic, qos, callback);
+		register_subscription(subObject);
+
+		return subObject;
+	end
+	alias subscribeTo subscribe_to
+
+
+	def publish_to(topic, data, qos: 1, retain: false)
 		raise ArgumentError, "Wrong symbol in topic: #{topic}" if topic =~ /[#\+]/
 
 		begin
@@ -78,6 +110,7 @@ class MQTTSubs
 			retry
 		end
 	end
+	alias publishTo publish_to
 
 	def mqttResubThread
 		while(true)
@@ -90,8 +123,7 @@ class MQTTSubs
 				}
 				until @subscribeQueue.empty? do
 					h = @subscribeQueue[-1];
-					@mqtt.subscribe(h);
-					@subscribedTopics[h] = true;
+					@mqtt.subscribe(h[0] => h[1]);
 					@subscribeQueue.pop;
 					sleep 0.01
 				end
@@ -102,14 +134,14 @@ class MQTTSubs
 					sleep 0.01
 				end
 				@mqtt.get do |topic, message|
-					callInterested(topic, message);
+					call_interested(topic, message);
 				end
 			rescue MQTT::Exception, Timeout::Error, SocketError, SystemCallError
 				@connected = false;
 
 				@conChangeMutex.unlock if @conChangeMutex.owned?
 				@mqtt.clean_session=false;
-				sleep 5
+				sleep 2
 			end
 		end
 	end
@@ -162,9 +194,49 @@ class MQTTSubs
 
 		begin
 		Timeout::timeout(10) {
-			until(@connected) do sleep 0.5; end
+			until(@connected) do sleep 0.1; end
 		}
 		rescue Timeout::Error
+		end
+	end
+end
+
+module MQTT
+	class Subscription
+		attr_reader :topic
+		attr_reader :qos
+		attr_reader :topic_split
+
+		def initialize(topic, qos, callback)
+			@topic 		 = topic;
+			@topic_split = MQTTSubs.getTopicSplit(topic);
+
+			@qos 			= 0;
+			@callback  	= callback;
+		end
+		def offer(topicList, data)
+			@callback.call(topicList, data);
+		end
+	end
+
+	class WaitpointSubscription
+		attr_reader :topic
+		attr_reader :qos
+		attr_reader :topic_split
+
+		attr_reader :waitpoint
+
+		def initialize(topic, qos)
+			@topic 		 = topic;
+			@topic_split = MQTTSubs.getTopicSplit(topic);
+
+			@qos 			 = 0;
+
+			@waitpoint 	 = Xasin::Waitpoint.new();
+		end
+
+		def offer(topicList, data)
+			@waitpoint.fire([topicList, data]);
 		end
 	end
 end
