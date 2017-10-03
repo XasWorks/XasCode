@@ -16,20 +16,7 @@ module Xasin
 			end
 		end
 
-		def wait(allow_run: false)
-			pausedID = @fireID;
-			@waitThreads << Thread.current
-			if(allow_run) then
-				Thread.stop();
-			else
-				Thread.stop() until pausedID != @fireID;
-			end
-			@waitThreads.delete(Thread.current);
-
-			return @lastArgument;
-		end
-
-		def wait_timeout(seconds = 1, allow_run: false)
+		def wait(seconds = 1, allow_run: false)
 			pausedID = @fireID;
 			@waitThreads << Thread.current
 
