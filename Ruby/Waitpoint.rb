@@ -2,13 +2,15 @@ require 'timeout'
 
 module Xasin
 	class Waitpoint
+		attr_reader :lastArgument
+
 		def initialize()
 			@waitThreads = Array.new();
 			@fireID = 0;
 			@lastArgument = Array.new();
 		end
 
-		def fire(args)
+		def fire(args = nil)
 			@fireID += 1
 			@lastArgument = args;
 			@waitThreads.each do |t|
@@ -16,7 +18,7 @@ module Xasin
 			end
 		end
 
-		def wait(seconds = 1, allow_run: false)
+		def wait(seconds = nil, allow_run: false)
 			pausedID = @fireID;
 			@waitThreads << Thread.current
 
