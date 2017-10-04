@@ -4,7 +4,8 @@ require 'timeout'
 
 require_relative 'Waitpoint.rb'
 
-class MQTTSubs
+module MQTT
+class SubHandler
 	def self.getTopicSplit(topicName)
 		return topicName.scan(/[^\/]+/);
 	end
@@ -37,7 +38,7 @@ class MQTTSubs
 	def call_interested(topic, data)
 		topicHasReceivers = false;
 		@callbackList.each do |h|
-			tMatch = MQTTSubs.getTopicMatch(topic, h.topic_split);
+			tMatch = SubHandler.getTopicMatch(topic, h.topic_split);
 			if tMatch
 				h.offer(tMatch, data)
 				topicHasReceivers = true;
@@ -46,6 +47,7 @@ class MQTTSubs
 
 		@mqtt.unsubscribe(topic) unless topicHasReceivers;
 	end
+	private :call_interested
 
 	def raw_subscribe_to(topic, qos: 1)
 		begin
@@ -62,13 +64,16 @@ class MQTTSubs
 			retry
 		end
 	end
+	private :raw_subscribe_to
 
 	def unregister_subscription(subObject)
+		raise ArgumentError, "Object is not a subscription!" unless subObject.is_a? MQTT::Subscription
 		return unless @callbackList.include? subObject;
 
 		@callbackList.delete(subObject);
 	end
 	def register_subscription(subObject)
+		raise ArgumentError, "Object is not a subscription!" unless subObject.is_a? MQTT::Subscription
 		return if @callbackList.include? subObject;
 
 		@callbackList << subObject;
@@ -85,7 +90,7 @@ class MQTTSubs
 		return return_data;
 	end
 	def subscribe_to(topic, qos: 1, &callback)
-		subObject = MQTT::Subscription.new(topic, qos, callback);
+		subObject = MQTT::CallbackSubscription.new(topic, qos, callback);
 		register_subscription(subObject);
 
 		return subObject;
@@ -112,7 +117,7 @@ class MQTTSubs
 	end
 	alias publishTo publish_to
 
-	def mqttResubThread
+	def mqtt_resub_thread
 		while(true)
 			begin
 				Timeout::timeout(10) {
@@ -145,25 +150,47 @@ class MQTTSubs
 			end
 		end
 	end
+	private :mqtt_resub_thread
 
 	def lockAndListen()
-		@listenerThread.join
-	end
+		Signal.trap("INT") {
+			exit 0
+		}
 
+		puts "Main thread paused."
+		Thread.stop();
+	end
 	def flush_pubqueue()
-		until @publishQueue.empty? do
-			sleep 0.05;
+		if @publishQueue.empty? then
+			puts "MQTT buffer empty, continuing."
+		else
+			print "Finishing sending of MQTT messages ... "
+			begin
+				Timeout::timeout(10) {
+					until @publishQueue.empty? do
+						sleep 0.05;
+					end
+				}
+			rescue Timeout::Error
+				puts "Timed out, aborting."
+			else
+				puts "Done."
+			end
 		end
 	end
 
 	def initialize(mqttClient, autoListen: true)
 		@callbackList = Array.new();
-		@mqtt = mqttClient;
+		if mqttClient.is_a? String then
+			@mqtt = MQTT::Client.new(mqttClient);
+		else
+			@mqtt = mqttClient;
+		end
 
 		@conChangeMutex = Mutex.new();
 		@connected 		= false;
 
-		@mqtt.client_id = MQTT::Client.generate_client_id("MQTT_Sub_", length = 5) unless @mqtt.client_id
+		@mqtt.client_id ||= MQTT::Client.generate_client_id("MQTT_Sub_", length = 8)
 
 		@publishQueue 		= Array.new();
 		@subscribeQueue 	= Array.new();
@@ -184,7 +211,7 @@ class MQTTSubs
 				@mqtt.clean_session=false;
 			end
 
-			mqttResubThread
+			mqtt_resub_thread
 		end
 		@listenerThread.abort_on_exception = true;
 
@@ -201,42 +228,43 @@ class MQTTSubs
 	end
 end
 
-module MQTT
-	class Subscription
-		attr_reader :topic
-		attr_reader :qos
-		attr_reader :topic_split
+class Subscription
+	attr_reader :topic
+	attr_reader :qos
+	attr_reader :topic_split
 
-		def initialize(topic, qos, callback)
-			@topic 		 = topic;
-			@topic_split = MQTTSubs.getTopicSplit(topic);
+	def initialize(topic, qos)
+		@topic 		 = topic;
+		@topic_split = SubHandler.getTopicSplit(topic);
 
-			@qos 			= 0;
-			@callback  	= callback;
-		end
-		def offer(topicList, data)
-			@callback.call(topicList, data);
-		end
+		@qos 			= 0;
 	end
 
-	class WaitpointSubscription
-		attr_reader :topic
-		attr_reader :qos
-		attr_reader :topic_split
+	def offer() end
+end
 
-		attr_reader :waitpoint
+class CallbackSubscription < Subscription
+	def initialize(topic, qos, callback)
+		super(topic, qos);
 
-		def initialize(topic, qos)
-			@topic 		 = topic;
-			@topic_split = MQTTSubs.getTopicSplit(topic);
-
-			@qos 			 = 0;
-
-			@waitpoint 	 = Xasin::Waitpoint.new();
-		end
-
-		def offer(topicList, data)
-			@waitpoint.fire([topicList, data]);
-		end
+		@callback  	= callback;
 	end
+	def offer(topicList, data)
+		@callback.call(topicList, data);
+	end
+end
+
+class WaitpointSubscription < Subscription
+	attr_reader :waitpoint
+
+	def initialize(topic, qos)
+		super(topic, qos);
+
+		@waitpoint 	 = Xasin::Waitpoint.new();
+	end
+
+	def offer(topicList, data)
+		@waitpoint.fire([topicList, data]);
+	end
+end
 end
