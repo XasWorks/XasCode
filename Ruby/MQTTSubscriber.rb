@@ -161,6 +161,7 @@ class SubHandler
 		Thread.stop();
 	end
 	def flush_pubqueue()
+		puts "\n";
 		if @publishQueue.empty? then
 			puts "MQTT buffer empty, continuing."
 		else
