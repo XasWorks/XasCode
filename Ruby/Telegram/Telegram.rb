@@ -103,6 +103,24 @@ module Telegram
 			return sent_message[:result][:message_id];
 		end
 
+		def edit_message(mID, text=nil, **args)
+			args[:chat_id] 		= @userChat;
+			args[:message_id] 	= mID;
+
+			args[:parse_mode]		||= "Markdown";
+
+			if(text) then
+				args[:text] = text;
+				@httpCore.perform_post("editMessageText", args);
+			else
+				@httpCore.perform_post("editMessageReplyMarkup", args);
+			end
+		end
+
+		def delete_message(mID)
+			@httpCore.perform_post("deleteMessage", {chat_id: @userChat, message_id: mID});
+		end
+
 		def on_message(&block)
 			@message_procs << block;
 		end
