@@ -79,6 +79,7 @@ class SubHandler
 		@callbackList << subObject;
 		raw_subscribe_to(subObject.topic, qos: subObject.qos);
 	end
+
 	def wait_for(topic, qos: 1, timeout: nil)
 		subObject = MQTT::WaitpointSubscription.new(topic, qos);
 		register_subscription(subObject);
@@ -89,6 +90,19 @@ class SubHandler
 
 		return return_data;
 	end
+	def track(topic, qos: 1, &callback)
+		unless(@trackerHash.has_key? topic)
+			subObject = MQTT::ValueTrackerSubscription.new(topic, qos);
+			register_subscription(subObject);
+
+			@trackerHash[topic] = subObject;
+		end
+
+		@trackerHash[topic].attach(callback) if(callback)
+
+		return @trackerHash[topic];
+	end
+	alias on_change track
 	def subscribe_to(topic, qos: 1, &callback)
 		subObject = MQTT::CallbackSubscription.new(topic, qos, callback);
 		register_subscription(subObject);
@@ -197,6 +211,8 @@ class SubHandler
 		@subscribeQueue 	= Array.new();
 		@subscribedTopics 	= Hash.new();
 
+		@trackerHash = Hash.new();
+
 		@listenerThread = Thread.new do
 			if @mqtt.clean_session
 				begin
@@ -266,6 +282,37 @@ class WaitpointSubscription < Subscription
 
 	def offer(topicList, data)
 		@waitpoint.fire([topicList, data]);
+	end
+end
+
+class ValueTrackerSubscription < Subscription
+	attr_reader :value
+
+	def initialize(topic, qos = 1)
+		raise ArgumentError, "Won't check values for wildcard topics! Topic: #{topic}" if topic =~ /[#\+]/
+		super(topic, qos);
+
+		@value = nil;
+
+		@callbackList = Array.new();
+	end
+
+	def offer(topicList, data)
+		return if data == @value;
+
+		@callbackList.each do |cb|
+			cb.call(data, @value);
+		end
+		@value = data;
+	end
+
+	def attach(callback)
+		@callbackList << callback;
+		callback.call(@value, nil) if(@value);
+		return callback;
+	end
+	def remove(callback)
+		@callbackList.delete callback;
 	end
 end
 end
