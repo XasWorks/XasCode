@@ -215,6 +215,7 @@ class SubHandler
 
 		@listenerThread = Thread.new do
 			if @mqtt.clean_session
+				@mqttWasStartedClean = true;
 				begin
 					@mqtt.connect();
 					@mqtt.disconnect();
@@ -234,6 +235,27 @@ class SubHandler
 
 		at_exit {
 			flush_pubqueue
+			@listenerThread.kill();
+
+			if(@mqttWasStartedClean) then
+				print "Logging out of mqtt server... "
+				begin
+				Timeout::timeout(10) {
+					begin
+						@mqtt.clean_session = true;
+						@mqtt.disconnect();
+						@mqtt.connect();
+					rescue MQTT::Exception, SocketError, SystemCallError
+						sleep 1
+						retry;
+					end
+				}
+				rescue  Timeout::Error
+					puts "Timed out, aborting!";
+				else
+					puts "Done."
+				end
+			end
 		}
 
 		begin
