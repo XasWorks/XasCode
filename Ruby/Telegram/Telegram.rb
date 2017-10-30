@@ -42,8 +42,6 @@ module Telegram
 					next unless packet[:ok];
 					next if packet[:result].length == 0;
 
-					puts "Handling packet: #{packet}"
-
 					packet[:result].each do |data|
 						hUpdateID = data[:update_id].to_i
 						@lastUpdateID = [hUpdateID, @lastUpdateID].max
@@ -86,7 +84,7 @@ module Telegram
 			if(packet[:callback_query]) then
 				return unless packet[:callback_query][:message][:chat][:id] == @userChat;
 
-				@inlinebutton_procs.each do |cb| cb.call(packet["callback_query"]); end
+				@inlinebutton_procs.each do |cb| cb.call(packet[:callback_query]); end
 				packet[:has_been_handled] = true;
 			end
 		end
