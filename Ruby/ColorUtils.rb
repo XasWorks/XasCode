@@ -35,6 +35,9 @@ class Color
 
 		self.new([r*brightness, g*brightness, b*brightness]);
 	end
+	def self.K(c, brightness = 1)
+		self.temperature(c, brightness);
+	end
 
 	def self.daylight(brightness = nil, time: nil)
 		time ||= Time.now();
@@ -123,7 +126,7 @@ class Color
 		return oArray;
 	end
 
-	def blend_with(otherColor, balance)
+	def interpolate(otherColor, balance)
 		nArray = [0, 0, 0];
 		3.times do |i|
 			nArray[i] = self.rgb()[i]*balance + otherColor.rgb()[i]*(1.0 - balance);
