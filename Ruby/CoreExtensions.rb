@@ -4,7 +4,11 @@ class Numeric
 		return self * 60;
 	end
 	def hours
-		return self * 60 * 60;
+		return self * 60.minutes;
+	end
+
+	def days
+		return self * 24.hours;
 	end
 end
 
