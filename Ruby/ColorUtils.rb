@@ -129,7 +129,7 @@ class Color
 	def interpolate(otherColor, balance)
 		nArray = [0, 0, 0];
 		3.times do |i|
-			nArray[i] = self.rgb()[i]*balance + otherColor.rgb()[i]*(1.0 - balance);
+			nArray[i] = self.rgb()[i]*(1 - balance) + otherColor.rgb()[i]*(balance);
 		end
 
 		return Color.RGB(*nArray);
