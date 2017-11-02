@@ -40,7 +40,7 @@ class Color
 		time ||= Time.now();
 
 		m = (time.sec()/60 + time.min())/60.0 + time.hour()
-		
+
 		colorTempPoints = {
 			0  => 1800,
 			1  => 1400,
@@ -114,6 +114,15 @@ class Color
 		end
 
 		return oArray;
+	end
+
+	def blend_with(otherColor, balance)
+		nArray = [0, 0, 0];
+		3.times do |i|
+			nArray[i] = self.rgb()[i]*balance + otherColor.rgb()[i]*(1.0 - balance);
+		end
+
+		return Color.RGB(*nArray);
 	end
 
 	def black?
