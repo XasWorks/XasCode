@@ -10,11 +10,13 @@ module Interpolate
 		lowerBound = maskHash.keys.min - preSpacing  + offset;
 
 		baseInterpolation = Interpolate::Points.new(baseHash);
+		baseHashLowerBound = baseInterpolation.at(lowerBound);
+		baseHashUpperBound = baseInterpolation.at(upperBound);
 
 		baseHash.delete_if do |key, val| key.between? lowerBound, upperBound end
 
-		baseHash[lowerBound] = baseInterpolation.at(lowerBound) if preSpacing  > 0;
-		baseHash[upperBound] = baseInterpolation.at(upperBound) if postSpacing > 0;
+		baseHash[lowerBound] = baseHashLowerBound if preSpacing  > 0;
+		baseHash[upperBound] = baseHashUpperBound if postSpacing > 0;
 
 		maskHash.each do |k, v|
 			baseHash[k+offset] = v;
