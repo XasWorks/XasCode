@@ -27,7 +27,6 @@ module Planetside2
 			end
 			end
 
-			puts "Pull command: #{getCommand}";
 			return JSON.parse(`wget -q -O - "#{getCommand}"`);
 		end
 
