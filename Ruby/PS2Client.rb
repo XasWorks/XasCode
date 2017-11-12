@@ -27,7 +27,11 @@ module Planetside2
 			end
 			end
 
-			return JSON.parse(`wget -q -O - "#{getCommand}"`);
+			begin
+				return JSON.parse(`wget -q -O - "#{getCommand}"`);
+			rescue
+				return nil;
+			end
 		end
 
 		def get_character_id(name)
@@ -39,15 +43,16 @@ module Planetside2
 				parameters: [	"name.first_lower", name,
 								"c:show", "character_id"]);
 
+			return nil unless retData
 			return nil if retData["returned"] == 0;
-
+			
 			@character_id_cache[name] = retData["character_name_list"][0]["character_id"].to_i;
 			return @character_id_cache[name];
 		end
 
 		def get_online_status(id)
 			id = get_character_id(id) if(id.is_a? String);
-			return 0 unless id;
+			return false unless id;
 
 			retData = pull_data(
 			collection: "characters_online_status",
@@ -55,7 +60,8 @@ module Planetside2
 							"c:show", "online_status"]
 			);
 
-			return nil if retData["returned"] == 0;
+			return false 	unless retData;
+			return false	if retData["returned"] == 0;
 			return retData["characters_online_status_list"][0]["online_status"].to_i != 0;
 		end
 
