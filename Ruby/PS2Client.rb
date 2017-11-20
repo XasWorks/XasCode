@@ -35,34 +35,42 @@ module Planetside2
 		end
 
 		def get_character_id(name)
-			name.downcase!
-			return @character_id_cache[name] if @character_id_cache.key? name
+			begin
+				name.downcase!
+				return @character_id_cache[name] if @character_id_cache.key? name
 
-			retData = pull_data(
-				collection: "character_name",
-				parameters: [	"name.first_lower", name,
-								"c:show", "character_id"]);
+				retData = pull_data(
+					collection: "character_name",
+					parameters: [	"name.first_lower", name,
+									"c:show", "character_id"]);
 
-			return nil unless retData
-			return nil if retData["returned"] == 0;
-			
-			@character_id_cache[name] = retData["character_name_list"][0]["character_id"].to_i;
-			return @character_id_cache[name];
+				return nil unless retData
+				return nil if retData["returned"] == 0;
+
+				@character_id_cache[name] = retData["character_name_list"][0]["character_id"].to_i;
+				return @character_id_cache[name];
+			rescue
+				return nil;
+			end
 		end
 
 		def get_online_status(id)
-			id = get_character_id(id) if(id.is_a? String);
-			return false unless id;
+			begin
+				id = get_character_id(id) if(id.is_a? String);
+				return false unless id;
 
-			retData = pull_data(
-			collection: "characters_online_status",
-			parameters: [	"character_id", id,
-							"c:show", "online_status"]
-			);
+				retData = pull_data(
+				collection: "characters_online_status",
+				parameters: [	"character_id", id,
+								"c:show", "online_status"]
+				);
 
-			return false 	unless retData;
-			return false	if retData["returned"] == 0;
-			return retData["characters_online_status_list"][0]["online_status"].to_i != 0;
+				return false 	unless retData;
+				return false	if retData["returned"] == 0;
+				return retData["characters_online_status_list"][0]["online_status"].to_i != 0;
+			rescue
+				return false;
+			end
 		end
 
 		def get_character_world(id)
