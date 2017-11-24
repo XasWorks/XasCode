@@ -84,10 +84,22 @@ class SubHandler
 		subObject = MQTT::WaitpointSubscription.new(topic, qos);
 		register_subscription(subObject);
 
-		return_data = subObject.waitpoint.wait(timeout);
+		if block_given? then
+			begin
+			Timeout::timeout(timeout) do
+				loop do
+					return_data = subObject.waitpoint.wait()[1];
+					return true if yield(return_data[0], return_data[1]);
+				end
+			end
+			rescue Timeout::Error
+				return false;
+			end
+		else
+			return_data = subObject.waitpoint.wait(timeout);
+		end
 
 		unregister_subscription(subObject);
-
 		return return_data;
 	end
 	def track(topic, qos: 1, &callback)
