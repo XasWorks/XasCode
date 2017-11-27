@@ -89,7 +89,10 @@ class SubHandler
 			Timeout::timeout(timeout) do
 				loop do
 					return_data = subObject.waitpoint.wait()[1];
-					return true if yield(return_data[0], return_data[1]);
+					if yield(return_data[0], return_data[1]) then
+						unregister_subscription(subObject);
+						return true;
+					end
 				end
 			end
 			rescue Timeout::Error
