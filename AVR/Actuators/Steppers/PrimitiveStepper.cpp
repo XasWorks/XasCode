@@ -18,9 +18,10 @@ void PrimitiveStepper::step(uint8_t dir) {
 }
 
 void PrimitiveStepper::moveBetweenCalls(float steps) {
-	this->stepsToGo = steps;
+	this->stepsToGo += steps;
 	this->stepBuffer = 0;
-	this->stepSpeed = fabs(stepsToGo) / this->updateFrequency;
+
+	this->stepSpeed = fabs(stepsToGo) / (float)this->updateFrequency;
 }
 
 PrimitiveStepper::PrimitiveStepper(volatile uint8_t *P, uint8_t pins, uint8_t pind,
@@ -43,7 +44,7 @@ void PrimitiveStepper::update() {
 
 		stepBuffer += stepSpeed;	//Increase the "Buffer step" value by the Steps/ISR value
 
-		if (stepBuffer >= 1) {		//Is there a step to be done?
+		if (stepBuffer >= 1) {	//Is there a step to be done?
 			stepBuffer -= 1;
 
 			if (signbit(stepsToGo))	//Backwards movement

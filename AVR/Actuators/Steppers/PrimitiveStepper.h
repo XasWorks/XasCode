@@ -24,7 +24,7 @@ private:
 	//Steps per ISR Call.
 	float stepSpeed = 1;
 	//Step buffer of the system. Not every ISR call will induce a Step, thusly, the rest has to be buffered.
-	float stepBuffer = 0.0;
+	float stepBuffer = 0;
 
 	//Step the motor ONCE into the specified direction (0 == backwards, else forwards)
 	void step(uint8_t dir);
