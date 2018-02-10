@@ -5,6 +5,11 @@ require 'mqtt'
 require 'mqtt/subscription_classes'
 
 module MQTT
+def self.Eclipse()
+	@EclipseMQTT ||= SubHandler.new('iot.eclipse.org');
+	return @EclipseMQTT;
+end
+
 class SubHandler
 	def self.getTopicSplit(topicName)
 		return topicName.scan(/[^\/]+/);
