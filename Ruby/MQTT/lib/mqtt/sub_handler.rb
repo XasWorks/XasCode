@@ -2,7 +2,7 @@
 require 'timeout'
 require 'mqtt'
 
-require 'mqtt/Waitpoint.rb'
+require 'mqtt/subscription_classes'
 
 module MQTT
 class SubHandler
@@ -220,7 +220,7 @@ class SubHandler
 		@conChangeMutex = Mutex.new();
 		@connected 		= false;
 
-		@mqtt.client_id ||= MQTT::Client.generate_client_id("MQTT_Sub_", length = 8)
+		@mqtt.client_id ||= MQTT::Client.generate_client_id("MQTT_Sub_", 8);
 
 		@publishQueue 		= Array.new();
 		@subscribeQueue 	= Array.new();
@@ -279,77 +279,6 @@ class SubHandler
 		}
 		rescue Timeout::Error
 		end
-	end
-end
-
-class Subscription
-	attr_reader :topic
-	attr_reader :qos
-	attr_reader :topic_split
-
-	def initialize(topic, qos)
-		@topic 		 = topic;
-		@topic_split = SubHandler.getTopicSplit(topic);
-
-		@qos 			= 0;
-	end
-
-	def offer() end
-end
-
-class CallbackSubscription < Subscription
-	def initialize(topic, qos, callback)
-		super(topic, qos);
-
-		@callback  	= callback;
-	end
-	def offer(topicList, data)
-		@callback.call(topicList, data);
-	end
-end
-
-class WaitpointSubscription < Subscription
-	attr_reader :waitpoint
-
-	def initialize(topic, qos)
-		super(topic, qos);
-
-		@waitpoint 	 = Xasin::Waitpoint.new();
-	end
-
-	def offer(topicList, data)
-		@waitpoint.fire([topicList, data]);
-	end
-end
-
-class ValueTrackerSubscription < Subscription
-	attr_reader :value
-
-	def initialize(topic, qos = 1)
-		raise ArgumentError, "Won't check values for wildcard topics! Topic: #{topic}" if topic =~ /[#\+]/
-		super(topic, qos);
-
-		@value = nil;
-
-		@callbackList = Array.new();
-	end
-
-	def offer(topicList, data)
-		return if data == @value;
-
-		@callbackList.each do |cb|
-			cb.call(data, @value);
-		end
-		@value = data;
-	end
-
-	def attach(callback)
-		@callbackList << callback;
-		callback.call(@value, nil) if(@value);
-		return callback;
-	end
-	def remove(callback)
-		@callbackList.delete callback;
 	end
 end
 end

@@ -5,7 +5,9 @@ Gem::Specification.new do |s|
   s.summary     = "Asynchronous, topic-based MQTT gem"
   s.description = "A gem to use when the normal ruby mqtt doesn't hit the spot."
   s.authors     = ["Xasin"]
-  s.files       = ["lib/mqtt/sub_handler.rb", "lib/mqtt/Waitpoint.rb"]
+  s.files       = [  "lib/mqtt/sub_handler.rb",
+                     "lib/mqtt/subscription_classes.rb",
+                     "lib/mqtt/Waitpoint.rb"]
   s.homepage    =
     'https://github.com/XasWorks/XasCode/tree/MQTT_GEM/Ruby/MQTT'
   s.license     = 'GPL-3.0'
