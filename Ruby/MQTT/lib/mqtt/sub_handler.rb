@@ -1,8 +1,8 @@
 
-require 'mqtt'
 require 'timeout'
+require 'mqtt'
 
-require_relative 'Waitpoint.rb'
+require 'mqtt/Waitpoint.rb'
 
 module MQTT
 class SubHandler
