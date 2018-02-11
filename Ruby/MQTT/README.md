@@ -22,7 +22,10 @@ mqttSubHandler = MQTT::SubHandler.new(myClient);    # Create a handler with a mq
 
 mqttSubHandler = MQTT::SubHandler.new('mqtts://Password:Username@Address') # Or use a string!
 mqttSubHandler = MQTT.Eclipse(); # Or use the quick shortcut to 'iot.eclipse.org' for testing!
+```
+### Subscribing
 
+```ruby
 mySub = mqttSubHandler.subscribe_to "Any/Topic/You/Want" do |data, [topicMatch]|
 	puts "I got some data: #{data}";
 end
@@ -33,7 +36,9 @@ end
 
 mqttSubHandler.unregister_subscription(mySub); # That'll remove the callback, and unsubscribe!
 # Don't worry about breaking other subscriptions. The code checks if any other callbacks are attached to the topic in question!
-
+```
+### Publishing
+```ruby
 # Pushing gets easy, too:
 mqttSubHandler.publish_to "Any/Topic/You/Want", theData, [qos: 1, retain: false]
 # Right now, the code ONLY SUPPORTS QOS 0, AND WILL BLOCK!
