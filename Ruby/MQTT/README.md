@@ -1,9 +1,9 @@
 
 ### Important note:
 *Right now, I (Xasin) am still in the process of figuring out how to properly set up gems.
-This is my first one, and it has only recently (11.02.18) been published.
+This is my first one, and it has only recently (11.02.18) been published.*
 
-I'm working on documenting the code, so if you can't figure out how to get it running, come back in a few days or make an issue explaining your problem!*
+*I'm working on documenting the code, so if you can't figure out how to get it running, come back in a few days or make an issue explaining your problem!*
 
 ---
 
