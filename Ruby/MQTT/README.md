@@ -1,5 +1,5 @@
 
-### Important note:
+**Important note:**
 *Right now, I (Xasin) am still in the process of figuring out how to properly set up gems.
 This is my first one, and it has only recently (11.02.18) been published.*
 
