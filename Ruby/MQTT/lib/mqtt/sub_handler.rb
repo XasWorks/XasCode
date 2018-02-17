@@ -292,8 +292,11 @@ class SubHandler
 	# Initialize a new MQTT::SubHandler
 	# The handler immediately connects to the server, and begins receciving and sending.
 	# @param mqttClient [String, MQTT::Client] Either a URI to connect to, or a MQTT::Client
-	#  The URI can be of the form "mqtts://Password@User:URL:port"
-	#  The MQTT client instance can be fully configured, as specified by the MQTT Gem. It must **not** already be connected!
+	#  The URI can be of the form "mqtts://Password@User:URL:port".
+	#  The MQTT client instance can be fully configured, as specified by the MQTT Gem. It must *not* already be connected!
+	# @example Starting the handler
+	#  mqtt = MQTT::SubHandler.new('iot.eclipse.org');
+	#  mqtt = MQTT::SubHandler.new(MQTT::Client.new("Your.Client.Opts"))
 	def initialize(mqttClient)
 		@callbackList = Array.new();
 		if mqttClient.is_a? String then

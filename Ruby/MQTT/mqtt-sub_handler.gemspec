@@ -1,13 +1,14 @@
 Gem::Specification.new do |s|
   s.name        = 'mqtt-sub_handler'
-  s.version     = '0.0.1'
-  s.date        = '2018-02-10'
+  s.version     = '0.0.3'
+  s.date        = '2018-02-17'
   s.summary     = "Asynchronous, topic-based MQTT gem"
-  s.description = "A gem to use when the normal ruby mqtt doesn't hit the spot."
+  s.description = "Asynchronous handling of callbacks that can be attached to individual topics, based on the mqtt gem."
   s.authors     = ["Xasin"]
   s.files       = [  "lib/mqtt/sub_handler.rb",
                      "lib/mqtt/subscription_classes.rb",
-                     "lib/mqtt/Waitpoint.rb"]
+                     "lib/mqtt/Waitpoint.rb",
+					 "README.md"]
   s.homepage    =
     'https://github.com/XasWorks/XasCode/tree/MQTT_GEM/Ruby/MQTT'
   s.license     = 'GPL-3.0'
