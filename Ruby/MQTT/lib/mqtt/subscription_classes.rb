@@ -9,7 +9,7 @@ module MQTT
 			attr_reader :qos
 			attr_reader :topic_split
 
-			def initialize(topic, qos)
+			def initialize(topic, _qos)
 				@topic 		 = topic;
 				@topic_split = SubHandler.getTopicSplit(topic);
 
@@ -56,7 +56,7 @@ module MQTT
 				@callbackList = Array.new();
 			end
 
-			def offer(topicList, data)
+			def offer(_topicList, data)
 				return if data == @value;
 				oldValue = @value;
 				@value = data;
