@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name        = 'mqtt-sub_handler'
-  s.version     = '0.0.4'
-  s.date        = '2018-04-24'
+  s.version     = '0.0.5'
+  s.date        = '2018-05-1'
   s.summary     = "Asynchronous, topic-based MQTT gem"
   s.description = "Asynchronous handling of callbacks that can be attached to individual topics, based on the mqtt gem."
   s.authors     = ["Xasin"]
