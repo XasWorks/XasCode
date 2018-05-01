@@ -40,10 +40,10 @@ class SubHandler
 		return nil unless receivedTopicList.length >= topicPattern.length;
 
 		topicPattern.each_index do |i|
-			if(topicPattern[i] == "+") then
+			if(topicPattern[i] == "+")
 				outputTopicList << receivedTopicList[i];
 
-			elsif(topicPattern[i] == "#") then
+			elsif(topicPattern[i] == "#")
 				outputTopicList.concat receivedTopicList[i..-1];
 				return outputTopicList;
 
@@ -76,7 +76,7 @@ class SubHandler
 	def raw_subscribe_to(topic, qos: 1)
 		begin
 			@conChangeMutex.lock
-			if not @connected then
+			if not @connected
 				@subscribeQueue << [topic, qos];
 				@conChangeMutex.unlock
 			else
@@ -222,10 +222,51 @@ class SubHandler
 	end
 	alias publishTo publish_to
 
+	def ensure_clean_start()
+		@mqttWasStartedClean = @mqtt.clean_session
+		if @mqttWasStartedClean
+			begin
+				@mqtt.connect();
+				@mqtt.disconnect();
+			rescue MQTT::Exception
+				sleep 1;
+				retry
+			rescue SocketError, SystemCallError
+				sleep 5
+				retry
+			end
+			@mqtt.clean_session=false;
+		end
+	end
+	private :ensure_clean_start
+
+	def ensure_clean_exit()
+		if(@mqttWasStartedClean)
+			print "Logging out of mqtt server... "
+			begin
+			Timeout.timeout(10) {
+				begin
+					@mqtt.clean_session = true;
+					@mqtt.disconnect();
+					@mqtt.connect();
+				rescue MQTT::Exception, SocketError, SystemCallError
+					sleep 1
+					retry;
+				end
+			}
+			rescue  Timeout::Error
+				puts "Timed out, aborting!";
+			else
+				puts "Done."
+			end
+		end
+	end
+	private :ensure_clean_exit
+
 	def mqtt_resub_thread
 		while(true)
 			begin
-				Timeout::timeout(10) {
+				Timeout.timeout(10) {
 					@mqtt.connect()
 				}
 				@conChangeMutex.synchronize {
@@ -270,12 +311,12 @@ class SubHandler
 	end
 	def flush_pubqueue()
 		puts "\n";
-		if @publishQueue.empty? then
+		if @publishQueue.empty?
 			puts "MQTT buffer empty, continuing."
 		else
 			print "Finishing sending of MQTT messages ... "
 			begin
-				Timeout::timeout(10) {
+				Timeout.timeout(10) {
 					until @publishQueue.empty? do
 						sleep 0.05;
 					end
@@ -299,7 +340,7 @@ class SubHandler
 	#  mqtt = MQTT::SubHandler.new(MQTT::Client.new("Your.Client.Opts"))
 	def initialize(mqttClient)
 		@callbackList = Array.new();
-		if mqttClient.is_a? String then
+		if mqttClient.is_a? String
 			@mqtt = MQTT::Client.new(mqttClient);
 		else
 			@mqtt = mqttClient;
@@ -317,52 +358,19 @@ class SubHandler
 		@trackerHash = Hash.new();
 
 		@listenerThread = Thread.new do
-			if @mqtt.clean_session
-				@mqttWasStartedClean = true;
-				begin
-					@mqtt.connect();
-					@mqtt.disconnect();
-				rescue MQTT::Exception
-					sleep 1;
-					retry
-				rescue SocketError, SystemCallError
-					sleep 5
-					retry
-				end
-				@mqtt.clean_session=false;
-			end
-
-			mqtt_resub_thread
+			ensure_clean_start();
+			mqtt_resub_thread();
 		end
 		@listenerThread.abort_on_exception = true;
 
 		at_exit {
-			flush_pubqueue
+			flush_pubqueue();
 			@listenerThread.kill();
-
-			if(@mqttWasStartedClean) then
-				print "Logging out of mqtt server... "
-				begin
-				Timeout::timeout(10) {
-					begin
-						@mqtt.clean_session = true;
-						@mqtt.disconnect();
-						@mqtt.connect();
-					rescue MQTT::Exception, SocketError, SystemCallError
-						sleep 1
-						retry;
-					end
-				}
-				rescue  Timeout::Error
-					puts "Timed out, aborting!";
-				else
-					puts "Done."
-				end
-			end
+			ensure_clean_exit();
 		}
 
 		begin
-		Timeout::timeout(10) {
+		Timeout.timeout(10) {
 			until(@connected) do sleep 0.1; end
 		}
 		rescue Timeout::Error
