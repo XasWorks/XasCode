@@ -58,11 +58,12 @@ module MQTT
 
 			def offer(topicList, data)
 				return if data == @value;
+				oldValue = @value;
+				@value = data;
 
 				@callbackList.each do |cb|
-					cb.call(data, @value);
+					cb.call(data, oldValue);
 				end
-				@value = data;
 			end
 
 			def attach(callback)
