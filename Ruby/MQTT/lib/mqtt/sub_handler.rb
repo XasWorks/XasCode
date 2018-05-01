@@ -128,7 +128,7 @@ class SubHandler
 	# @yieldparam topicList [Array<String>] The wildcard topic branches matched.
 	# @yieldreturn [Boolean] Whether or not the data was sufficient, and capture should be stopped.
 	def wait_for(topic, qos: 1, timeout: nil)
-		unless block_given? then
+		unless block_given?
 			raise ArgumentError, "A block for data-processing needs to be passed!"
 		end
 
@@ -136,10 +136,10 @@ class SubHandler
 		register_subscription(subObject);
 
 		begin
-		Timeout::timeout(timeout) do
+		Timeout.timeout(timeout) do
 			loop do
 				return_data = subObject.waitpoint.wait()[1];
-				if yield(return_data[0], return_data[1]) then
+				if yield(return_data[0], return_data[1])
 					return true;
 				end
 			end
@@ -208,7 +208,7 @@ class SubHandler
 
 		begin
 			@conChangeMutex.lock
-			if not @connected then
+			if not @connected
 				@publishQueue << {topic: topic, data: data, qos: qos, retain: retain} unless qos == 0
 				@conChangeMutex.unlock
 			else
