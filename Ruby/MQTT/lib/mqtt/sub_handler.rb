@@ -2,7 +2,7 @@
 require 'timeout'
 require 'mqtt'
 
-require 'mqtt/subscription_classes'
+require_relative 'subscription_classes.rb'
 
 # @author Xasin
 module MQTT
@@ -19,7 +19,7 @@ class SubHandler
 	# @param topicName [String] The string topic which to split
 	# @return [Array<String>] A list of individual topic-branches
 	# @note This function is mainly used for background processing.
-	def self.getTopicSplit(topicName)
+	def self.get_topic_split(topicName)
 		return topicName.scan(/[^\/]+/);
 	end
 
@@ -27,13 +27,13 @@ class SubHandler
 	# @param receivedTopicString [String] The string (as
 	#  returned by MQTT.get) to compare
 	# @param topicPattern [Array<String>] The Topic-Array (as
-	#  returned by .getTopicSplit) to compare against
+	#  returned by .get_topic_split) to compare against
 	# @return [nil, Array<String>] Nil if no match was found.
 	#  An Array of matched wildcard topic branches (can be empty) when
 	#  successfully matched
-	# @note (see .getTopicSplit)
+	# @note (see .get_topic_split)
 	def self.getTopicMatch(receivedTopicString, topicPattern)
-		receivedTopicList = getTopicSplit receivedTopicString;
+		receivedTopicList = get_topic_split receivedTopicString;
 
 		outputTopicList = Array.new();
 

@@ -1,5 +1,5 @@
 
-require "mqtt/sub_handler"
+require_relative "sub_handler.rb"
 
 module MQTT
 	module Testing
