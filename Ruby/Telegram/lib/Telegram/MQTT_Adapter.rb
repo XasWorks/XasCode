@@ -32,7 +32,7 @@ module Telegram
 			# @param uID [Integer,String] The user-id as received from the MQTT Wildcard.
 			#   Can be a username defined in @usernameList
 			def _handle_send(data, uID)
-				uID = uID[0];
+				# Resolve a saved Username to a User-ID
 				uID = @usernameList[uID] if(@usernameList.key? uID)
 				uID = uID.to_i;
 
@@ -47,37 +47,46 @@ module Telegram
 
 				reply = @httpCore.perform_post("sendMessage", data);
 
+				# Check if this message has a grouping ID
 				if(gID = data[:GID])
+					# If the message has the :single flag, delete the last one
 					if(data[:single] and (mID = @groupIDList[uID][gID]))
 						@httpCore.perform_post("deleteMessage", {chat_id: uID, message_id: mID})
 					end
 
+					# Save this grouping ID
 					@groupIDList[uID][gID] = reply[:result][:message_id];
 				end
 			end
 
+			def _handle_edit(data, uID)
+				# Resolve a saved Username to a User-ID
+				uID = @usernameList[uID] if(@usernameList.key? uID)
+				uID = uID.to_i;
+
+				begin
+					data = JSON.parse(data, symbolize_names: true);
+
+					return unless data[:text];
+					# Fetch the target Message ID
+					return unless mID = @groupIDList[uID].key(data[:GID])
+
+					# Send the POST request editing the message text
+					@httpCore.perform_post("editMessageText",
+							{	text: data[:text],
+								chat_id: 	uID,
+								message_id:	mID});
+				rescue
+				end
+			end
+
 			def setup_mqtt()
-				@mqtt.subscribe_to "Telegram/+/Send" do |data, uID|
-					_handle_send(data, uID);
+				@mqtt.subscribe_to "Telegram/+/Send" do |data, tSplit|
+					_handle_send(data, tSplit[0]);
 				end
 
-				@mqtt.subscribe_to "Telegram/+/Edit" do |data, uID|
-					uID = uID[0];
-					uID = @usernameList[uID] if(@usernameList.key? uID)
-					uID = uID.to_i;
-
-					begin
-						data = JSON.parse(data, symbolize_names: true);
-
-						if(mID = data[:message_id])
-							if(newMID = @groupIDList[uID].key(mID))
-								data[:message_id] = newMID;
-							end
-						end
-
-						data[:chat_id] = uID;
-					rescue
-					end
+				@mqtt.subscribe_to "Telegram/+/Edit" do |data, tSplit|
+					_handle_edit(data, tSplit[0])
 				end
 			end
 
