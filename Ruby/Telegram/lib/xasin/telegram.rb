@@ -1,3 +1,3 @@
 
-require_relative "Telegram/HTTPCore.rb"
-require_relative "Telegram/SingleUser.rb"
+require_relative "telegram/HTTPCore.rb"
+require_relative "telegram/SingleUser.rb"

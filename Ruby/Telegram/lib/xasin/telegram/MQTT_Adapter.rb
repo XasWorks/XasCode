@@ -1,4 +1,5 @@
 
+require_relative 'HTTPCore.rb'
 require 'mqtt/sub_handler'
 
 module Xasin
@@ -20,7 +21,9 @@ module Telegram
 				# Hash {username => ChatID}
 				@usernameList 	= Hash.new();
 				# Hash {ChatID => {GroupID => MessageID}}
-				@groupIDList 	= Hash.new();
+				@groupIDList 	= Hash.new do |hash, key|
+					hash[key] = Hash.new;
+				end
 
 				setup_mqtt();
 			end
