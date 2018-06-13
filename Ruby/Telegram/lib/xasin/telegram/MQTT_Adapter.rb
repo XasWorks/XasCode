@@ -38,7 +38,8 @@ module Telegram
 			def _handle_send(data, uID)
 				# Resolve a saved Username to a User-ID
 				uID = @usernameList[uID] if(@usernameList.key? uID)
-				uID = uID.to_i;
+				return if (uID = uID.to_i) == 0;
+
 
 				begin
 					data = JSON.parse(data, symbolize_names: true);
@@ -67,7 +68,7 @@ module Telegram
 			def _handle_edit(data, uID)
 				# Resolve a saved Username to a User-ID
 				uID = @usernameList[uID] if(@usernameList.key? uID)
-				uID = uID.to_i;
+				return if (uID = uID.to_i) == 0;
 
 				begin
 					data = JSON.parse(data, symbolize_names: true);
@@ -88,7 +89,7 @@ module Telegram
 			def _handle_delete(data, uID)
 				# Resolve a saved Username to a User-ID
 				uID = @usernameList[uID] if(@usernameList.key? uID)
-				uID = uID.to_i;
+				return if (uID = uID.to_i) == 0;
 
 				# Fetch the real message ID held by a grouping ID
 				return unless mID = @groupIDList[uID][data]
