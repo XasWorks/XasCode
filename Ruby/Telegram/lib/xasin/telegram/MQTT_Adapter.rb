@@ -28,6 +28,19 @@ module Telegram
 				setup_mqtt();
 			end
 
+			def _process_inline_keyboard(keyboardLayout, GID)
+				return nil unless (keyboardLayout.is_a? Array)
+				return nil unless GID
+
+				outData = Array.new();
+
+				keyboardLayout.each do |key|
+					outData << {text: key, callback_data: "#{GID}:#{key}"}
+				end
+
+				return {inline_keyboard: outData};
+			end
+
 			# Processes messages received through MQTT
 			# It takes care of setting a few good defaults (like parse_mode),
 			# deletes any old messages of the same GroupID (if requested),
@@ -40,7 +53,6 @@ module Telegram
 				uID = @usernameList[uID] if(@usernameList.key? uID)
 				return if (uID = uID.to_i) == 0;
 
-
 				begin
 					data = JSON.parse(data, symbolize_names: true);
 				rescue
@@ -48,10 +60,17 @@ module Telegram
 					data = {text: data}
 				end
 
-				data[:parse_mode] ||= "Markdown";
-				data[:chat_id]		= uID;
+				outData = {
+					chat_id: 	uID,
+					parse_mode: (data[:parse_mode] or "Markdown"),
+					text:			data[:text]
+				}
 
-				reply = @httpCore.perform_post("sendMessage", data);
+				if(ilk = data[:inline_keyboard])
+					outData[:reply_markup] = _process_inline_keyboard(ilk, data[:GID]);
+				end
+
+				reply = @httpCore.perform_post("sendMessage", outData);
 
 				# Check if this message has a grouping ID
 				if(gID = data[:GID])
@@ -77,11 +96,22 @@ module Telegram
 					# Fetch the target Message ID
 					return unless mID = @groupIDList[uID][data[:GID]]
 
-					# Send the POST request editing the message text
-					@httpCore.perform_post("editMessageText",
-							{	text: data[:text],
-								chat_id: 	uID,
-								message_id:	mID});
+					outData = {
+						chat_id: uID,
+						message_id: mID,
+					};
+
+					if(data[:inline_keyboard])
+						outData[:reply_markup] = _process_inline_keyboard(data[:inline_keyboard]);
+					end
+
+					if(data[:text])
+						outData[:text] = data[:text];
+						# Send the POST request editing the message text
+						@httpCore.perform_post("editMessageText", outData);
+					else
+						@httpCore.perform_post("editMessageReplyMarkup", outData);
+					end
 				rescue
 				end
 			end
@@ -137,10 +167,22 @@ module Telegram
 					end
 
 					if(data[:reply_GID])
-						@mqtt.publish_to "Telegram/#{uID}/Reply", data;
+						@mqtt.publish_to "Telegram/#{uID}/Reply", data.to_json;
 					else
-						@mqtt.publish_to "Telegram/#{uID}/Received", data;
+						@mqtt.publish_to "Telegram/#{uID}/Received", data.to_json;
 					end
+				end
+
+				if(msg = packet[:callback_query])
+					@httpCore.perform_post("answerCallbackQuery", {callback_query_id: msg[:id]});
+
+					uID = msg[:message][:chat][:id];
+					if(newUID = @usernameList.key(uID))
+						uID = newUID
+					end
+
+					return unless /(\w+):(\w+)/ =~ msg[:data]
+					@mqtt.publish_to "Telegram/#{uID}/KeyboardPress", {GID: $1, key: $2}
 				end
 			end
 		end

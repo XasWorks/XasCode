@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'xasin-telegram'
-  s.version     = '0.1.2.dev'
+  s.version     = '0.1.3.dev'
   s.date        = '2018-06-13'
   s.summary     = "Xasin's Telegram gem"
   s.description = "Multi-Purpose Telegram gem. Mainly for personal use, but also used as a Telegram to MQTT Bridge for IoT devices"
