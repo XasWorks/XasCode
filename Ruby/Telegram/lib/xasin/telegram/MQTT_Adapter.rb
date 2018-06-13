@@ -1,6 +1,7 @@
 
 require 'mqtt/sub_handler'
 
+module Xasin
 module Telegram
 	module MQTT
 		class Server
@@ -140,4 +141,5 @@ module Telegram
 			end
 		end
 	end
+end
 end

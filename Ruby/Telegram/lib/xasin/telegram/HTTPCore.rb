@@ -2,6 +2,7 @@
 require 'net/http'
 require 'json'
 
+module Xasin
 module Telegram
 	class HTTPCore
 		def initialize(apikey)
@@ -61,4 +62,5 @@ module Telegram
 			@receptors << receptorClass;
 		end
 	end
+end
 end
