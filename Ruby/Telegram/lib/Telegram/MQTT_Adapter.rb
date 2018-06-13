@@ -39,6 +39,7 @@ module Telegram
 				begin
 					data = JSON.parse(data, symbolize_names: true);
 				rescue
+					# Allow for pure-text to be sent (easier on the ESPs)
 					data = {text: data}
 				end
 
@@ -50,8 +51,8 @@ module Telegram
 				# Check if this message has a grouping ID
 				if(gID = data[:GID])
 					# If the message has the :single flag, delete the last one
-					if(data[:single] and (mID = @groupIDList[uID][gID]))
-						@httpCore.perform_post("deleteMessage", {chat_id: uID, message_id: mID})
+					if(data[:single])
+						_handle_delete(gID, uID);
 					end
 
 					# Save this grouping ID
@@ -69,7 +70,7 @@ module Telegram
 
 					return unless data[:text];
 					# Fetch the target Message ID
-					return unless mID = @groupIDList[uID].key(data[:GID])
+					return unless mID = @groupIDList[uID][data[:GID]]
 
 					# Send the POST request editing the message text
 					@httpCore.perform_post("editMessageText",
@@ -80,6 +81,18 @@ module Telegram
 				end
 			end
 
+			def _handle_delete(data, uID)
+				# Resolve a saved Username to a User-ID
+				uID = @usernameList[uID] if(@usernameList.key? uID)
+				uID = uID.to_i;
+
+				# Fetch the real message ID held by a grouping ID
+				return unless mID = @groupIDList[uID][data]
+				@groupIDList[uID].delete(data);
+
+				@httpCore.perform_post("deleteMessage", {chat_id: uID, message_id: mID});
+			end
+
 			def setup_mqtt()
 				@mqtt.subscribe_to "Telegram/+/Send" do |data, tSplit|
 					_handle_send(data, tSplit[0]);
@@ -87,6 +100,20 @@ module Telegram
 
 				@mqtt.subscribe_to "Telegram/+/Edit" do |data, tSplit|
 					_handle_edit(data, tSplit[0])
+				end
+
+				@mqtt.subscribe_to "Telegram/+/Delete" do |data, tSplit|
+					_handle_delete(data, tSplit[0])
+				end
+
+				@mqtt.subscribe_to "Telegram/+/Release" do |data, tSplit|
+					# Resolve a saved Username to a User-ID
+					uID = tSplit[0];
+					uID = @usernameList[uID] if(@usernameList.key? uID)
+					uID = uID.to_i;
+
+					# Delete the stored GID key
+					@groupIDList[uID].delete(data);
 				end
 			end
 
