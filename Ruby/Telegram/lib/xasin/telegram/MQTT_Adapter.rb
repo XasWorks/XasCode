@@ -28,14 +28,14 @@ module Telegram
 				setup_mqtt();
 			end
 
-			def _process_inline_keyboard(keyboardLayout, GID)
+			def _process_inline_keyboard(keyboardLayout, gID)
 				return nil unless (keyboardLayout.is_a? Array)
-				return nil unless GID
+				return nil unless gID
 
 				outData = Array.new();
 
 				keyboardLayout.each do |key|
-					outData << {text: key, callback_data: "#{GID}:#{key}"}
+					outData << {text: key, callback_data: "#{gID}:#{key}"}
 				end
 
 				return {inline_keyboard: outData};
@@ -181,7 +181,7 @@ module Telegram
 						uID = newUID
 					end
 
-					return unless /(\w+):(\w+)/ =~ msg[:data]
+					return unless /(\S+):(\S+)/ =~ msg[:data]
 					@mqtt.publish_to "Telegram/#{uID}/KeyboardPress", {GID: $1, key: $2}
 				end
 			end
