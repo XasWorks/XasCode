@@ -76,12 +76,11 @@ module Telegram
 					text:			data[:text]
 				}
 
-				if(ilk = data[:inline_keyboard])
+				if(ilk = data[:inline_keyboard] and data[:GID])
 					outData[:reply_markup] = _process_inline_keyboard(ilk, data[:GID]);
 				end
 
 				reply = @httpCore.perform_post("sendMessage", outData);
-				puts "Core Reply: #{reply}"
 				return unless reply[:ok]
 
 				# Check if this message has a grouping ID
