@@ -33,9 +33,19 @@ module Telegram
 				return nil unless gID
 
 				outData = Array.new();
-
-				keyboardLayout.each do |key|
-					outData << {text: key, callback_data: "#{gID}:#{key}"}
+				if(keyboardLayout[0].is_a? String) then
+					keyboardLayout.each do |key|
+						outData << {text: key, callback_data: "#{gID}:#{key}"}
+					end
+					outData = [outData];
+				else
+					keyboardLayout.each do |row|
+						newRow = Array.new();
+						row.each do |key|
+							newRow << {text: key, callback_data: "#{gID}:#{key}"}
+						end
+						outData << newRow
+					end
 				end
 
 				return {inline_keyboard: outData};
@@ -71,6 +81,8 @@ module Telegram
 				end
 
 				reply = @httpCore.perform_post("sendMessage", outData);
+				puts "Core Reply: #{reply}"
+				return unless reply[:ok]
 
 				# Check if this message has a grouping ID
 				if(gID = data[:GID])
