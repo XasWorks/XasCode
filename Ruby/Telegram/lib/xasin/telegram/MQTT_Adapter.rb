@@ -76,15 +76,15 @@ module Telegram
 					text:			data[:text]
 				}
 
-				if(ilk = data[:inline_keyboard] and data[:GID])
-					outData[:reply_markup] = _process_inline_keyboard(ilk, data[:GID]);
+				if(ilk = data[:inline_keyboard] and data[:gid])
+					outData[:reply_markup] = _process_inline_keyboard(ilk, data[:gid]);
 				end
 
 				reply = @httpCore.perform_post("sendMessage", outData);
 				return unless reply[:ok]
 
 				# Check if this message has a grouping ID
-				if(gID = data[:GID])
+				if(gID = data[:gid])
 					# If the message has the :single flag, delete the last one
 					if(data[:single])
 						_handle_delete(gID, uID);
@@ -105,7 +105,7 @@ module Telegram
 
 					return unless data[:text];
 					# Fetch the target Message ID
-					return unless mID = @groupIDList[uID][data[:GID]]
+					return unless mID = @groupIDList[uID][data[:gid]]
 
 					outData = {
 						chat_id: uID,
@@ -174,10 +174,10 @@ module Telegram
 					return unless(data[:text] = msg[:text])
 
 					if(replyMSG = msg[:reply_to_message])
-						data[:reply_GID] = @groupIDList[uID].key(replyMSG[:message_id]);
+						data[:reply_gid] = @groupIDList[uID].key(replyMSG[:message_id]);
 					end
 
-					if(data[:reply_GID])
+					if(data[:reply_gid])
 						@mqtt.publish_to "Telegram/#{uID}/Reply", data.to_json;
 					else
 						@mqtt.publish_to "Telegram/#{uID}/Received", data.to_json;
@@ -193,7 +193,7 @@ module Telegram
 					end
 
 					return unless /(\S+):(\S+)/ =~ msg[:data]
-					@mqtt.publish_to "Telegram/#{uID}/KeyboardPress", {GID: $1, key: $2}
+					@mqtt.publish_to "Telegram/#{uID}/KeyboardPress", {gid: $1, key: $2}.to_json
 				end
 			end
 		end
