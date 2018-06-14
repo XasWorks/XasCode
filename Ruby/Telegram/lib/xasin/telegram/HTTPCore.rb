@@ -21,7 +21,16 @@ module Telegram
 
 			begin
 				if data
-					response = Net::HTTP.post_form(callAddress, data);
+					outData = Hash.new();
+					data.each do |key, val|
+						if(val.is_a? Hash or val.is_a? Array)
+							outData[key] = val.to_json
+						else
+							outData[key] = val;
+						end
+					end
+
+					response = Net::HTTP.post_form(callAddress, outData);
 				else
 					response = Net::HTTP.get callAddress
 				end
