@@ -32,20 +32,18 @@ module Telegram
 				return nil unless (keyboardLayout.is_a? Array)
 				return nil unless gID
 
+
+				keyboardLayout = [keyboardLayout] unless(keyboardLayout[0].is_a? Array);
 				outData = Array.new();
-				if(keyboardLayout[0].is_a? String) then
-					keyboardLayout.each do |key|
-						outData << {text: key, callback_data: "#{gID}:#{key}"}
+
+				keyboardLayout.each do |row|
+					newRow = Array.new();
+
+					row.each do |key, val|
+						cbd = {i: gID, k: (val or key)};
+						newRow << {text: key, callback_data: cbd.to_json}
 					end
-					outData = [outData];
-				else
-					keyboardLayout.each do |row|
-						newRow = Array.new();
-						row.each do |key|
-							newRow << {text: key, callback_data: "#{gID}:#{key}"}
-						end
-						outData << newRow
-					end
+					outData << newRow;
 				end
 
 				return {inline_keyboard: outData};
@@ -177,6 +175,10 @@ module Telegram
 						data[:reply_gid] = @groupIDList[uID].key(replyMSG[:message_id]);
 					end
 
+					if(data[:text] =~ /^\//)
+						@mqtt.publish_to "Telegram/#{uID}/Command", data.to_json;
+					end
+
 					if(data[:reply_gid])
 						@mqtt.publish_to "Telegram/#{uID}/Reply", data.to_json;
 					else
@@ -193,7 +195,15 @@ module Telegram
 					end
 
 					return unless /(\S+):(\S+)/ =~ msg[:data]
-					@mqtt.publish_to "Telegram/#{uID}/KeyboardPress", {gid: $1, key: $2}.to_json
+					begin
+						data = JSON.parse(msg[:data], symbolize_names: true);
+
+						if(data[:k] =~ /^\//)
+							@mqtt.publish_to "Telegram/#{uID}/Command", {text: data[:k]}.to_json
+						end
+						@mqtt.publish_to "Telegram/#{uID}/KeyboardPress", data.to_json
+					rescue
+					end
 				end
 			end
 		end
