@@ -62,10 +62,19 @@ module Telegram
 				return if (uID = uID.to_i) == 0;
 
 				begin
-					data = JSON.parse(data, symbolize_names: true);
+					data = JSON.parse(data, symbolize_names: true) if data.is_a? String
 				rescue
 					# Allow for pure-text to be sent (easier on the ESPs)
 					data = {text: data}
+				end
+
+				if(gID = data[:gid])
+					if(data[:replace])
+						_handle_delete(gID, uID)
+					elsif(data[:overwrite] and @groupIDList[uID][gID])
+						_handle_edit(data, uID);
+						return;
+					end
 				end
 
 				outData = {
@@ -83,11 +92,6 @@ module Telegram
 
 				# Check if this message has a grouping ID
 				if(gID = data[:gid])
-					# If the message has the :single flag, delete the last one
-					if(data[:single])
-						_handle_delete(gID, uID);
-					end
-
 					# Save this grouping ID
 					@groupIDList[uID][gID] = reply[:result][:message_id];
 				end
@@ -99,9 +103,8 @@ module Telegram
 				return if (uID = uID.to_i) == 0;
 
 				begin
-					data = JSON.parse(data, symbolize_names: true);
+					data = JSON.parse(data, symbolize_names: true) if data.is_a? String
 
-					return unless data[:text];
 					# Fetch the target Message ID
 					return unless mID = @groupIDList[uID][data[:gid]]
 
@@ -177,9 +180,7 @@ module Telegram
 
 					if(data[:text] =~ /^\//)
 						@mqtt.publish_to "Telegram/#{uID}/Command", data.to_json;
-					end
-
-					if(data[:reply_gid])
+					elsif(data[:reply_gid])
 						@mqtt.publish_to "Telegram/#{uID}/Reply", data.to_json;
 					else
 						@mqtt.publish_to "Telegram/#{uID}/Received", data.to_json;
@@ -198,8 +199,13 @@ module Telegram
 					begin
 						data = JSON.parse(msg[:data], symbolize_names: true);
 
-						if(data[:k] =~ /^\//)
-							@mqtt.publish_to "Telegram/#{uID}/Command", {text: data[:k]}.to_json
+						data = {
+							gid:  data[:g],
+							key: data[:k],
+						}
+
+						if(data[:key] =~ /^\//)
+							@mqtt.publish_to "Telegram/#{uID}/Command", {text: data[:key]}.to_json
 						end
 						@mqtt.publish_to "Telegram/#{uID}/KeyboardPress", data.to_json
 					rescue
