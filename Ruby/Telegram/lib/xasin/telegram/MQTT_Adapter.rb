@@ -29,9 +29,8 @@ module Telegram
 			end
 
 			def _process_inline_keyboard(keyboardLayout, gID)
-				return nil unless (keyboardLayout.is_a? Array)
+				return nil unless (keyboardLayout.is_a? Array or keyboardLayout.is_a? Hash)
 				return nil unless gID
-
 
 				keyboardLayout = [keyboardLayout] unless(keyboardLayout[0].is_a? Array);
 				outData = Array.new();
@@ -113,8 +112,8 @@ module Telegram
 						message_id: mID,
 					};
 
-					if(data[:inline_keyboard])
-						outData[:reply_markup] = _process_inline_keyboard(data[:inline_keyboard]);
+					if(data[:inline_keyboard] and data[:gid])
+						outData[:reply_markup] = _process_inline_keyboard(data[:inline_keyboard], data[:gid]);
 					end
 
 					if(data[:text])
@@ -200,7 +199,7 @@ module Telegram
 						data = JSON.parse(msg[:data], symbolize_names: true);
 
 						data = {
-							gid:  data[:g],
+							gid:  data[:i],
 							key: data[:k],
 						}
 
