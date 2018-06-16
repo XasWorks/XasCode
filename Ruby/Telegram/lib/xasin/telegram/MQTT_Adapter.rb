@@ -194,7 +194,6 @@ module Telegram
 						uID = newUID
 					end
 
-					return unless /(\S+):(\S+)/ =~ msg[:data]
 					begin
 						data = JSON.parse(msg[:data], symbolize_names: true);
 
