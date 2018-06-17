@@ -9,6 +9,7 @@ module Telegram
 			attr_accessor :usernameList
 
 			def initialize(httpCore, mqtt)
+				# Check if we already have a HTTPCore, else create one
 				if(httpCore.is_a? Telegram::HTTPCore)
 					@httpCore = httpCore;
 				else
@@ -29,22 +30,33 @@ module Telegram
 			end
 
 			def _process_inline_keyboard(keyboardLayout, gID)
+				# Return unless we have a structure we can form into a keyboard
 				return nil unless (keyboardLayout.is_a? Array or keyboardLayout.is_a? Hash)
-				return nil unless gID
 
-				keyboardLayout = [keyboardLayout] unless(keyboardLayout[0].is_a? Array);
+				# Make sure the structure of keyboardLayout is [{}] or [[]]
+				if(keyboardLayout.is_a? Hash)
+					keyboardLayout = [keyboardLayout]
+				elsif(not (keyboardLayout[0].is_a? Array or keyboardLayout[0].is_a? Hash))
+					keyboardLayout = [keyboardLayout]
+				end
+
 				outData = Array.new();
 
+				# Iterate through the rows of keyboards
 				keyboardLayout.each do |row|
 					newRow = Array.new();
 
+					# Create the INLINE KEY button elements
 					row.each do |key, val|
 						cbd = {i: gID, k: (val or key)};
 						newRow << {text: key, callback_data: cbd.to_json}
 					end
+
+					# Add the new row to the array of rows
 					outData << newRow;
 				end
 
+				# Return the ready reply_markup element
 				return {inline_keyboard: outData};
 			end
 
