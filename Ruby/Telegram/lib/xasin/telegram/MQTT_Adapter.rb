@@ -29,7 +29,7 @@ module Telegram
 				setup_mqtt();
 			end
 
-			def _process_inline_keyboard(keyboardLayout, gID)
+			def _process_inline_keyboard(keyboardLayout, gID = nil)
 				# Return unless we have a structure we can form into a keyboard
 				return nil unless (keyboardLayout.is_a? Array or keyboardLayout.is_a? Hash)
 

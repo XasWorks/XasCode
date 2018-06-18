@@ -9,9 +9,10 @@ module Xasin
 			attr_accessor :toReturn
 
 			def initialize()
+				prepare();
 			end
 
-			def reconfigure()
+			def prepare()
 				@lastPostData  	= Array.new();
 				@lastPostRequest 	= Array.new();
 
