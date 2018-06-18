@@ -154,7 +154,7 @@ module Telegram
 			def setup_mqtt()
 				@mqtt.subscribe_to "Telegram/+/Send" do |data, tSplit|
 					begin
-						data = JSON.parse(data);
+						data = JSON.parse(data, symbolize_names: true);
 					rescue
 						data = {text: data}
 					end
@@ -164,7 +164,7 @@ module Telegram
 
 				@mqtt.subscribe_to "Telegram/+/Edit" do |data, tSplit|
 					begin
-						data = JSON.parse(data);
+						data = JSON.parse(data, symbolize_names: true);
 					rescue
 						next;
 					end
