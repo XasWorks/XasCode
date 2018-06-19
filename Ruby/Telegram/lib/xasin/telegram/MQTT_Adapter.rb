@@ -19,16 +19,21 @@ module Telegram
 
 				@mqtt = mqtt;
 
+				_reset();
+
+				setup_mqtt();
+			end
+
+			def _reset()
 				# Hash {username => ChatID}
 				@usernameList 	= Hash.new();
 				# Hash {ChatID => {GroupID => MessageID}}
 				@groupIDList 	= Hash.new do |hash, key|
 					hash[key] = Hash.new;
 				end
-
-				setup_mqtt();
 			end
 
+			# Tested in ts_mqtt/test_keyboard_build
 			def _process_inline_keyboard(keyboardLayout, gID = nil)
 				# Return unless we have a structure we can form into a keyboard
 				return nil unless (keyboardLayout.is_a? Array or keyboardLayout.is_a? Hash)
@@ -67,6 +72,7 @@ module Telegram
 			# @param data [Hash] The raw "message" object received from the Telegram API
 			# @param uID [Integer,String] The user-id as received from the MQTT Wildcard.
 			#   Can be a username defined in @usernameList
+			# Tested in ts_mqtt/test_send
 			def _handle_send(data, uID)
 				# Resolve a saved Username to a User-ID
 				uID = @usernameList[uID] if(@usernameList.key? uID)
