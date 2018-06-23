@@ -1,10 +1,10 @@
 
-require 'test/unit'
+require 'minitest/autorun'
 
 require_relative '../lib/mqtt/mqtt_hash.rb'
 require_relative '../lib/mqtt/sub_testing.rb'
 
-class TC_Hash < Test::Unit::TestCase
+class TC_Hash < Minitest::Test
 	def setup
 		@mqtt ||= MQTT::Testing::SubHandler.new();
 		@mqtt.prepare();
