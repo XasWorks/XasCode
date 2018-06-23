@@ -44,6 +44,12 @@ module MQTT
 			# @note The published data is not immediately processed.
 			#  Use process_message or process_all
 			def publish_to(topic, data, qos: nil, retain: false)
+				if(@jsonifyHashes and (data.is_a? Array or data.is_a? Hash))
+					data = data.to_json
+				else
+					data = data.to_s;
+				end
+
 				@publish_queue 		<< [topic, data];
 				@message_log[topic] 	<< data;
 				@retained_topics[topic] = data if retain;
@@ -90,11 +96,13 @@ module MQTT
 				@message_log.clear()
 			end
 
-			def initialize()
+			def initialize(jsonfiy: true)
 				@callbackList    = Array.new();
 				@retained_topics = Hash.new();
 				@publish_queue   = Queue.new();
 				@message_log	  = Hash.new() do |h, key| h = Array.new() end;
+
+				@jsonifyHashes = jsonify;
 			end
 
 			def on_error(&handler)
