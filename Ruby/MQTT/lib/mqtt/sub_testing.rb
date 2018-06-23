@@ -12,20 +12,13 @@ module MQTT
 			attr_reader		:publish_queue
 			attr_accessor 	:retained_topics
 
+			attr_accessor  :test_handler
+
 			def call_interested(topic, data)
 				@callbackList.each do |h|
 					tMatch = SubHandler.getTopicMatch(topic, h.topic_split);
 					if tMatch then
-						begin
-							h.offer(tMatch, data)
-						rescue StandardError => e
-							if(@error_handler)
-								@error_handler.call(e);
-							else
-								raise
-							end
-							return
-						end
+						h.offer(tMatch, data)
 					end
 				end
 			end
@@ -70,12 +63,21 @@ module MQTT
 				until @publish_queue.empty?
 					process_message
 					max_loops -= 1;
+
 					if(max_loops == 0)
 						if(error_on_loop)
-							raise RuntimeError, "MQTT Loop recursion detected!"
+							if(test_handler)
+								test_handler.flunk("MQTT Loop recursion detected")
+							else
+								raise RuntimeError, "MQTT Loop recursion detected"
+							end
 						end
 						return
 					end
+				end
+
+				if(error_on_loop and test_handler)
+					test_handler.pass();
 				end
 			end
 
@@ -96,17 +98,29 @@ module MQTT
 				@message_log.clear()
 			end
 
-			def initialize(jsonfiy: true)
+			# Perform a complete reset of the testing unit, clearing out all
+			#  queues and removing all callbacks. This should mainly be used
+			#  inside the teardown or setup routines, before creating a new
+			#  testing instance, to prevent uncleaned garbage.
+			def full_reset()
+				@callbackList.clear();
+				prepare();
+			end
+
+			# Initialize the test class
+			# @param jsonify [Boolean] Whether or not Hashes and Arrays should be
+			#  converted to JSON before sending.
+			# @param test_handler [nil, MiniTest::Test] The test handler to use to report
+			#  errors or pass sanity checks. Must support flunk and pass!
+			def initialize(jsonfiy: true, test_handler: nil)
 				@callbackList    = Array.new();
 				@retained_topics = Hash.new();
 				@publish_queue   = Queue.new();
 				@message_log	  = Hash.new() do |h, key| h = Array.new() end;
 
 				@jsonifyHashes = jsonify;
-			end
 
-			def on_error(&handler)
-				@error_handler = handler;
+				@test_handler = test_handler;
 			end
 		end
 	end
