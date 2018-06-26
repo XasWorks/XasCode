@@ -1,5 +1,6 @@
 
 require_relative "sub_handler.rb"
+require 'securerandom'
 
 module MQTT
 	module Testing
@@ -66,8 +67,8 @@ module MQTT
 
 					if(max_loops == 0)
 						if(error_on_loop)
-							if(test_handler)
-								test_handler.flunk("MQTT Loop recursion detected")
+							if(@test_handler)
+								@test_handler.flunk("MQTT Loop recursion detected")
 							else
 								raise RuntimeError, "MQTT Loop recursion detected"
 							end
@@ -76,8 +77,19 @@ module MQTT
 					end
 				end
 
-				if(error_on_loop and test_handler)
-					test_handler.pass();
+				if(error_on_loop and @test_handler)
+					@test_handler.pass("No MQTT Loop recursion.");
+				end
+			end
+
+			def assert_garbage_resilient()
+				@callbackList.each do |c|
+					t = Array.new() {|a,k| a[k] = SecureRandom.random_bytes(100)}
+					c.offer(t, SecureRandom.random_bytes(100));
+				end
+
+				if(@test_handler)
+					@test_handler.pass("No garbage message problem detected.");
 				end
 			end
 
@@ -112,11 +124,13 @@ module MQTT
 			#  converted to JSON before sending.
 			# @param test_handler [nil, MiniTest::Test] The test handler to use to report
 			#  errors or pass sanity checks. Must support flunk and pass!
-			def initialize(jsonfiy: true, test_handler: nil)
+			def initialize(jsonify: true, test_handler: nil)
 				@callbackList    = Array.new();
 				@retained_topics = Hash.new();
 				@publish_queue   = Queue.new();
 				@message_log	  = Hash.new() do |h, key| h = Array.new() end;
+
+				@trackerHash = Hash.new();
 
 				@jsonifyHashes = jsonify;
 
