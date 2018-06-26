@@ -1,6 +1,6 @@
+
 # with Minitest::Unit
 guard :minitest,
-			bundler: false,
 			test_folders: ['tests'],
 			test_file_patterns: ["tc_*.rb"] do
 
