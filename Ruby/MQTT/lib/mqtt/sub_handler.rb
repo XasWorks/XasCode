@@ -1,8 +1,9 @@
 
 require 'timeout'
 require 'mqtt'
+require 'json'
 
-require 'mqtt/subscription_classes'
+require_relative 'subscription_classes.rb'
 
 # @author Xasin
 module MQTT
@@ -15,11 +16,14 @@ end
 
 
 class SubHandler
+	# Whether or not hashes and arrays should be converted to JSON when sending
+	attr_accessor :jsonifyHashes
+
 	# Split a Topic into a Topic-Array
 	# @param topicName [String] The string topic which to split
 	# @return [Array<String>] A list of individual topic-branches
 	# @note This function is mainly used for background processing.
-	def self.getTopicSplit(topicName)
+	def self.get_topic_split(topicName)
 		return topicName.scan(/[^\/]+/);
 	end
 
@@ -27,13 +31,13 @@ class SubHandler
 	# @param receivedTopicString [String] The string (as
 	#  returned by MQTT.get) to compare
 	# @param topicPattern [Array<String>] The Topic-Array (as
-	#  returned by .getTopicSplit) to compare against
+	#  returned by .get_topic_split) to compare against
 	# @return [nil, Array<String>] Nil if no match was found.
 	#  An Array of matched wildcard topic branches (can be empty) when
 	#  successfully matched
-	# @note (see .getTopicSplit)
+	# @note (see .get_topic_split)
 	def self.getTopicMatch(receivedTopicString, topicPattern)
-		receivedTopicList = getTopicSplit receivedTopicString;
+		receivedTopicList = get_topic_split receivedTopicString;
 
 		outputTopicList = Array.new();
 
@@ -206,6 +210,10 @@ class SubHandler
 	def publish_to(topic, data, qos: 1, retain: false)
 		raise ArgumentError, "Wrong symbol in topic: #{topic}" if topic =~ /[#\+]/
 
+		if(@jsonifyHashes and (data.is_a? Array or data.is_a? Hash))
+			data = data.to_json
+		end
+
 		begin
 			@conChangeMutex.lock
 			if not @connected
@@ -335,16 +343,20 @@ class SubHandler
 	# @param mqttClient [String, MQTT::Client] Either a URI to connect to, or a MQTT::Client
 	#  The URI can be of the form "mqtts://Password@User:URL:port".
 	#  The MQTT client instance can be fully configured, as specified by the MQTT Gem. It must *not* already be connected!
+	# @param jsonify [Boolean] Should Hashes and Arrays input into publish_to be converted to JSON?
+	#  This can be useful to have one less .to_json call. Default is true.
 	# @example Starting the handler
 	#  mqtt = MQTT::SubHandler.new('iot.eclipse.org');
 	#  mqtt = MQTT::SubHandler.new(MQTT::Client.new("Your.Client.Opts"))
-	def initialize(mqttClient)
+	def initialize(mqttClient, jsonify: true)
 		@callbackList = Array.new();
 		if mqttClient.is_a? String
 			@mqtt = MQTT::Client.new(mqttClient);
 		else
 			@mqtt = mqttClient;
 		end
+
+		@jsonifyHashes = jsonify;
 
 		@conChangeMutex = Mutex.new();
 		@connected 		= false;

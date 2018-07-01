@@ -1,5 +1,5 @@
 
-require 'mqtt/Waitpoint.rb'
+require_relative 'Waitpoint.rb'
 
 module MQTT
 	module Subscriptions
@@ -11,7 +11,7 @@ module MQTT
 
 			def initialize(topic, _qos)
 				@topic 		 = topic;
-				@topic_split = SubHandler.getTopicSplit(topic);
+				@topic_split = SubHandler.get_topic_split(topic);
 
 				@qos 			= 0;
 			end
