@@ -62,4 +62,22 @@ class Test_SubHandlerTest < Minitest::Test
 			@mqtt.assert_garbage_resilient();
 		}
 	end
+
+	def test_retained
+		@mqtt.publish_to "Unrelated/Retain", "Test", retain: true;
+		@mqtt.publish_to "Retained/One", "Test1!", retain: true;
+		@mqtt.publish_to "Retained/Two", "Test2!", retain: true;
+
+		@mqtt.process_all();
+
+		caughtData = Hash.new();
+		@mqtt.subscribe_to "Retained/+" do |data, tSplit|
+			caughtData[tSplit[0]] = data;
+		end
+		assert_equal 2, @mqtt.publish_queue.length
+
+		@mqtt.process_all();
+
+		assert_equal({"One" => "Test1!", "Two" => "Test2!"}, caughtData)
+	end
 end
