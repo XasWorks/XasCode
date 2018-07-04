@@ -47,6 +47,7 @@ class TestPersistence < Minitest::Test
 	def test_callbacks
 		testHash = {test: "Data"}
 		@mqtt.publish_to "Persistence/test_a", testHash.to_json, retain: true;
+		@mqtt.process_all
 
 		assert_raises do
 			@persistence.on_set(:test_a) do end
@@ -54,7 +55,7 @@ class TestPersistence < Minitest::Test
 
 		@persistence.setup(:test_a)
 		@persistence.on_set(:test_a) do |newData, oldData|
-			@setNewData = newData,
+			@setNewData = newData;
 			@setOldData = oldData;
 		end
 		@persistence.on_change(:test_a) do |newData, oldData|
@@ -64,5 +65,29 @@ class TestPersistence < Minitest::Test
 
 		assert_equal testHash, @setNewData;
 		[@setOldData, @changeNewData, @changeOldData].each do |d| assert_nil d; end
+
+		newTestHash = {new: "HashData"}
+		@persistence[:test_a] = newTestHash;
+
+		assert_equal newTestHash, @persistence[:test_a];
+
+		assert_equal newTestHash, @setNewData;
+		assert_equal newTestHash, @changeNewData;
+
+		assert_equal testHash, @setOldData;
+		assert_equal testHash, @changeOldData;
+
+		testHash = newTestHash;
+		newTestHash = {andAnother: "newHash"};
+		@mqtt.publish_to "Persistence/test_a", newTestHash.to_json;
+		@mqtt.process_all
+
+		assert_equal newTestHash, @persistence[:test_a];
+
+		assert_equal newTestHash, @setNewData;
+		assert_equal newTestHash, @changeNewData;
+
+		assert_equal testHash, @setOldData;
+		assert_equal testHash, @changeOldData;
 	end
 end
