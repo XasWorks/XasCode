@@ -90,4 +90,8 @@ class TestPersistence < Minitest::Test
 		assert_equal testHash, @setOldData;
 		assert_equal testHash, @changeOldData;
 	end
+
+	def test_conversion
+
+	end
 end
