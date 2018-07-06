@@ -111,7 +111,7 @@ class SubHandler
 	# @param subObject [MQTT::Subscriptions::Subscription]
 	#  An instance of a MQTT Subscription object
 	# @return void
-	def register_subscription(subObject)
+	def register_subscription_object(subObject)
 		raise ArgumentError, "Object is not a subscription!" unless subObject.is_a? MQTT::Subscriptions::Subscription
 		return if @callbackList.include? subObject;
 
@@ -137,7 +137,7 @@ class SubHandler
 		end
 
 		subObject = MQTT::Subscriptions::WaitpointSubscription.new(topic, qos);
-		register_subscription(subObject);
+		register_subscription_object(subObject);
 
 		begin
 		Timeout.timeout(timeout) do
@@ -170,7 +170,7 @@ class SubHandler
 	def track(topic, qos: 1, &callback)
 		unless(@trackerHash.has_key? topic)
 			subObject = MQTT::Subscriptions::ValueTrackerSubscription.new(topic, qos);
-			register_subscription(subObject);
+			register_subscription_object(subObject);
 
 			@trackerHash[topic] = subObject;
 		end
@@ -194,7 +194,7 @@ class SubHandler
 	#  Mainly used by the .unregister_subscription function to unsubscribe.
 	def subscribe_to(topic, qos: 1, &callback)
 		subObject = MQTT::Subscriptions::CallbackSubscription.new(topic, qos, callback);
-		register_subscription(subObject);
+		register_subscription_object(subObject);
 
 		return subObject;
 	end
