@@ -17,7 +17,7 @@ module MQTT
 
 			def call_interested(topic, data)
 				@callbackList.each do |h|
-					tMatch = SubHandler.getTopicMatch(topic, h.topic_split);
+					tMatch = SubHandler.get_topic_match(topic, h.topic_split);
 					if tMatch then
 						h.offer(tMatch, data)
 					end
@@ -27,7 +27,7 @@ module MQTT
 
 			def raw_subscribe_to(topic, qos: nil)
 				@retained_topics.each do |retTopic, retData|
-					if SubHandler.getTopicMatch(retTopic, SubHandler.get_topic_split(topic))
+					if SubHandler.get_topic_match(retTopic, SubHandler.get_topic_split(topic))
 						publish_to(retTopic, retData)
 					end
 				end

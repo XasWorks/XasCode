@@ -36,7 +36,7 @@ class SubHandler
 	#  An Array of matched wildcard topic branches (can be empty) when
 	#  successfully matched
 	# @note (see .get_topic_split)
-	def self.getTopicMatch(receivedTopicString, topicPattern)
+	def self.get_topic_match(receivedTopicString, topicPattern)
 		receivedTopicList = get_topic_split receivedTopicString;
 
 		outputTopicList = Array.new();
@@ -65,7 +65,7 @@ class SubHandler
 	def call_interested(topic, data)
 		topicHasReceivers = false;
 		@callbackList.each do |h|
-			tMatch = SubHandler.getTopicMatch(topic, h.topic_split);
+			tMatch = SubHandler.get_topic_match(topic, h.topic_split);
 			if tMatch
 				h.offer(tMatch, data)
 				topicHasReceivers = true;
