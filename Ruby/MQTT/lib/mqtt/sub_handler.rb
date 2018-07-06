@@ -284,15 +284,15 @@ class SubHandler
 					@connected = true;
 				}
 				until @subscribeQueue.empty? do
-					h = @subscribeQueue[-1];
+					h = @subscribeQueue[0];
 					@mqtt.subscribe(h[0] => h[1]);
-					@subscribeQueue.pop;
+					@subscribeQueue.shift;
 					sleep 0.01
 				end
 				until @publishQueue.empty? do
-					h = @publishQueue[-1];
+					h = @publishQueue[0];
 					@mqtt.publish(h[:topic], h[:data], h[:retain]);
-					@publishQueue.pop;
+					@publishQueue.shift;
 					sleep 0.01
 				end
 				@mqtt.get do |topic, message|
