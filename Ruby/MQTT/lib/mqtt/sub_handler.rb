@@ -198,7 +198,10 @@ class SubHandler
 
 		return subObject;
 	end
-	alias subscribeTo subscribe_to
+	def subscribeTo(*args, **argHash, &callback)
+		warn("subscribeTo does not fit the current naming scheme, and will become deprecated soon!");
+		subscribe_to(*args, **argHash, &callback);
+	end
 
 	# @!endgroup
 
