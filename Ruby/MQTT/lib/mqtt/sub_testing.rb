@@ -26,8 +26,10 @@ module MQTT
 			private :call_interested
 
 			def raw_subscribe_to(topic, qos: nil)
-				if(@retained_topics[topic]) then
-					publish_to(topic, @retained_topics[topic])
+				@retained_topics.each do |retTopic, retData|
+					if SubHandler.getTopicMatch(retTopic, SubHandler.get_topic_split(topic))
+						publish_to(retTopic, retData)
+					end
 				end
 			end
 			private :raw_subscribe_to
