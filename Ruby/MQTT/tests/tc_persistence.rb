@@ -92,6 +92,13 @@ class TestPersistence < Minitest::Test
 	end
 
 	def test_conversion
+		testTime = Time.at(rand(0..99999999));
 
+		@persistence.setup(:test_a, Time);
+		@persistence[:test_a] = testTime;
+
+		@mqtt.process_all();
+
+		assert_equal testTime.to_i, @mqtt.retained_topics["Persistence/test_a"];
 	end
 end
