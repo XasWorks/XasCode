@@ -112,8 +112,45 @@ class TestPersistence < Minitest::Test
 		@mqtt.process_all();
 		assert_nil @persistence[:test_a];
 	end
+
+	def test_custom_conversion
+		customClass = Class.new do
+			attr_accessor :firstValue, :secondValue
+
+			def self.from_mqtt_string(data)
+				nInstance = new();
+				nInstance.update_from_mqtt(data);
+			end
+
+			def update_from_mqtt(data)
+				data = JSON.parse(data);
+				@firstValue = data["first"];
+				@secondValue = data["second"];
+			end
+
+			def to_mqtt_string()
+				{
+					first: @firstValue,
+					second: @secondValue,
+				}.to_json
+			end
+		end
+
+		cInstance = customClass.new();
+		@persistence.setup(:test_custom, customClass);
+
+		cInstance.firstValue = "One test!"
+		cInstance.secondValue = "Second test!"
+		@persistence[:test_custom] = cInstance;
+
+		assert_equal cInstance.to_mqtt_string, @mqtt.retained_topics["Persistence/test_custom"];
+
+		@mqtt.publish_to "Persistence/test_custom", {
+			first: "Test 1"
+		}
 		@mqtt.process_all();
 
-		assert_equal testTime.to_i, @mqtt.retained_topics["Persistence/test_a"];
+		assert_equal "Test 1", cInstance.firstValue
+		assert_nil   cInstance.secondValue
 	end
 end
