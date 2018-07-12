@@ -1,5 +1,6 @@
 
 require 'json'
+require_relative 'persistence_extensions.rb'
 
 module MQTT
 	class Persistence
@@ -20,12 +21,6 @@ module MQTT
 		def _prepare_send(data, key)
 			if(data.respond_to? :to_mqtt_string)
 				return data.to_mqtt_string;
-			end
-
-			dType = @paramList[key][:type]
-			if(dType == Time)
-				return nil.to_json unless data;
-				return data.to_i.to_json;
 			else
 				return data.to_json
 			end
@@ -33,20 +28,9 @@ module MQTT
 
 		def _parse_received(data, key)
 			begin
-				if((cData = @paramList[key][:current]).respond_to? :update_from_mqtt)
-					cData.update_from_mqtt(data);
-					return cData;
-				end
-
 				dType = @paramList[key][:type];
 				if(dType.respond_to? :from_mqtt_string)
 					return dType.from_mqtt_string(data);
-				end
-
-				if(dType == Time)
-					i = JSON.parse(data);
-					return nil unless i.is_a? Numeric;
-					return Time.at(i);
 				else
 					return JSON.parse(data, symbolize_names: true);
 				end
