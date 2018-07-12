@@ -91,26 +91,33 @@ class TestPersistence < Minitest::Test
 		assert_equal testHash, @changeOldData;
 	end
 
+	def test_nil()
+		@persistence.setup(:test_nil);
+		@persistence[:test_nil] = "Not nil!";
+		@mqtt.publish_to "Persistence/test_nil", nil.to_json;
+		@mqtt.process_all();
+
+		assert_nil @persistence[:test_nil];
+
+		@mqtt.publish_to "Persistence/test_nil", "Not nil!", retain: true;
+		@mqtt.process_all();
+		@persistence[:test_nil] = nil;
+		@mqtt.process_all();
+
+		assert_equal nil.to_json, @mqtt.retained_topics["Persistence/test_nil"]
+	end
+
 	def test_conversion_time
 		testTime = Time.at(rand(0..99999999));
 
 		@persistence.setup(:test_a, Time);
 		@persistence[:test_a] = testTime;
 		@mqtt.process_all();
-		assert_equal testTime.to_i.to_json, @mqtt.retained_topics["Persistence/test_a"];
+		assert_equal testTime.to_f.to_json, @mqtt.retained_topics["Persistence/test_a"];
 
-		@persistence[:test_a] = nil;
-		@mqtt.process_all();
-		assert_equal nil.to_json, @mqtt.retained_topics["Persistence/test_a"];
-
-
-		@mqtt.publish_to "Persistence/test_a", testTime.to_i.to_json
+		@mqtt.publish_to "Persistence/test_a", testTime.to_f.to_json
 		@mqtt.process_all();
 		assert_equal testTime, @persistence[:test_a]
-
-		@mqtt.publish_to "Persistence/test_a", nil.to_json;
-		@mqtt.process_all();
-		assert_nil @persistence[:test_a];
 	end
 
 	def test_custom_conversion
@@ -118,14 +125,16 @@ class TestPersistence < Minitest::Test
 			attr_accessor :firstValue, :secondValue
 
 			def self.from_mqtt_string(data)
-				nInstance = new();
-				nInstance.update_from_mqtt(data);
+				return new().update_from_mqtt(data);
 			end
 
 			def update_from_mqtt(data)
 				data = JSON.parse(data);
+				return unless data;
 				@firstValue = data["first"];
 				@secondValue = data["second"];
+
+				return self;
 			end
 
 			def to_mqtt_string()
@@ -142,13 +151,16 @@ class TestPersistence < Minitest::Test
 		cInstance.firstValue = "One test!"
 		cInstance.secondValue = "Second test!"
 		@persistence[:test_custom] = cInstance;
+		@mqtt.process_all();
 
-		assert_equal cInstance.to_mqtt_string, @mqtt.retained_topics["Persistence/test_custom"];
+		assert_equal cInstance.to_mqtt_string,
+			@mqtt.retained_topics["Persistence/test_custom"];
 
 		@mqtt.publish_to "Persistence/test_custom", {
 			first: "Test 1"
-		}
+		}.to_json
 		@mqtt.process_all();
+		cInstance = @persistence[:test_custom];
 
 		assert_equal "Test 1", cInstance.firstValue
 		assert_nil   cInstance.secondValue
