@@ -101,7 +101,7 @@ module MQTT
 
 			if(callback)
 				@paramList[key][:cbList] << callback
-				yield(@paramList[key][:current], nil);
+				yield(@paramList[key][:current], nil) if @paramList[key][:current]
 			end
 
 			return @paramList[key][:current];
