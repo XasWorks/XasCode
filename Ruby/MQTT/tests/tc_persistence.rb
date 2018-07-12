@@ -91,12 +91,27 @@ class TestPersistence < Minitest::Test
 		assert_equal testHash, @changeOldData;
 	end
 
-	def test_conversion
+	def test_conversion_time
 		testTime = Time.at(rand(0..99999999));
 
 		@persistence.setup(:test_a, Time);
 		@persistence[:test_a] = testTime;
+		@mqtt.process_all();
+		assert_equal testTime.to_i.to_json, @mqtt.retained_topics["Persistence/test_a"];
 
+		@persistence[:test_a] = nil;
+		@mqtt.process_all();
+		assert_equal nil.to_json, @mqtt.retained_topics["Persistence/test_a"];
+
+
+		@mqtt.publish_to "Persistence/test_a", testTime.to_i.to_json
+		@mqtt.process_all();
+		assert_equal testTime, @persistence[:test_a]
+
+		@mqtt.publish_to "Persistence/test_a", nil.to_json;
+		@mqtt.process_all();
+		assert_nil @persistence[:test_a];
+	end
 		@mqtt.process_all();
 
 		assert_equal testTime.to_i, @mqtt.retained_topics["Persistence/test_a"];
