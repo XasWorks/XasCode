@@ -1,8 +1,3 @@
-
-### Where're the tests?
-They're not here yet! But if you know how to set them up, I'd absolutely love to have you contribute.
-Open an issue about that and we can figure things out!
-
 # A topic-based, asynchronous MQTT handler
 That's right, finally there's a *mostly* stable, connection-loss resistant MQTT handler out there that runs fully asynchronously.
 What's even nicer is that you can attach (and detach!) callbacks to *any* topic you want - including wildcards!
