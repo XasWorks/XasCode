@@ -1,0 +1,3 @@
+#!/usr/bin/ruby
+
+require 'mqtt/sub_handler.rb'
