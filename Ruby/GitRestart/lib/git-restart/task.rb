@@ -2,20 +2,17 @@
 module GitRestart
 	class Task
 		attr_reader 	:targets
+
 		attr_accessor 	:signal
-		attr_accessor	:restart_on_exit, :restart_on_failure, :expect_clean_exit
-		attr_accessor	:complete
+		attr_accessor	:expect_clean_exit
+		attr_accessor	:name, :status_descriptor
 
 		def initialize()
 			@targets = Array.new();
 			@signal 	= "INT"
 
-			@restart_on_exit 		= false;
-			@restart_on_failure	= false;
 			@expect_clean_exit	= true;
-
-			@complete 	= true;
-			@exiting		= false;
+			@exiting					= false;
 
 			yield(self);
 
@@ -32,19 +29,26 @@ module GitRestart
 			end
 		end
 
+		def report_error()
+
+		end
+
 		def start()
 			@executionThread = Thread.new do
-				currentTargetI = 0;
-				loop do
-					target = @targets[currentTargetI];
+				@targets.each do |target|
+					break if (@exiting && !@signal.nil?);
 
 					@currentPID = Process.spawn(target, [:in, :out, :err] => "/dev/null", chdir: @chdir);
-					pid, status = Process.wait2(@currentPID);
-					@lastStatus = status.exitstatus;
+					nil, status = Process.wait2(@currentPID);
+					@lastStatus = status.exitstatus();
 
-					success 	= @lastStatus == 0;
-					lastTask = @targets[currentTargetI + 1].nil?
+					break unless @lastStatus == 0;
+				end
 
+				if(@lastStatus == 0)
+					report_success();
+				elsif(!@exiting || @expect_clean_exit)
+					report_error();
 				end
 			end
 		end
