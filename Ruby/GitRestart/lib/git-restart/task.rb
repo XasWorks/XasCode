@@ -7,7 +7,10 @@ module GitRestart
 		attr_accessor	:expect_clean_exit
 		attr_accessor	:report_status
 		attr_accessor	:name, :status_file
+		attr_accessor	:chdir
+
 		attr_accessor	:active
+		attr_accessor	:triggered
 
 		attr_reader		:lastStatus
 		attr_reader		:status_message
@@ -31,7 +34,29 @@ module GitRestart
 		def modified()
 			self.class.modified
 		end
-		
+
+		def watch(regEx)
+			if(regEx.is_a? String)
+				regEx = %r[#{Regexp.quote(regEx)}];
+			end
+
+			modified().each do |f|
+				unless(@chdir.nil? or @chdir.empty?)
+					if(f =~ %r{^#{Regexp.quote(@chdir)}/(.+)})
+						@triggered |= ($1 =~ regEx);
+					end
+				else
+					@triggered |= (f =~ regEx);
+				end
+			end
+		end
+
+		def on_branches(branches)
+			[branches].flatten.each do |b|
+				@active |= (b == branch());
+			end
+		end
+
 		def initialize()
 			@statuschange_mutex = Mutex.new();
 
