@@ -11,4 +11,8 @@ The exit status of scripts can be monitored, and a failure can be sent back, mak
 	s.license 		= 'GPL-3.0'
 
 	s.add_runtime_dependency "mqtt-sub_handler", "~> 1.0"
+
+	s.add_development_dependency "minitest"
+	s.add_development_dependency "guard"
+	s.add_development_dependency "guard-minitest"
 end
