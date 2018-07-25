@@ -36,10 +36,17 @@ module GitRestart
 		def start()
 			@executionThread = Thread.new do
 				@targets.each do |target|
-					break if (@exiting && !@signal.nil?);
+					@statuschange_mutex.synchronize {
+						break if @exiting
+						options = {
+							[:in, :out, :err] => "/dev/null"
+						}
+						options[:chdir] = @chdir if @chdir
 
-					@currentPID = Process.spawn(target, [:in, :out, :err] => "/dev/null", chdir: @chdir);
-					nil, status = Process.wait2(@currentPID);
+						@currentPID = Process.spawn(target, options);
+					}
+
+					status = Process.wait2(@currentPID)[1];
 					@lastStatus = status.exitstatus();
 
 					break unless @lastStatus == 0;
