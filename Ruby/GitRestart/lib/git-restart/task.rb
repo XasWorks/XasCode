@@ -29,12 +29,18 @@ module GitRestart
 			end
 		end
 
-		def report_error()
+		def _report_status(status, message = nil)
+			@status_message = ""
 
+			return unless @report_status
+			print "Task #{@name} assumed a new status: #{status}#{message ? " MSG:#{message}" : ""}"
 		end
+		private :_report_status
 
 		def start()
 			@executionThread = Thread.new do
+				_report_status(:pending);
+
 				@targets.each do |target|
 					@statuschange_mutex.synchronize {
 						break if @exiting
@@ -53,9 +59,9 @@ module GitRestart
 				end
 
 				if(@lastStatus == 0)
-					report_success();
+					_report_status(:success);
 				elsif(!@exiting || @expect_clean_exit)
-					report_error();
+					_report_status(:failure);
 				end
 			end
 		end
