@@ -80,4 +80,46 @@ class Test_Task < Minitest::Test
 		assert File.exist?("/tmp/TEST_FILE_1");
 		assert File.exist?("/tmp/TEST_FILE_2");
 	end
+
+	def test_chdir
+		@task = GitRestart::Task.new() do |t|
+			t.name = "TestTask";
+			t.chdir = "/tmp";
+
+			t.targets << "touch TEST_FILE_1";
+		end
+
+		@task.start();
+		@task.join();
+
+		assert File.exist?("/tmp/TEST_FILE_1");
+	end
+
+	def test_triggers()
+		GitRestart::Task.branch 	="master";
+		GitRestart::Task.modified 	= ["Tests/Test1/Test.rb"];
+
+		@task = GitRestart::Task.new() do |t|
+			t.chdir = "Tests/Test1";
+			t.name = "TestTask"
+
+			t.watch(%r{.*\.rb});
+			assert t.triggered;
+			t.triggered = false;
+
+			t.watch("Test.rb");
+			assert t.triggered;
+			t.triggered = false;
+
+			t.watch("NotTest.rb");
+			refute t.triggered;
+
+			t.on_branches ["master", "dev"];
+			assert t.active;
+			t.active = false;
+
+			t.on_branches "dev";
+			refute t.active;
+		end
+	end
 end
