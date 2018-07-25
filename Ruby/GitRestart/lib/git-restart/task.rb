@@ -5,27 +5,46 @@ module GitRestart
 
 		attr_accessor 	:signal
 		attr_accessor	:expect_clean_exit
-		attr_accessor	:name, :status_descriptor
+		attr_accessor	:report_status
+		attr_accessor	:name, :status_file
+		attr_accessor	:active
 
+		attr_reader		:lastStatus
+		attr_reader		:status_message
+
+		def self.branch(newBranch)
+			@branch = newBranch;
+		end
+		def branch()
+			self.class.branch();
+		end
+
+		def self.modified(newAffected)
+			@modified = newAffected;
+		end
+		def modified()
+			self.class.modified
+		end
+		
 		def initialize()
-			@targets = Array.new();
-			@signal 	= "INT"
+			@statuschange_mutex = Mutex.new();
 
+			@targets = Array.new();
+
+			@signal 	= "INT"
 			@expect_clean_exit	= true;
 			@exiting					= false;
 
 			yield(self);
-
-			@name ||= @targets[-1];
 		end
 
 		def valid?()
-			@targets.each do |t|
-				raise ArgumentError, "Target-File #{t} wasn't found!" unless File.exist?(t)
-			end
-
 			unless Signal.list[@signal] or @signal.nil?
 				raise ArgumentError, "The specified kill-signal is not valid!"
+			end
+
+			unless @name
+				raise ArgumentError, "A name needs to be set for identification!"
 			end
 		end
 
