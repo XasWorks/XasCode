@@ -61,9 +61,18 @@ module GitRestart
 		end
 
 		def stop()
+			return if @signal.nil?
+
+			@statuschange_mutex.synchronize {
+				@exiting = true;
+				if(p = @currentPID)
+					Process.kill(@signal, p);
+				end
+			}
 		end
 
 		def join()
+			@executionThread.join();
 		end
 	end
 end
