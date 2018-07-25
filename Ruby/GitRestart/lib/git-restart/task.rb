@@ -12,15 +12,21 @@ module GitRestart
 		attr_reader		:lastStatus
 		attr_reader		:status_message
 
-		def self.branch(newBranch)
+		def self.branch=(newBranch)
 			@branch = newBranch;
+		end
+		def self.branch()
+			@branch;
 		end
 		def branch()
 			self.class.branch();
 		end
 
-		def self.modified(newAffected)
+		def self.modified=(newAffected)
 			@modified = newAffected;
+		end
+		def self.modified()
+			return @modified;
 		end
 		def modified()
 			self.class.modified
