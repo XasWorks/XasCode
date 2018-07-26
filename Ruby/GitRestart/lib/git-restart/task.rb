@@ -1,5 +1,8 @@
 
 module GitRestart
+	class TaskValidityError < StandardError
+	end
+
 	class Task
 		attr_reader 	:targets
 
@@ -67,15 +70,24 @@ module GitRestart
 			@exiting					= false;
 
 			yield(self);
+
+			valid?
+
+			if(runner().next_tasks[@name])
+				raise TaskValidityError, "A task of name #{@name} already exists!"
+			else
+				runner().next_tasks[@name] = self;
+			end
+		end
 		end
 
 		def valid?()
 			unless Signal.list[@signal] or @signal.nil?
-				raise ArgumentError, "The specified kill-signal is not valid!"
+				raise TaskValidityError, "The specified kill-signal is not valid!"
 			end
 
 			unless @name
-				raise ArgumentError, "A name needs to be set for identification!"
+				raise TaskValidityError, "A name needs to be set for identification!"
 			end
 		end
 
