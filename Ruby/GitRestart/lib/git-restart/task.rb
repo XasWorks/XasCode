@@ -13,7 +13,6 @@ module GitRestart
 		attr_accessor	:chdir
 
 		attr_accessor	:active
-		attr_accessor	:triggered
 
 		attr_reader		:lastStatus
 		attr_reader		:status_message
@@ -40,18 +39,14 @@ module GitRestart
 
 		def watch(regEx)
 			if(regEx.is_a? String)
-				regEx = %r[#{Regexp.quote(regEx)}];
+				regEx = Regexp.quote(regEx);
 			end
 
-			modified().each do |f|
-				unless(@chdir.nil? or @chdir.empty?)
-					if(f =~ %r{^#{Regexp.quote(@chdir)}/(.+)})
-						@triggered |= ($1 =~ regEx);
-					end
-				else
-					@triggered |= (f =~ regEx);
-				end
+			if(@chdir)
+				regEx = "#{Regexp.quote(@chdir)}/#{regEx.to_s}";
 			end
+
+			@watched << Regexp.new(regEx);
 		end
 
 		def on_branches(branches)
@@ -64,6 +59,8 @@ module GitRestart
 			@statuschange_mutex = Mutex.new();
 
 			@targets = Array.new();
+			@watched = Array.new();
+			watch(runner().current_task_file);
 
 			@signal 	= "INT"
 			@expect_clean_exit	= true;
@@ -79,6 +76,17 @@ module GitRestart
 				runner().next_tasks[@name] = self;
 			end
 		end
+
+		def triggered?
+			return true if modified().nil?
+
+			@watched.each do |regEx|
+				modified().each do |f|
+					return true if f =~ regEx;
+				end
+			end
+
+			return false;
 		end
 
 		def valid?()
