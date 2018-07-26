@@ -1,9 +1,27 @@
 
 require_relative "../lib/git-restart/task.rb"
 
+class DummyRunner
+	attr_accessor :current_branch, :current_commit, :current_modified;
+	attr_accessor :current_task_file;
+	attr_accessor :next_tasks;
+
+	def initialize()
+		@current_branch 	= "";
+		@current_commit 	= "wkdfaosdo2988a9sd";
+		@current_modified = Array.new();
+		@current_task_file = "";
+
+		@next_tasks = Hash.new();
+	end
+end
+
 class Test_Task < Minitest::Test
 	def setup()
 		`rm /tmp/TEST_FILE_* 2>/dev/null`
+
+		@runner = DummyRunner.new();
+		GitRestart::Task.runner = @runner;
 	end
 
 	def teardown()
@@ -82,9 +100,10 @@ class Test_Task < Minitest::Test
 	end
 
 	def test_chdir
+		@runner.current_task_file = "/tmp/.gittask";
+
 		@task = GitRestart::Task.new() do |t|
 			t.name = "TestTask";
-			t.chdir = "/tmp";
 
 			t.targets << "touch TEST_FILE_1";
 		end
@@ -96,23 +115,22 @@ class Test_Task < Minitest::Test
 	end
 
 	def test_triggers()
-		GitRestart::Task.branch 	="master";
-		GitRestart::Task.modified 	= ["Tests/Test1/Test.rb"];
+		@runner.current_branch 		= "master";
+		@runner.current_modified 	= ["Tests/Test1/Test.rb"];
+
+		@runner.current_task_file	= "Tests/Test1/.gittask";
 
 		@task = GitRestart::Task.new() do |t|
-			t.chdir = "Tests/Test1";
 			t.name = "TestTask"
 
 			t.watch(%r{.*\.rb});
-			assert t.triggered;
-			t.triggered = false;
+			assert t.triggered?
 
 			t.watch("Test.rb");
-			assert t.triggered;
-			t.triggered = false;
+			assert t.triggered?
 
-			t.watch("NotTest.rb");
-			refute t.triggered;
+			@runner.current_modified = ["Tests/Test1/NotTested.txt"];
+			refute t.triggered?
 
 			t.on_branches ["master", "dev"];
 			assert t.active;
@@ -120,6 +138,13 @@ class Test_Task < Minitest::Test
 
 			t.on_branches "dev";
 			refute t.active;
+
+			@runner.current_modified = ["Tests/Test1/.gittask"];
+			assert t.triggered?
+
+			@runner.current_modified = nil;
+			assert t.triggered?
 		end
+
 	end
 end
