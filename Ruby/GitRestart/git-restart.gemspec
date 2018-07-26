@@ -6,11 +6,16 @@ Gem::Specification.new do |s|
 The exit status of scripts can be monitored, and a failure can be sent back, making this capable of running simple tests too!'
 	s.authors		= ['Xasin']
 
+	s.files 			= [	'bin/git-restart',
+								'lib/git-restart/runner.rb',
+								'lib/git-restart/task.rb']
+
 	s.homepage		=
 	'https://github.com/XasWorks/XasCode/tree/master/Ruby/GitRestart'
 	s.license 		= 'GPL-3.0'
 
 	s.add_runtime_dependency "mqtt-sub_handler", "~> 1.0"
+	s.add_runtime_dependency "git", "~> 1.4"
 
 	s.add_development_dependency "minitest"
 	s.add_development_dependency "guard"
