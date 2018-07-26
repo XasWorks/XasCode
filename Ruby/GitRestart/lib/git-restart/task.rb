@@ -10,31 +10,27 @@ module GitRestart
 		attr_accessor	:expect_clean_exit
 		attr_accessor	:report_status
 		attr_accessor	:name, :status_file
-		attr_accessor	:chdir
 
 		attr_accessor	:active
 
 		attr_reader		:lastStatus
 		attr_reader		:status_message
 
-		def self.branch=(newBranch)
-			@branch = newBranch;
+		def self.runner=(runner)
+			@runner = runner;
 		end
-		def self.branch()
-			@branch;
+		def self.runner()
+			return @runner;
 		end
-		def branch()
-			self.class.branch();
+		def runner()
+			return self.class.runner();
 		end
 
-		def self.modified=(newAffected)
-			@modified = newAffected;
-		end
-		def self.modified()
-			return @modified;
+		def branch()
+			runner().current_branch();
 		end
 		def modified()
-			self.class.modified
+			runner().current_modified();
 		end
 
 		def watch(regEx)
@@ -65,6 +61,8 @@ module GitRestart
 			@signal 	= "INT"
 			@expect_clean_exit	= true;
 			@exiting					= false;
+
+			@chdir = File.dirname(runner().current_task_file);
 
 			yield(self);
 
