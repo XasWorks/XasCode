@@ -1,6 +1,8 @@
-require 'mqtt/sub_handler'
 
-require_relative "runner.rb"
+require 'mqtt/sub_handler'
+require 'git'
+
+require_relative "task.rb"
 
 module GitRestart
 	class Runner
