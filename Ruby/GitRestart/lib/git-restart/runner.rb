@@ -72,7 +72,7 @@ module GitRestart
 					puts "Popped data: #{newData}"
 
 					@current_modified = newData[:touched];
-					_switch_to(newData[:branch], newData[:commit]);
+					_switch_to(newData[:branch], newData[:head_commit]);
 				end
 			end.abort_on_exception = true;
 		end
