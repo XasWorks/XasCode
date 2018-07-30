@@ -106,6 +106,8 @@ module GitRestart
 		private :_report_status
 
 		def start()
+			puts "Starting Task: #{@name}"
+
 			@executionThread = Thread.new do
 				_report_status(:pending);
 
@@ -135,6 +137,7 @@ module GitRestart
 		end
 
 		def stop()
+			puts "Stopping Task: #{@name}"
 			return if @signal.nil?
 
 			@statuschange_mutex.synchronize {

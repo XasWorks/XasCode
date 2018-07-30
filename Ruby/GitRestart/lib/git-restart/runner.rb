@@ -67,7 +67,7 @@ module GitRestart
 					@current_modified = newData[:touched];
 					_switch_to(newData[:branch], newData[:commit]);
 				end
-			end
+			end.abort_on_exception = true;
 		end
 
 		def _stop_tasks(taskList)
@@ -87,12 +87,14 @@ module GitRestart
 		end
 
 		def _generate_next_tasks()
+			puts "Generating new tasks..."
 			@next_tasks = Hash.new();
 
 			taskFiles = `find . -iname -nowarn "*.gittask"`
 			taskFiles.split("\n");
 
 			taskFiles.each do |t|
+				puts "Looking at: #{t}"
 				t.gsub!(/^\.\//,"");
 				@current_task_file = t;
 
@@ -105,11 +107,14 @@ module GitRestart
 					puts("Task-File #{t} is not configured properly!");
 				end
 			end
+
+			puts "Finished loading! Next tasks are: #{@next_tasks}"
 		end
 
 		def _start_next_tasks()
 			_generate_next_tasks();
 
+			puts "Starting next tasks!"
 			@next_tasks.each do |name, t|
 				next unless t.active;
 				next unless t.triggered?
@@ -120,6 +125,7 @@ module GitRestart
 		end
 
 		def _switch_to(branch, commit = nil)
+			puts "Switching to branch: #{branch}, commit: #{commit}"
 			@git.fetch();
 
 			if(branch != current_branch())
