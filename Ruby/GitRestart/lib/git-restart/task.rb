@@ -123,6 +123,7 @@ module GitRestart
 					}
 
 					status = Process.wait2(@currentPID)[1];
+					@currentPID = nil;
 					@lastStatus = status.exitstatus();
 
 					break unless @lastStatus == 0;
