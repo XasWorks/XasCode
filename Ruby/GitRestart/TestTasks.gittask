@@ -2,7 +2,9 @@
 GitRestart::Task.new do |t|
 	t.name = "Failure testing";
 	t.report_status = true;
+
 	t.active = true;
+	t.watch(/.*/);
 
 	t.targets << 'echo "Hello from #{branch}, modified files: #{modified}" > TestOutput.txt'
 	t.targets << 'sleep 10'
