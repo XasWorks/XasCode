@@ -1,0 +1,5 @@
+
+GitRestart::Runner.new do |r|
+	r.name = "Test Git Runner";
+	r.repo = "XasWorks/XasCode";
+end
