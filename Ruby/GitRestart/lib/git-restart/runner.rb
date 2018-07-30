@@ -97,7 +97,7 @@ module GitRestart
 			puts "Generating new tasks..."
 			@next_tasks = Hash.new();
 
-			taskFiles = `find . -iname -nowarn "*.gittask"`
+			taskFiles = `find ./ -nowarn -iname "*.gittask"`
 			taskFiles.split("\n");
 
 			taskFiles.each do |t|
