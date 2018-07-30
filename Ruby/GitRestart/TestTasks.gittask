@@ -6,7 +6,7 @@ GitRestart::Task.new do |t|
 	t.active = true;
 	t.watch(/.*/);
 
-	t.targets << 'echo "Hello from #{branch}, modified files: #{modified}" > TestOutput.txt'
+	t.targets << "echo Hello from #{branch}, modified files: #{modified} > TestOutput.txt"
 	t.targets << 'sleep 10'
 	t.targets << 'exit 1'
 end
