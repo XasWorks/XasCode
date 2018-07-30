@@ -98,9 +98,7 @@ module GitRestart
 			@next_tasks = Hash.new();
 
 			taskFiles = `find ./ -nowarn -iname "*.gittask"`
-			taskFiles.split("\n");
-
-			taskFiles.each do |t|
+			taskFiles.split("\n").each do |t|
 				puts "Looking at: #{t}"
 				t.gsub!(/^\.\//,"");
 				@current_task_file = t;
