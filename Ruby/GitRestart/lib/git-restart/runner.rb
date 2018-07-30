@@ -46,12 +46,16 @@ module GitRestart
 					next;
 				end
 
+				puts "Processing data #{data}"
+
 				next unless data[:branch];
 				if(@branches)
 					next unless @branches.include? data[:branch];
 				elsif(@exclude_branches)
 					next if @exclude_branches.include? data[:branch];
 				end
+
+				puts "Queueing data!"
 
 				@branchQueue << data;
 			end
@@ -64,6 +68,8 @@ module GitRestart
 			@taskThread = Thread.new do
 				loop do
 					newData = @branchQueue.pop;
+
+					puts "Popped data: #{newData}"
 
 					@current_modified = newData[:touched];
 					_switch_to(newData[:branch], newData[:commit]);
