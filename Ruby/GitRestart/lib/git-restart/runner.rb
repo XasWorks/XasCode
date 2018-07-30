@@ -56,14 +56,14 @@ module GitRestart
 			autostart();
 		end
 
-		def _stop_all_tasks()
-			@current_tasks.each do |name, t|
+		def _stop_tasks(taskList)
+			taskList.each do |name, t|
 				t.stop();
 			end
-			@current_tasks.each do |name, t|
+			taskList.each do |name, t|
 				t.join();
+				@current_tasks.delete(name);
 			end
-			@current_tasks.clear();
 		end
 
 		def _switch_to(branch, commit = nil)
@@ -76,6 +76,11 @@ module GitRestart
 			@git.reset_hard(commit) if commit;
 
 			@git.merge("origin/#{start_on}");
+		def _stop_all_tasks()
+			_stop_tasks(@current_tasks);
+		end
+		def _stop_triggered_tasks()
+			_stop_tasks(@current_tasks.select {|k,v| v.triggered?});
 		end
 
 		def _generate_next_tasks()
@@ -98,8 +103,6 @@ module GitRestart
 				end
 			end
 		end
-
-		def _stop_
 
 		def autostart()
 			return unless @start_on;
