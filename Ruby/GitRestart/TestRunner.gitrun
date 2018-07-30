@@ -1,5 +1,7 @@
 
-GitRestart::Runner.new do |r|
+require_relative "lib/git-restart/runner.rb"
+
+$runner = GitRestart::Runner.new do |r|
 	r.name = "Test Git Runner";
 	r.repo = "XasWorks/XasCode";
 

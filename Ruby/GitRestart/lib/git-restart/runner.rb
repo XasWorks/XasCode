@@ -39,6 +39,7 @@ module GitRestart
 			yield(self);
 
 			@listenedSub = @mqtt.subscribe_to "GitHub/#{@repo}" do |data|
+				puts "Received data: #{data}"
 				begin
 					data = JSON.parse(data, symbolize_names: true);
 				rescue
