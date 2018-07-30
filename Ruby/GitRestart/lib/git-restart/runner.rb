@@ -54,6 +54,18 @@ module GitRestart
 			end
 
 			autostart();
+			_start_task_thread();
+		end
+
+		def _start_task_thread()
+			@taskThread = Thread.new do
+				loop do
+					newData = @branchQueue.pop;
+
+					@current_modified = newData[:touched];
+					_switch_to(newData[:branch], newData[:commit]);
+				end
+			end
 		end
 
 		def _stop_tasks(taskList)
