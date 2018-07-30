@@ -49,9 +49,9 @@ module GitRestart
 				puts "Processing data #{data}"
 
 				next unless data[:branch];
-				if(@branches)
+				if(not @branches.empty?)
 					next unless @branches.include? data[:branch];
-				elsif(@exclude_branches)
+				elsif(not @exclude_branches.empty?)
 					next if @exclude_branches.include? data[:branch];
 				end
 
