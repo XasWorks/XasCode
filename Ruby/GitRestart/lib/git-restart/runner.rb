@@ -36,7 +36,7 @@ module GitRestart
 
 			yield(self);
 
-			@mqtt.subscribe_to "GitHub/#{@repo}" do |data|
+			@listenedSub = @mqtt.subscribe_to "GitHub/#{@repo}" do |data|
 				begin
 					data = JSON.parse(data, symbolize_names: true);
 				rescue
@@ -77,17 +77,6 @@ module GitRestart
 				@current_tasks.delete(name);
 			end
 		end
-
-		def _switch_to(branch, commit = nil)
-			@git.fetch();
-
-			if(branch != current_branch())
-				_stop_all_tasks();
-			end
-			@git.checkout(branch);
-			@git.reset_hard(commit) if commit;
-
-			@git.merge("origin/#{start_on}");
 		def _stop_all_tasks()
 			_stop_tasks(@current_tasks);
 		end
@@ -116,17 +105,37 @@ module GitRestart
 			end
 		end
 
-		def autostart()
-			return unless @start_on;
-
-			_switch_to(@start_on);
+		def _start_next_tasks()
 			_generate_next_tasks();
 
 			@next_tasks.each do |name, t|
-				next unless t.active
+				next unless t.active;
+				next unless t.triggered?
+
 				t.start();
 				@current_tasks[name] = t;
 			end
+		end
+
+		def _switch_to(branch, commit = nil)
+			@git.fetch();
+
+			if(branch != current_branch())
+				_stop_all_tasks();
+			else
+				_stop_triggered_tasks();
+			end
+			@git.checkout(branch);
+			@git.reset_hard(commit);
+
+			@git.merge("origin/#{branch}");
+
+			_start_next_tasks();
+		end
+
+		def autostart()
+			return unless @start_on;
+			@branchQueue << {branch: @start_on};
 		end
 
 		def mqtt=(mqtt)
