@@ -60,7 +60,7 @@ module GitRestart
 			@lastStatus = 0;
 			@chdir = File.dirname(runner().current_task_file);
 
-			watch(runner().current_task_file);
+			watch(File.basename(runner().current_task_file));
 
 			yield(self);
 
@@ -111,7 +111,7 @@ module GitRestart
 
 			return if @targets.empty?
 			sleep 0.01
-			
+
 			@executionThread = Thread.new do
 				_report_status(:pending);
 
