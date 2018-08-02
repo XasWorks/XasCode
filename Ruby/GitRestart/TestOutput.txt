@@ -1,0 +1,1 @@
+Hello from GIT_RESTART, modified files: [Ruby/GitRestart/TestOutput.txt]
