@@ -11,7 +11,7 @@ GitRestart::Task.new do |t|
 	t.targets << 'exit 1'
 end
 
-GitTask::Task.new do |t|
+GitRestart::Task.new do |t|
 	t.name = "Git-Task-Tester"
 	t.active = true;
 
