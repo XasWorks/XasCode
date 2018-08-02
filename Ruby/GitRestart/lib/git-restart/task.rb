@@ -118,7 +118,7 @@ module GitRestart
 					@statuschange_mutex.synchronize {
 						break if @exiting
 						options = {
-							#[:in, :out, :err] => "/dev/null"
+							[:in, :out, :err] => "/dev/null"
 						}
 						options[:chdir] = @chdir if @chdir
 
