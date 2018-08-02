@@ -101,7 +101,7 @@ module GitRestart
 			@status_message = ""
 
 			return unless @report_status
-			print "Task #{@name} assumed a new status: #{status}#{message ? " MSG:#{message}" : ""}"
+			puts "Task #{@name} assumed a new status: #{status}#{message ? " MSG:#{message}" : ""}"
 		end
 		private :_report_status
 
@@ -115,7 +115,7 @@ module GitRestart
 					@statuschange_mutex.synchronize {
 						break if @exiting
 						options = {
-							[:in, :out, :err] => "/dev/null"
+							#[:in, :out, :err] => "/dev/null"
 						}
 						options[:chdir] = @chdir if @chdir
 
