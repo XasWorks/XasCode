@@ -62,6 +62,7 @@ module GitRestart
 			@expect_clean_exit	= true;
 			@exiting					= false;
 
+			@lastStatus = 0;
 			@chdir = File.dirname(runner().current_task_file);
 
 			yield(self);
@@ -101,6 +102,8 @@ module GitRestart
 			@status_message = ""
 
 			return unless @report_status
+
+			runner().update_status(@name, status, message);
 			puts "Task #{@name} assumed a new status: #{status}#{message ? " MSG:#{message}" : ""}"
 		end
 		private :_report_status
