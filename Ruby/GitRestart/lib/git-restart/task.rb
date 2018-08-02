@@ -111,6 +111,7 @@ module GitRestart
 		def start()
 			puts "Starting Task: #{@name}"
 
+			return if @targets.empty?
 			@executionThread = Thread.new do
 				_report_status(:pending);
 
