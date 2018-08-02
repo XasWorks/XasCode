@@ -52,7 +52,6 @@ module GitRestart
 
 			@targets = Array.new();
 			@watched = Array.new();
-			watch(runner().current_task_file);
 
 			@signal 	= "INT"
 			@expect_clean_exit	= true;
@@ -60,6 +59,8 @@ module GitRestart
 
 			@lastStatus = 0;
 			@chdir = File.dirname(runner().current_task_file);
+
+			watch(runner().current_task_file);
 
 			yield(self);
 
@@ -136,7 +137,7 @@ module GitRestart
 				elsif(!@exiting || @expect_clean_exit)
 					_report_status(:failure);
 				end
-			end
+			end.abort_on_exception = true;
 		end
 
 		def stop()

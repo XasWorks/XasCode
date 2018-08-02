@@ -14,6 +14,9 @@ class DummyRunner
 
 		@next_tasks = Hash.new();
 	end
+
+	def update_status(*args)
+	end
 end
 
 class Test_Task < Minitest::Test

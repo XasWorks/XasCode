@@ -64,6 +64,9 @@ module GitRestart
 			_start_task_thread();
 		end
 
+		def update_status(name, newStatus, message = nil)
+		end
+
 		def _start_task_thread()
 			@taskThread = Thread.new do
 				loop do
