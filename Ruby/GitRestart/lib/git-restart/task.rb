@@ -110,8 +110,9 @@ module GitRestart
 			puts "Starting Task: #{@name}"
 
 			return if @targets.empty?
+			sleep 0.01
+			
 			@executionThread = Thread.new do
-				sleep 0.01
 				_report_status(:pending);
 
 				@targets.each do |target|
