@@ -10,3 +10,13 @@ GitRestart::Task.new do |t|
 	t.targets << 'sleep 10'
 	t.targets << 'exit 1'
 end
+
+GitTask::Task.new do |t|
+	t.name = "Git-Task-Tester"
+	t.active = true;
+
+	t.watch(/task.rb/);
+	t.watch(/tc_task.rb/);
+
+	t.targets << "ruby tests/tc_task.rb";
+end
