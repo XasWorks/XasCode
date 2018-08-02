@@ -38,10 +38,6 @@ module GitRestart
 				regEx = Regexp.quote(regEx);
 			end
 
-			if(@chdir)
-				regEx = "#{Regexp.quote(@chdir)}/#{regEx.to_s}";
-			end
-
 			@watched << Regexp.new(regEx);
 		end
 
@@ -81,7 +77,8 @@ module GitRestart
 
 			@watched.each do |regEx|
 				modified().each do |f|
-					return true if f =~ regEx;
+					next unless f =~ /#{Regexp.quote(@chdir)}(.*)/
+					return true if $1 =~ regEx;
 				end
 			end
 
@@ -112,6 +109,7 @@ module GitRestart
 			puts "Starting Task: #{@name}"
 
 			return if @targets.empty?
+
 			@executionThread = Thread.new do
 				_report_status(:pending);
 
