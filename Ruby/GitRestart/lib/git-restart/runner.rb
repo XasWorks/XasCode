@@ -106,7 +106,7 @@ module GitRestart
 				# TODO Add proper error reporting
 				begin
 					load(t);
-				rescue LoadError
+				rescue ScriptError, StandardError
 					puts("File #{t} could not be loaded!");
 				rescue GitRestart::TaskValidityError
 					puts("Task-File #{t} is not configured properly!");
