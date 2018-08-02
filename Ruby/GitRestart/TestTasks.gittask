@@ -14,6 +14,7 @@ end
 GitRestart::Task.new do |t|
 	t.name = "Git-Task-Tester"
 	t.active = true;
+	t.report_status = true;
 
 	t.watch(/task.rb/);
 	t.watch(/tc_task.rb/);
