@@ -137,7 +137,8 @@ module GitRestart
 				elsif(!@exiting || @expect_clean_exit)
 					_report_status(:failure);
 				end
-			end.abort_on_exception = true;
+			end
+			@executionThread.abort_on_exception = true;
 		end
 
 		def stop()

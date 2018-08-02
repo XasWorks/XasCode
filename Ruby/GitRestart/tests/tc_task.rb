@@ -1,5 +1,6 @@
 
 require_relative "../lib/git-restart/task.rb"
+require 'minitest/autorun'
 
 class DummyRunner
 	attr_accessor :current_branch, :current_commit, :current_modified;
