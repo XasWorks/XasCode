@@ -135,6 +135,10 @@ module GitRestart
 		def _switch_to(branch, commit = nil)
 			puts "Switching to branch: #{branch}, commit: #{commit}"
 			@git.fetch();
+			begin
+				@git.fetch();
+			rescue
+			end
 
 			if(branch != current_branch())
 				_stop_all_tasks();
@@ -142,9 +146,9 @@ module GitRestart
 				_stop_triggered_tasks();
 			end
 			@git.checkout(branch);
-			@git.reset_hard(commit);
-
 			@git.merge("origin/#{branch}");
+
+			@git.reset_hard(commit);
 
 			_start_next_tasks();
 		end
