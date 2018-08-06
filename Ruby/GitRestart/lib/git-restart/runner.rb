@@ -1,6 +1,8 @@
 
 require 'mqtt/sub_handler'
+
 require 'git'
+require 'octokit'
 
 require_relative "task.rb"
 
@@ -12,6 +14,9 @@ module GitRestart
 
 		attr_reader	  	:next_tasks
 		attr_reader		:current_task_file
+
+		attr_reader		:mqtt
+		attr_accessor	:octokit
 
 		def current_commit()
 			@git.object("HEAD^").sha;
@@ -60,6 +65,15 @@ module GitRestart
 		end
 
 		def update_status(name, newStatus, message = nil)
+			return unless @octokit;
+
+			begin
+			@octokit.create_status(@repo, current_commit, newStatus, {
+					context: "#{@name}/#{name}".gsub(" ", "_"),
+					description: message,
+				})
+			rescue
+			end
 		end
 
 		def _start_task_thread()
@@ -99,12 +113,13 @@ module GitRestart
 				t.gsub!(/^\.\//,"");
 				@current_task_file = t;
 
-				# TODO Add proper error reporting
 				begin
 					load(t);
 				rescue ScriptError, StandardError
+					update_status("File #{t}", :failure, "File could not be parsed!")
 					puts("File #{t} could not be loaded!");
 				rescue GitRestart::TaskValidityError
+					update_status("File #{t}", :failure, "Task-file not configured properly!")
 					puts("Task-File #{t} is not configured properly!");
 				end
 			end
