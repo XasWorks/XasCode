@@ -9,6 +9,7 @@ module GitRestart
 		attr_accessor 	:signal
 		attr_accessor	:expect_clean_exit
 		attr_accessor	:report_status
+		attr_accessor  :ci_task
 		attr_accessor	:name, :status_file
 
 		attr_accessor	:active
@@ -75,6 +76,7 @@ module GitRestart
 
 		def triggered?
 			return true if modified().nil?
+			return true if @ci_task
 
 			@watched.each do |regEx|
 				modified().each do |f|
