@@ -111,8 +111,10 @@ module GitRestart
 		def start()
 			puts "Starting Task: #{@name}"
 
-			return if @targets.empty?
-			sleep 0.01
+			if @targets.empty?
+				_report_status(:success, "No tasks to run!");
+				return
+			end
 
 			@executionThread = Thread.new do
 				_report_status(:pending);
@@ -121,7 +123,7 @@ module GitRestart
 					@statuschange_mutex.synchronize {
 						break if @exiting
 						options = {
-							[:in, :out, :err] => "/dev/null"
+							[:out, :err] => "/dev/null"
 						}
 						options[:chdir] = @chdir if @chdir
 
@@ -142,6 +144,8 @@ module GitRestart
 				end
 			end
 			@executionThread.abort_on_exception = true;
+
+			sleep 0.01
 		end
 
 		def stop()
