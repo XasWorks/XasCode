@@ -39,14 +39,11 @@ module GitRestart
 			yield(self);
 
 			@listenedSub = @mqtt.subscribe_to "GitHub/#{@repo}" do |data|
-				puts "Received data: #{data}"
 				begin
 					data = JSON.parse(data, symbolize_names: true);
 				rescue
 					next;
 				end
-
-				puts "Processing data #{data}"
 
 				next unless data[:branch];
 				if(not @branches.empty?)
@@ -54,8 +51,6 @@ module GitRestart
 				elsif(not @exclude_branches.empty?)
 					next if @exclude_branches.include? data[:branch];
 				end
-
-				puts "Queueing data!"
 
 				@branchQueue << data;
 			end
@@ -71,8 +66,6 @@ module GitRestart
 			@taskThread = Thread.new do
 				loop do
 					newData = @branchQueue.pop;
-
-					puts "Popped data: #{newData}"
 
 					@current_modified = newData[:touched];
 					_switch_to(newData[:branch], newData[:head_commit]);
@@ -116,13 +109,13 @@ module GitRestart
 				end
 			end
 
-			puts "Finished loading! Next tasks are: #{@next_tasks}"
+			puts "Finished loading! Next tasks: #{@next_tasks.keys}"
 		end
 
 		def _start_next_tasks()
 			_generate_next_tasks();
 
-			puts "Starting next tasks!"
+			puts "\n\nStarting next tasks!"
 			@next_tasks.each do |name, t|
 				next unless t.active;
 				next unless t.triggered?
@@ -133,8 +126,8 @@ module GitRestart
 		end
 
 		def _switch_to(branch, commit = nil)
-			puts "Switching to branch: #{branch}, commit: #{commit}"
-			@git.fetch();
+			puts "\nSwitching to branch: #{branch}#{commit ? ",commit: #{commit}" : ""}"
+
 			begin
 				@git.fetch();
 			rescue
