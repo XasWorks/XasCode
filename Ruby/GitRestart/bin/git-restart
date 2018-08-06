@@ -1,3 +1,15 @@
 #!/usr/bin/ruby
 
 require 'mqtt/sub_handler.rb'
+require 'git-restart/runner.rb'
+
+puts "Starting runner ..."
+
+target = ARGV[0]
+target ||= ".gitrun"
+
+raise ArgumentError, "No valid task file specified!" unless File.exist? target
+
+load target
+
+GitRestart::Task.runner.mqtt.lockAndListen
