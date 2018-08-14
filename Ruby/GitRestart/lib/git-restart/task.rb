@@ -104,7 +104,6 @@ module GitRestart
 			return unless @report_status
 
 			runner().update_status(@name, status, message);
-			puts "Task #{@name} assumed a new status: #{status}#{message ? " MSG:#{message}" : ""}"
 		end
 		private :_report_status
 

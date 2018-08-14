@@ -19,7 +19,7 @@ module GitRestart
 		attr_accessor	:octokit
 
 		def current_commit()
-			@git.object("HEAD^").sha;
+			@git.object("HEAD").sha;
 		end
 		def current_branch()
 			@git.current_branch();
@@ -65,10 +65,12 @@ module GitRestart
 		end
 
 		def update_status(name, newStatus, message = nil)
+			puts "Task #{@name} assumed a new status: #{newStatus}#{message ? " MSG:#{message}" : ""}"
+
 			return unless @octokit;
 
 			begin
-			@octokit.create_status(@repo, current_commit, newStatus, {
+			@octokit.create_status(@repo, current_commit(), newStatus, {
 					context: "#{@name}/#{name}".gsub(" ", "_"),
 					description: message,
 				})
@@ -130,7 +132,7 @@ module GitRestart
 		def _start_next_tasks()
 			_generate_next_tasks();
 
-			puts "\n\nStarting next tasks!"
+			puts "\nStarting next tasks!"
 			@next_tasks.each do |name, t|
 				next unless t.active;
 				next unless t.triggered?
@@ -141,7 +143,7 @@ module GitRestart
 		end
 
 		def _switch_to(branch, commit = nil)
-			puts "\nSwitching to branch: #{branch}#{commit ? ",commit: #{commit}" : ""}"
+			puts "\n\nSwitching to branch: #{branch}#{commit ? ",commit: #{commit}" : ""}"
 
 			begin
 				@git.fetch();
