@@ -71,6 +71,10 @@ module GitRestart
 
 			autostart();
 			_start_task_thread();
+
+			at_exit {
+				_stop_all_tasks();
+			}
 		end
 
 		def update_status(name, newStatus, message = nil)
@@ -166,6 +170,7 @@ module GitRestart
 			else
 				_stop_triggered_tasks();
 			end
+			@git.reset_hard();
 			@git.checkout(branch);
 			@git.merge("origin/#{branch}");
 
