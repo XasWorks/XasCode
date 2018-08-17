@@ -5,10 +5,17 @@ require 'git-restart/runner.rb'
 
 puts "Starting runner ..."
 
-target = ARGV[0]
-target ||= ".gitrun"
+$taskfiles = Array.new();
+target = ".gitrun"
+ARGV.each do |t|
+	if(File.extname(t) == ".gitrun")
+		target = t;
+	elsif(File.extname(t) == ".gittask")
+		$taskfiles << t;
+	end
+end
 
-raise ArgumentError, "No valid task file specified!" unless File.exist? target
+raise ArgumentError, "No valid runner file specified!" unless File.exist? target
 
 load target
 

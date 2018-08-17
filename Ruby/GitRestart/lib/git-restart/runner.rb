@@ -11,6 +11,7 @@ module GitRestart
 		attr_accessor :name
 
 		attr_accessor :repo, :branches, :exclude_branches, :start_on
+		attr_accessor :allowed_tasks
 
 		attr_reader	  	:next_tasks
 		attr_reader		:current_task_file
@@ -28,8 +29,14 @@ module GitRestart
 			@current_modified;
 		end
 
-		def initialize()
+		def initialize(fileList = nil)
+			raise ArgumentError, "File list needs to be nil or an Array!" unless (fileList.is_a? Array or fileList.nil?)
+
 			GitRestart::Task.runner = self;
+
+			@allowed_tasks = Array.new();
+			@allowed_tasks << fileList if(fileList);
+			@allowed_tasks << $taskfiles unless($taskfiles.empty?)
 
 			@current_tasks = Hash.new();
 			@next_tasks		= Hash.new();
@@ -42,6 +49,8 @@ module GitRestart
 			@git = Git.open(".");
 
 			yield(self);
+
+			@allowed_tasks.flatten!
 
 			@listenedSub = @mqtt.subscribe_to "GitHub/#{@repo}" do |data|
 				begin
@@ -112,6 +121,10 @@ module GitRestart
 				puts "Looking at: #{t}"
 				t.gsub!(/^\.\//,"");
 				@current_task_file = t;
+
+				unless(@allowed_tasks.empty?)
+					next unless @allowed_tasks.include? @current_task_file
+				end
 
 				begin
 					load(t);
