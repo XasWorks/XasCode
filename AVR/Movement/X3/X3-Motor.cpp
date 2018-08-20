@@ -10,7 +10,7 @@ namespace X3 {
     headMotor = this;
   }
 
-  void Motor::moveBy(float x, float y, float r) {};
+  void Motor::stepBy(float x, float y, float r) {};
 
 
   Motor * Motor::getHeadMotor() {
