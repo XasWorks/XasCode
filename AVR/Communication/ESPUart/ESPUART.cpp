@@ -32,16 +32,18 @@ ISR(USART_RX_vect) {
 
 	switch(RXStatus) {
 	case WAIT_FOR_START_RX:
-		if(rData == START_CHAR) {
-			RXStatus = RX_COMMAND;
-			UDR0 = START_CHAR;
+		if(rData == 	ESP_START_CHAR) {
+			RXStatus = 	RX_COMMAND;
+			UDR0 = 		ESP_START_CHAR;
+			
 			UDREI_ON;
 		}
 	break;
 
 	case RX_COMMAND:
-		if(rData == START_CHAR) {
-			UDR0 = START_CHAR;
+		if(rData == ESP_START_CHAR) {
+			UDR0 =   ESP_START_CHAR;
+
 			UDREI_ON;
 			if(resetCallback != 0)
 				resetCallback();

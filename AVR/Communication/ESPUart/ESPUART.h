@@ -16,8 +16,12 @@
 
 namespace ESPComs {
 
+#ifndef ESP_BAUDRATE
 #define ESP_BAUDRATE 31250
-#define START_CHAR '!'
+#endif
+#ifndef ESP_START_CHAR
+#define ESP_START_CHAR '!'
+#endif
 
 enum RXStates {
 	WAIT_FOR_START_RX,
