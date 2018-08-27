@@ -20,6 +20,8 @@ TXStates TXStatus = WAIT_FOR_START_TX;
 uint8_t * 	RXData;
 uint8_t 	RXToReceive = 0;
 
+volatile uint16_t RXTimeoutFrames = 0;
+
 Endpoint * 	RXEndpoint = 0;
 
 uint8_t * 	TXData;
@@ -62,19 +64,32 @@ ISR(USART_RX_vect) {
 			RXEndpoint = RXEndpoint->nextEndpoint;
 		}
 
-		if(RXToReceive != 0)
+		if(RXToReceive != 0) {
 			RXStatus = RX_DATA;
+			RXTimeoutFrames = 0;
+		}
 		else
 			RXEndpoint->callCallback();
 	break;
 
 	case RX_DATA:
+		RXTimeoutFrames = 0;
 		*(RXData++) = rData;
 		if(--RXToReceive == 0) {
 			RXStatus = RX_COMMAND;
 			RXEndpoint->callCallback();
 		}
 	break;
+	}
+}
+
+void increaseTimeout(uint16_t maxTimeout) {
+	if(RXStatus != RX_DATA)
+		return;
+
+	RXTimeoutFrames++;
+	if(RXTimeoutFrames >= maxTimeout) {
+		RXStatus = RX_COMMAND;
 	}
 }
 
