@@ -23,6 +23,24 @@ namespace ESPComs {
 #define ESP_START_CHAR '!'
 #endif
 
+#if defined(__AVR_ATmega32__)
+#define UBRR0 	UBRRL
+#define UCSR0B	UCSRB
+#define UCSR0C	UCSRC
+#define UDR0	UDR
+
+#define	UCSZ00	UCSZ0
+#define UCSZ01	UCSZ1
+#define UDRIE0	UDRIE
+
+#define RXEN0	RXEN
+#define TXEN0	TXEN
+#define RXCIE0	RXCIE
+#define	TXCIE0	TXCIE
+
+#define USART_RX_vect USART_RXC_vect
+#endif
+
 enum RXStates {
 	WAIT_FOR_START_RX,
 	RX_COMMAND,

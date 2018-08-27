@@ -153,10 +153,15 @@ void init() {
 
 	// UART Initialisation
 	UCSR0B = (1<< RXEN0 | 1<< TXEN0 | 1<<RXCIE0);
+#ifdef URSEL
+	UBRRH  = 0;
+	UCSR0C = (1<<URSEL | 1<< UCSZ01 | 1<< UCSZ00);
+#else
 	UCSR0C = (1<< UCSZ01 | 1<< UCSZ00);
 
 	DDRD 	&= ~(1);
 	PORTD 	|= (1);
+#endif
 }
 
 }
