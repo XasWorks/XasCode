@@ -35,6 +35,8 @@ enum TXStates {
 	TX_SENDING,
 };
 
+void increaseTimeout(uint16_t maxFrames);
+
 void onReset(void (* const resetCallback)());
 
 bool tryToStart(Source * txSource);

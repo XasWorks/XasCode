@@ -149,7 +149,7 @@ ISR(USART_UDRE_vect) {
 
 void init() {
 	// Init of the baudrate register (Asynchronous normal)
-	UBRR0 = F_CPU/16/ESP_BAUDRATE -1;
+	UBRR0 = (F_CPU/16)/ESP_BAUDRATE -1;
 
 	// UART Initialisation
 	UCSR0B = (1<< RXEN0 | 1<< TXEN0 | 1<<RXCIE0);
