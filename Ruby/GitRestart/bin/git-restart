@@ -10,7 +10,7 @@ target = ".gitrun"
 ARGV.each do |t|
 	if(File.extname(t) == ".gitrun")
 		target = t;
-	elsif(File.extname(t) == ".gittask")
+	else
 		$taskfiles << t;
 	end
 end
