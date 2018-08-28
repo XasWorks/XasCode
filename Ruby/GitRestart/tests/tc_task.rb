@@ -118,6 +118,34 @@ class Test_Task < Minitest::Test
 		assert File.exist?("/tmp/TEST_FILE_1");
 	end
 
+	def test_status_msg()
+		@task = GitRestart::Task.new do |t|
+			t.name = "TestTask"
+			t.ci_task = true;
+
+			t.targets << 'echo "Status A!"'
+		end
+
+		@task.start();
+		@task.join();
+
+		refute File.exist? "/tmp/TaskLog_TestTask_#{@runner.current_commit()}"
+		assert_equal "Status A!", @task.status_message
+
+		@task = GitRestart::Task.new do |t|
+			t.name = "TestTask2"
+			t.ci_task = true;
+
+			t.targets << 'echo "Status A!" && exit 1'
+		end
+
+		@task.start();
+		@task.join();
+
+		assert File.exist? "/tmp/TaskLog_TestTask2_#{@runner.current_commit()}"
+		assert_equal "Status A!", @task.status_message
+	end
+
 	def test_triggers()
 		@runner.current_branch 		= "master";
 		@runner.current_modified 	= ["Tests/Test1/Test.rb"];
