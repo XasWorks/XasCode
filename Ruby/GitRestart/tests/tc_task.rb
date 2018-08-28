@@ -136,6 +136,12 @@ class Test_Task < Minitest::Test
 			@runner.current_modified = ["Tests/Test1/NotTested.txt"];
 			refute t.triggered?
 
+			@runner.current_modified = ["OutOfCHDir/Test.rb"];
+			refute t.triggered?
+
+			t.watch(%r{/OutOfCHDir/.*});
+			assert t.triggered?
+
 			t.on_branches ["master", "dev"];
 			assert t.active;
 			t.active = false;

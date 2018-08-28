@@ -83,8 +83,12 @@ module GitRestart
 
 			@watched.each do |regEx|
 				modified().each do |f|
-					next unless f =~ /#{Regexp.quote(@chdir)}(.*)/
-					return true if $1 =~ regEx;
+					if regEx.to_s =~ /^\(\?\-mix:\\\/(.*)\)$/ then
+						return true if f =~ Regexp.new($1);
+					else
+						next unless f =~ /#{Regexp.quote(@chdir)}(.*)/
+						return true if $1 =~ regEx;
+					end
 				end
 			end
 
