@@ -117,7 +117,13 @@ module GitRestart
 
 			sMsg = ""
 			File.open(@status_file, "r") do |sFile|
-				sFile.each_line do |l| sMsg = l; end
+				sFile.each_line do |l|
+					l.chomp!
+					next if l == "";
+					next if l =~ /^\s+/;
+
+					sMsg = l;
+				end
 			end
 
 			return sMsg;
@@ -144,10 +150,10 @@ module GitRestart
 			@executionThread = Thread.new do
 				_report_status(:pending);
 
+				_rm_logfile();
 				@targets.each do |target|
 					@statuschange_mutex.synchronize {
 						break if @exiting
-						_rm_logfile();
 						options = {
 							[:out, :err] => "/tmp/TaskLog_#{@name}_#{current_commit()}"
 						}
