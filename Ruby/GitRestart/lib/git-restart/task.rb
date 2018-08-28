@@ -70,6 +70,8 @@ module GitRestart
 
 			valid?
 
+			@status_file ||= "/tmp/TaskLog_#{@name}_#{current_commit()}";
+
 			if(runner().next_tasks[@name])
 				raise TaskValidityError, "A task of name #{@name} already exists!"
 			else
@@ -105,8 +107,25 @@ module GitRestart
 			end
 		end
 
+		def _rm_logfile()
+			if File.exist?("/tmp/TaskLog_#{@name}_#{current_commit()}") then
+				File.delete("/tmp/TaskLog_#{@name}_#{current_commit()}");
+			end
+		end
+		def _get_statusline()
+			return "No status specified" unless File.exist? @status_file
+
+			sMsg = ""
+			File.open(@status_file, "r") do |sFile|
+				sFile.each_line do |l| sMsg = l; end
+			end
+
+			return sMsg;
+		end
+
 		def _report_status(status, message = nil)
-			@status_message = ""
+			message ||= _get_statusline();
+			@status_message = message;
 
 			return unless @report_status
 
@@ -128,8 +147,9 @@ module GitRestart
 				@targets.each do |target|
 					@statuschange_mutex.synchronize {
 						break if @exiting
+						_rm_logfile();
 						options = {
-							[:out, :err] => "/dev/null"
+							[:out, :err] => "/tmp/TaskLog_#{@name}_#{current_commit()}"
 						}
 						options[:chdir] = @chdir if @chdir
 
@@ -145,6 +165,7 @@ module GitRestart
 
 				if(@lastStatus == 0)
 					_report_status(:success);
+					_rm_logfile();
 				elsif(!@exiting || @expect_clean_exit)
 					_report_status(:failure);
 				end
