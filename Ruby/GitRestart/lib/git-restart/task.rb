@@ -30,6 +30,9 @@ module GitRestart
 		def branch()
 			runner().current_branch();
 		end
+		def current_commit()
+			runner().current_commit();
+		end
 		def modified()
 			runner().current_modified();
 		end
