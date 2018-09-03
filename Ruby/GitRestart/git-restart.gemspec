@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
 	s.name 			= 'git-restart'
-	s.version 		= '0.0.2'
+	s.version 		= '0.0.3'
 	s.summary		= '(Re)start scripts and monitor them on a GitHub push'
 	s.description	= 'This gem can be used to (re)start scripts whenever a GitHub push event is recorded.
 The exit status of scripts can be monitored, and a failure can be sent back, making this capable of running simple tests too!'

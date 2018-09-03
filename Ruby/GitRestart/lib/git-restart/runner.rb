@@ -78,13 +78,13 @@ module GitRestart
 		end
 
 		def update_status(name, newStatus, message = nil)
-			puts "Task #{@name} assumed a new status: #{newStatus}#{message ? " MSG:#{message}" : ""}"
+			puts "Task #{name} assumed a new status: #{newStatus}#{message ? " MSG:#{message}" : ""}"
 
 			return unless @octokit;
 
 			begin
 			@octokit.create_status(@repo, current_commit(), newStatus, {
-					context: "#{@name}/#{name}".gsub(" ", "_"),
+					context: "#{name}/#{name}".gsub(" ", "_"),
 					description: message,
 				})
 			rescue
