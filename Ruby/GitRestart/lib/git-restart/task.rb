@@ -1,42 +1,82 @@
 
+# @author Xasin
 module GitRestart
+	# The Error-Class used to signal when a Task is set up wrong
 	class TaskValidityError < StandardError
 	end
 
+	# This class is used to define "Tasks". Each task represents
+	# a set of commands, which it executes in chronological order, or until
+	# a task errors.
+	# Additionally, it will kill execution of tasks with a specified kill-signal
+	# when an update was detected from GitHub.
+	# The failure-status of the tasks can also be reported via Octokit, allowing this
+	# to be used as a simple CI or Test system for various languages.
 	class Task
+		# The array of tasks to execute. Each target will be executed in the given
+		# order via `Process.spawn`.
+		# @return [Array<String>]
 		attr_reader 	:targets
 
+		# The signal (as String, like Signal.list) to use to kill the process.
+		# Can be nil to disable killing
 		attr_accessor 	:signal
+		# Whether or not to report failure if the currently running target
+		# has a non-zero exit status after having been killed. Only makes sense
+		# together with report_status
 		attr_accessor	:expect_clean_exit
+		# Whether or not to report failure/success status to GitHub using Octokit
 		attr_accessor	:report_status
+		# Defines this as a "CI_Task". Such a task will always run on an update,
+		# regardless what files changed. Useful if you always want a status report
+		# on GitHub.
 		attr_accessor  :ci_task
-		attr_accessor	:name, :status_file
+		# Name of the Task. *Required*. Used as *unique* ID, and to report status to GitHub
+		attr_accessor	:name
+		# The file to use to retrieve a single-line status info for the "description"
+		# string of the GitHub status. Only the last *non-indented* line is used,
+		# which allows the output of Minitest to be used directly.
+		attr_accessor  :status_file
 
+		# Whether or not this task is active. Usually set via #on_branches,
+		# but can be used to manually disable or enable this task based on
+		# config files, ENV variables etc.
 		attr_accessor	:active
 
+		# The last status-code of this Task. Used internally.
 		attr_reader		:lastStatus
+		# The last status-message of this task. Used internally.
 		attr_reader		:status_message
 
+		# @api private
 		def self.runner=(runner)
 			@runner = runner;
 		end
+		# @api private
 		def self.runner()
 			return @runner;
 		end
+		# @return [GitRestart::Runner] Responsible Runner class
 		def runner()
 			return self.class.runner();
 		end
 
+		# @return [String] Name of the current branch
 		def branch()
 			runner().current_branch();
 		end
+		# @return [String] Full SHA of the current commit
 		def current_commit()
 			runner().current_commit();
 		end
+
+		# @return [Array<String>] A list of all files that were modified in the commit we are checking
 		def modified()
 			runner().current_modified();
 		end
 
+		# Use this function to specify which files trigger a restart for this Task
+		# Files can be specified as a RegEx, and can be "local/like.this" or "/reference/from/project.root"
 		def watch(regEx)
 			if(regEx.is_a? String)
 				regEx = Regexp.quote(regEx);
@@ -45,9 +85,10 @@ module GitRestart
 			@watched << Regexp.new(regEx);
 		end
 
+		# Specify which branches to run on. Not needed if "active" is just set to true
 		def on_branches(branches)
 			[branches].flatten.each do |b|
-				@active |= (b == branch());
+				@activ |= (b == branch());
 			end
 		end
 
