@@ -158,7 +158,8 @@ namespace X3 {
 
 			Motor *cMotor = Motor::getHeadMotor();
 			while(cMotor != 0) {
-				cMotor->moveBy(xRotated, yRotated, rThisISR);
+				cMotor->stepBy(xRotated, yRotated, rThisISR);
+				cMotor = cMotor->getNextMotor();
 			}
 
 			//Reset acceleration if at target and not having received a new command for ACCEL_DEBOUNCE_CYCLES updates
