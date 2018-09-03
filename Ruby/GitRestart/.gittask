@@ -1,6 +1,6 @@
 
 GitRestart::Task.new do |t|
-	@ci_task = true;
+	t.ci_task = true;
 	t.name = "GitRestart Task"
 
 	t.report_status = true;
