@@ -8,7 +8,7 @@ puts "Starting runner ..."
 $taskfiles = Array.new();
 target = ".gitrun"
 ARGV.each do |t|
-	if(File.extname(t) == ".gitrun")
+	if(t =~ /\.gitrun$/)
 		target = t;
 	else
 		$taskfiles << t;
