@@ -8,23 +8,41 @@ require_relative "task.rb"
 
 module GitRestart
 	class Runner
+		# Sets a name for this Runner, used for reporting to GitHub
 		attr_accessor :name
 
-		attr_accessor :repo, :branches, :exclude_branches, :start_on
+		# Which repository to listen to. Uses "Owner/Repo" syntax.
+		attr_accessor :repo
+		# A white- and blacklist of branches. If neither are specified, all are used.
+		# If the whitelist is used, only it is considered.
+		attr_accessor :branches, :exclude_branches
+		# Which branch to start on.
+		# This not only makes the system switch branch, but it will also execute
+		# ALL active tasks. Very useful for auto-updating servers.
+		attr_accessor :start_on
+		# A list of tasks that this Runner will actually look at.
+		# If nil, all tasks are allowed.
 		attr_accessor :allowed_tasks
 
 		attr_reader	  	:next_tasks
 		attr_reader		:current_task_file
 
+		# The MQTT::SubHandler to use to listen to GitHub updates.
+		# Can be specified as either MQTT::SubHandler class or String, the latter
+		# will be interpreted as URI
 		attr_reader		:mqtt
+		# Octokit to use for optional status reporting
 		attr_accessor	:octokit
 
+		# @return [String] Full SHA of the current commit
 		def current_commit()
 			@git.object("HEAD").sha;
 		end
+		# @return [String] Name of the current branch
 		def current_branch()
 			@git.current_branch();
 		end
+		# @return [Array<String>] A list of all files that were modified in the commit we are checking
 		def current_modified()
 			@current_modified;
 		end
@@ -77,6 +95,8 @@ module GitRestart
 			}
 		end
 
+		# Update the GitHub status for the task of given name, with optional status message
+		# Only prints a line if no octokit is specified
 		def update_status(name, newStatus, message = nil)
 			puts "Task #{name} assumed a new status: #{newStatus}#{message ? " MSG:#{message}" : ""}"
 
@@ -91,6 +111,8 @@ module GitRestart
 			end
 		end
 
+		# Start the task responsible for queueing and executing the individual
+		# task stop, branch switch, task start cycles
 		def _start_task_thread()
 			@taskThread = Thread.new do
 				loop do
@@ -101,7 +123,9 @@ module GitRestart
 				end
 			end.abort_on_exception = true;
 		end
+		private :_start_task_thread
 
+		# Stop all tasks of the given hash, not list. Waits for them to stop.
 		def _stop_tasks(taskList)
 			taskList.each do |name, t|
 				t.stop();
@@ -111,19 +135,27 @@ module GitRestart
 				@current_tasks.delete(name);
 			end
 		end
+		private :_stop_tasks
 		def _stop_all_tasks()
 			_stop_tasks(@current_tasks);
 		end
+		private :_stop_all_tasks
+		# Stop all tasks that have marked themselves as affected by the
+		# current set of file-changes. This way, applications are only
+		# restarted when their own files have been altered.
 		def _stop_triggered_tasks()
 			_stop_tasks(@current_tasks.select {|k,v| v.triggered?});
 		end
+		private :_stop_triggered_tasks
 
+		# Scan through the file-tree for .gittask files, or use the @allowed_tasks
+		# list of tasks.
 		def _generate_next_tasks()
 			puts "Generating new tasks..."
 			@next_tasks = Hash.new();
 
 			taskFiles = `find ./ -nowarn -iname "*.gittask"`
-			taskFiles.split("\n").each do |t|
+			[taskFiles.split("\n"), @allowed_tasks].flatten.each do |t|
 				puts "Looking at: #{t}"
 				t.gsub!(/^\.\//,"");
 				@current_task_file = t;
@@ -145,7 +177,10 @@ module GitRestart
 
 			puts "Finished loading! Next tasks: #{@next_tasks.keys}"
 		end
+		private :_generate_next_tasks
 
+		# Start all new tasks that have marked themselves as affected by the current
+		# set of filechanges
 		def _start_next_tasks()
 			_generate_next_tasks();
 
@@ -158,7 +193,10 @@ module GitRestart
 				@current_tasks[name] = t;
 			end
 		end
+		private :_start_next_tasks
 
+		# Perform an entire cycle of git fetch & checkout, stop tasks, pull, restart.
+		# *CAUTION* A HARD RESET IS USED HERE
 		def _switch_to(branch, commit = nil)
 			puts "\n\nSwitching to branch: #{branch}#{commit ? ",commit: #{commit}" : ""}"
 
@@ -180,6 +218,7 @@ module GitRestart
 
 			_start_next_tasks();
 		end
+		private :_switch_to
 
 		def autostart()
 			return unless @start_on;

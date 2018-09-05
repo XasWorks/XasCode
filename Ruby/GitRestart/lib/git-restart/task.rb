@@ -88,10 +88,14 @@ module GitRestart
 		# Specify which branches to run on. Not needed if "active" is just set to true
 		def on_branches(branches)
 			[branches].flatten.each do |b|
-				@activ |= (b == branch());
+				@active |= (b == branch());
 			end
 		end
 
+		# Create a new Task. This function does not take any input values, instead,
+		# one has to set the class up inside the block!
+		# A validity check will be run directly after yield(), as such, at the very least
+		# the name and a valid signal must have been specified!
 		def initialize()
 			@statuschange_mutex = Mutex.new();
 
@@ -120,6 +124,10 @@ module GitRestart
 			end
 		end
 
+		# Checks whether or not the current set of modified files would require this
+		# task to be (re)started. Always returns true if @ci_task is set, or if
+		# the runner just has been started using @start_on
+		# @api private
 		def triggered?
 			return true if modified().nil?
 			return true if @ci_task
@@ -138,6 +146,9 @@ module GitRestart
 			return false;
 		end
 
+		# Checks whether or not this task has been set up properly. Currently only
+		# checks the name and abort signal.
+		# @api private
 		def valid?()
 			unless Signal.list[@signal] or @signal.nil?
 				raise TaskValidityError, "The specified kill-signal is not valid!"
@@ -153,6 +164,7 @@ module GitRestart
 				File.delete("/tmp/TaskLog_#{@name}_#{current_commit()}");
 			end
 		end
+		private :_rm_logfile
 		def _get_statusline()
 			return "No status specified" unless File.exist? @status_file
 
@@ -169,6 +181,7 @@ module GitRestart
 
 			return sMsg;
 		end
+		private :_rm_logfile
 
 		def _report_status(status, message = nil)
 			message ||= _get_statusline();
@@ -180,6 +193,13 @@ module GitRestart
 		end
 		private :_report_status
 
+		# Starts this task.
+		# Once the task has been started it will run each given
+		# target one after another, waiting for each one to finish. If @report_status
+		# is set, it will also do just that.
+		# Task execution is handled within a thread, meaning that the function
+		# itself does not block.
+		# @api private
 		def start()
 			puts "Starting Task: #{@name}"
 
@@ -193,6 +213,7 @@ module GitRestart
 
 				_rm_logfile();
 				@targets.each do |target|
+					# Mutex to ensure there either is no task running or a PID given
 					@statuschange_mutex.synchronize {
 						break if @exiting
 						options = {
@@ -222,6 +243,11 @@ module GitRestart
 			sleep 0.01
 		end
 
+		# Stop this task.
+		# Stopping it means immediately killing the currently running target with
+		# the specified signal, and not running any further targets.
+		# *Except* when nil is specified as signal, in which case the stop will be ignored!
+		# @api private
 		def stop()
 			puts "Stopping Task: #{@name}"
 			return if @signal.nil?
@@ -234,6 +260,8 @@ module GitRestart
 			}
 		end
 
+		# Wait for this task to finish execution.
+		# Either by naturally ending, or by being killed.
 		def join()
 			@executionThread.join();
 		end
