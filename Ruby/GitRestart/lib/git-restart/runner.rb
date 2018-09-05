@@ -224,6 +224,7 @@ module GitRestart
 			return unless @start_on;
 			@branchQueue << {branch: @start_on};
 		end
+		private :autostart
 
 		def mqtt=(mqtt)
 			if(mqtt.is_a? String)
