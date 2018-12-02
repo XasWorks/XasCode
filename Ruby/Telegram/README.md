@@ -8,8 +8,31 @@ My gem doesn't include all functionality, but aims to provide a somewhat simpler
 interaction with a small number (or just a single) of users.
 I mainly use it for my own smart home system, to easily send and receive messages, but not much more.
 
+## MQTT-Mode (Preferred)
+The main mode of using this gem would be via the MQTT Adapter system.
+It translates a lot of commonly used functionality into an asynchronous MQTT API, allowing other parts of your code, but also embedded devices like ESPs to very easily interface with the Telegram bot.
+
+*Note:* A MQTT server is not needed! The "virtual" MQTT Server `MQTT::Testing::SubHandler` can be used too!
+
+Setting up the system is fairly easy:
+
+```Ruby
+require 'xasin/telegram.rb'
+require 'xasin/telegram/MQTT_Adapter.rb'
+
+# Create the HTTP core, which will handle all the communication to the REST api
+httpCore = Xasin::Telegram::HTTPCore.new(APIKEY);
+
+# Now create the MQTT interface.
+mqttAdapter = Xasin::Telegram::MQTT::Server.new(httpCore, mqtt);
+```
+
+This exposes the Telegram Bot's interface functions to the "Telegram/#" tree.
+
+Incoming messages will be published to
+
 ## Single-User mode
-The main element of this gem is the single user mode.
+Another way to use the HTTP-Core is by only looking at a single user.
 It discards messages of all users except one, and provides a simple "send" and "on_message" interface:
 
 ```Ruby
