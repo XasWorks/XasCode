@@ -19,7 +19,7 @@ namespace X3 {
   public:
     Motor();
 
-    virtual void moveBy(float x, float y, float r);
+    virtual void stepBy(float x, float y, float r);
 
     static Motor * getHeadMotor();
     Motor * getNextMotor();

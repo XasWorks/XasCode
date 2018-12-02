@@ -56,7 +56,7 @@ void PrimitiveStepper::update() {
 }
 
 float PrimitiveStepper::getSpeed() {
-	return this->stepSpeed;
+	return (signbit(stepsToGo) ? -1 : 1) * this->stepSpeed;
 }
 float PrimitiveStepper::getPosition() {
 	return this->currentSteps;
