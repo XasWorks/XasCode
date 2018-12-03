@@ -1,11 +1,24 @@
 
 require_relative 'setup.rb'
+require_relative 'tc_GroupingAdapter.rb'
 require_relative '../lib/xasin/telegram/MQTT_Adapter.rb'
+
 
 require 'mqtt/sub_testing'
 
 $mqtt = MQTT::Testing::SubHandler.new();
 $mqttTelegram = Xasin::Telegram::MQTT::Server.new($core, $mqtt);
+
+class MQTT_Grouping_Test < Grouping_Test
+	def setup
+		$mqtt.prepare
+		$core.prepare
+
+		$mqttTelegram._reset();
+
+		$adapter = $mqttTelegram;
+	end
+end
 
 class MQTT_Server_Test < MiniTest::Test
 	def setup
