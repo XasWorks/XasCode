@@ -36,8 +36,6 @@ module Xasin
 			end
 
 			def simulate_send_packet(packet)
-				puts("Simulating packet #{packet} for #{@receptors}");
-
 				@receptors.each do |r|
 					r.handle_packet(packet);
 				end

@@ -52,15 +52,19 @@ module Telegram
 			end
 
 			def on_message(data, uID)
+				super(data, uID);
 				@mqtt.publish_to "Telegram/#{uID}/Received", data.to_json;
 			end
 			def on_command(data, uID)
+				super(data, uID);
 				@mqtt.publish_to "Telegram/#{uID}/Command", data.to_json;
 			end
 			def on_reply(data, uID)
+				super(data, uID);
 				@mqtt.publish_to "Telegram/#{uID}/Reply", data.to_json;
 			end
 			def on_callback_pressed(data, uID)
+				super(data, uID);
 				@mqtt.publish_to "Telegram/#{uID}/KeyboardPress", data.to_json
 			end
 		end
