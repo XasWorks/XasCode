@@ -63,52 +63,6 @@ module Telegram
 			def on_callback_pressed(data, uID)
 				@mqtt.publish_to "Telegram/#{uID}/KeyboardPress", data.to_json
 			end
-
-			def handle_packet(packet)
-				if(msg = packet[:message])
-					uID = msg[:chat][:id];
-					if(newUID = @usernameList.key(uID))
-						uID = newUID
-					end
-
-					data = Hash.new();
-					return unless(data[:text] = msg[:text])
-
-					if(replyMSG = msg[:reply_to_message])
-						data[:reply_gid] = @groupIDList[uID].key(replyMSG[:message_id]);
-					end
-
-					if(data[:text] =~ /^\//)
-					elsif(data[:reply_gid])
-
-					else
-
-					end
-				end
-
-				if(msg = packet[:callback_query])
-					@httpCore.perform_post("answerCallbackQuery", {callback_query_id: msg[:id]});
-
-					uID = msg[:message][:chat][:id];
-					if(newUID = @usernameList.key(uID))
-						uID = newUID
-					end
-
-					begin
-						data = JSON.parse(msg[:data], symbolize_names: true);
-
-						data = {
-							gid:  data[:i],
-							key: data[:k],
-						}
-
-						if(data[:key] =~ /^\//)
-							@mqtt.publish_to "Telegram/#{uID}/Command", {text: data[:key]}.to_json
-						end
-					rescue
-					end
-				end
-			end
 		end
 	end
 end
