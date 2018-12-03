@@ -10,6 +10,8 @@ module Xasin
 
 			def initialize()
 				prepare();
+
+				@receptors = Array.new();
 			end
 
 			def prepare()
@@ -26,14 +28,32 @@ module Xasin
 				}
 			end
 
-			def attach_receptor(receptor)
-			end
-
 			def perform_post(postRequest, postData)
 				@lastPostRequest << postRequest;
 				@lastPostData << postData;
 
 				return @toReturn;
+			end
+
+			def simulate_send_packet(packet)
+				puts("Simulating packet #{packet} for #{@receptors}");
+
+				@receptors.each do |r|
+					r.handle_packet(packet);
+				end
+			end
+
+			def simulate_sent_message(text, chatID: "test", reply_id: nil )
+				outData = Hash.new();
+
+				outData[:chat] = {id: chatID};
+				outData[:text] = text;
+
+				if(reply_id)
+					outData[:reply_to_message] = reply_id;
+				end
+
+				simulate_send_packet({message: outData});
 			end
 		end
 	end
