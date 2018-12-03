@@ -7,6 +7,9 @@ module Xasin
 			attr_accessor :usernameList
 			attr_reader   :groupIDList
 
+			attr_reader :testLastUID
+			attr_reader :testLastData
+
 			def initialize(httpCore)
 				# Check if we already have a HTTPCore, else create one
 				if(httpCore.is_a? Telegram::HTTPCore)
@@ -153,6 +156,8 @@ module Xasin
 			end
 
 			def on_message(data, uID)
+				@testLastUID  = uID;
+				@testLastData = data;
 			end
 
 			def on_command(data, uID)

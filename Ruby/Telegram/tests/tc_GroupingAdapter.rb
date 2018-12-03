@@ -72,4 +72,9 @@ class Grouping_Test < MiniTest::Test
 		assert_equal "sendMessage", $core.lastPostRequest.shift
 		assert_equal expectedMessage, $core.lastPostData.shift
 	end
+
+	def test_basic_receive
+		$core.simulate_sent_message("Test text!");
+		assert_equal "Test text!", $adapter.testLastData[:text];
+	end
 end
