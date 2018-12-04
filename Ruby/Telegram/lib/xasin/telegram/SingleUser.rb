@@ -17,19 +17,18 @@ module Telegram
 		end
 
 		def handle_packet(packet)
-			if(packet[:message]) then
+			if(packet[:message])
 				return unless packet[:message][:chat][:id] == @userID;
 
 				@message_procs.each do |cb| cb.call(packet[:message]); end
 				packet[:has_been_handled] = true;
 			end
 
-			if(packet[:callback_query]) then
-				return unless packet[:callback_query][:message][:chat][:id] == @userID;
+			return unless packet[:callback_query]
+			return unless packet[:callback_query][:message][:chat][:id] == @userID;
 
-				@inlinebutton_procs.each do |cb| cb.call(packet[:callback_query]); end
-				packet[:has_been_handled] = true;
-			end
+			@inlinebutton_procs.each { |cb| cb.call(packet[:callback_query]); }
+			packet[:has_been_handled] = true;
 		end
 
 		def send_message(text, **args)

@@ -9,9 +9,10 @@ module Telegram
 			@apikey = apikey;
 
 			@lastUpdateID = 0;
-			Thread.new do
+			@receiveThread = Thread.new do
 				receive_loop();
-			end.abort_on_exception = true
+			end
+			@receiveThread.abort_on_exception = true
 
 			@receptors = Array.new();
 		end

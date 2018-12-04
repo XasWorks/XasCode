@@ -10,7 +10,7 @@ Gem::Specification.new do |s|
                      "lib/xasin/telegram/SingleUser.rb",
                      "lib/xasin/telegram.rb",
 							"lib/xasin/telegram/TestHTTPCore.rb",
-					 "README.md"]
+							"README.md"]
   s.homepage    =
     'https://github.com/XasWorks/XasCode/tree/GEM_Telegram/Ruby/Telegram'
   s.license     = 'GPL-3.0'

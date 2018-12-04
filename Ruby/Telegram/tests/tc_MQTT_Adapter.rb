@@ -28,7 +28,6 @@ class MQTT_Server_Test < MiniTest::Test
 		$mqttTelegram._reset();
 	end
 
-
 	def test_send
 		uID = rand(0..9999);
 
