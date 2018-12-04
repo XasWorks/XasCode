@@ -3,6 +3,12 @@ require_relative 'HTTPCore.rb'
 
 module Xasin
 	module Telegram
+		# This class handles translating the sometimes a bit interesting
+		# Telegram API data to more usable types.
+		# It also handles the translation of User-IDs to the Usernames,
+		# and provides "Grouping IDs" to make it easier to edit, reply to, and
+		# delete messages
+		# It also exposes a much neater way of constructing inline keyboards.
 		class GroupingAdapter
 			attr_accessor :usernameList
 			attr_reader   :groupIDList

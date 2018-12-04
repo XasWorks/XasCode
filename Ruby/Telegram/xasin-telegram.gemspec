@@ -6,9 +6,9 @@ Gem::Specification.new do |s|
   s.description = "Multi-Purpose Telegram gem. Mainly for personal use, but also used as a Telegram to MQTT Bridge for IoT devices"
   s.authors     = ["Xasin"]
   s.files       = [  "lib/xasin/telegram/HTTPCore.rb",
-                     "lib/xasin/telegram/MQTT_Adapter.rb",
-                     "lib/xasin/telegram/SingleUser.rb",
-                     "lib/xasin/telegram.rb",
+							"lib/xasin/telegram/MQTT_Adapter.rb",
+							"lib/xasin/telegram/SingleUser.rb",
+							"lib/xasin/telegram.rb",
 							"lib/xasin/telegram/TestHTTPCore.rb",
 							"README.md"]
   s.homepage    =
