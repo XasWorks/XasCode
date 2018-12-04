@@ -4,6 +4,9 @@ require_relative '../lib/xasin/telegram/GroupingAdapter.rb'
 
 $adapter = Xasin::Telegram::GroupingAdapter.new($core);
 
+# This class tests all of GroupingAdapter's functions.
+# That includes keyboard parsing and constructing, sending and
+# receving of messages, etc.
 class Grouping_Test < MiniTest::Test
 	def setup()
 		$core.prepare();
@@ -15,34 +18,37 @@ class Grouping_Test < MiniTest::Test
 
 		expectedKeyboard = {
 			inline_keyboard: [[
-					{	text: "Key 1",
-						callback_data: {i:"GID", k:"Key 1"}.to_json
+					{
+						text: "Key 1",
+						callback_data: {i: "GID",
+											 k: "Key 1"}.to_json
 					}]]
 		}
 
 		sentKeyboard = $adapter._process_inline_keyboard(["Key 1"], "GID");
 		assert_equal expectedKeyboard, sentKeyboard,
-			"Keyboard parsing did not equal expected result."
+						 "Keyboard parsing did not equal expected result."
 
 		sentKeyboard = $adapter._process_inline_keyboard([["Key 1"]], "GID");
 		assert_equal expectedKeyboard, sentKeyboard,
-			"Keyboard parsing did not equal expected result."
+						 "Keyboard parsing did not equal expected result."
 
 
 		expectedKeyboard = {
 			inline_keyboard: [[
-					{	text: "Key 1",
+					{
+						text: "Key 1",
 						callback_data: {i:"GID", k:"CB 1"}.to_json
 					}]]
 		}
 
 		sentKeyboard = $adapter._process_inline_keyboard({"Key 1" => "CB 1"}, "GID");
 		assert_equal expectedKeyboard, sentKeyboard,
-			"Keyboard parsing did not equal expected result."
+						 "Keyboard parsing did not equal expected result."
 
 		sentKeyboard = $adapter._process_inline_keyboard([{"Key 1" => "CB 1"}], "GID");
 		assert_equal expectedKeyboard, sentKeyboard,
-			"Keyboard parsing did not equal expected result."
+						 "Keyboard parsing did not equal expected result."
 	end
 
 	def test_basic_send()

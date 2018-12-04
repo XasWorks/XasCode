@@ -20,7 +20,7 @@ module Telegram
 					begin
 						data = JSON.parse(data, symbolize_names: true);
 					rescue
-						data = {text: data}
+						data = { text: data }
 					end
 
 					_handle_send(data, tSplit[0]);

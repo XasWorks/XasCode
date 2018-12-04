@@ -12,11 +12,11 @@ module Xasin
 
 			def initialize(httpCore)
 				# Check if we already have a HTTPCore, else create one
-				if(httpCore.is_a? Telegram::HTTPCore)
-					@httpCore = httpCore;
-				else
-					@httpCore = Telegram::HTTPCore.new(httpCore);
-				end
+				@httpCore = if(httpCore.is_a? Telegram::HTTPCore)
+						httpCore;
+					else
+						Telegram::HTTPCore.new(httpCore);
+					end
 				@httpCore.attach_receptor(self);
 
 				_reset();

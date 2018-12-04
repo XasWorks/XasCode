@@ -3,6 +3,10 @@ require_relative 'HTTPCore.rb'
 
 module Xasin
 	module Telegram
+		# This is a purely test-related class. It implements all of HTTPCore's
+		# functionality, but does not connect to the Telegram API. Instead,
+		# it simply saves the last POST request, and simulates received requests,
+		# allowing testing.
 		class TestCore < HTTPCore
 			attr_accessor :lastPostData, :lastPostRequest
 			attr_reader   :currentMessageID
@@ -21,11 +25,11 @@ module Xasin
 				@currentMessageID = rand(0..9999);
 
 				@toReturn = {
-					ok: true,
-					result: {
-						message_id: @currentMessageID
-					}
-				}
+									ok: true,
+									result: {
+										message_id: @currentMessageID
+									}
+								}
 			end
 
 			def perform_post(postRequest, postData)

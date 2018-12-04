@@ -7,7 +7,13 @@ module Telegram
 		attr_reader :httpCore
 
 		def initialize(userChat, httpCore)
-			@httpCore = httpCore.is_a?(Telegram::HTTPCore) ? httpCore : HTTPCore.new(httpCore);
+			# Check if we already have a HTTPCore, else create one
+			@httpCore = if(httpCore.is_a? Telegram::HTTPCore)
+					httpCore;
+				else
+					Telegram::HTTPCore.new(httpCore);
+				end
+			@httpCore.attach_receptor(self);
 			@httpCore.attach_receptor(self);
 
 			@userID = userChat;
