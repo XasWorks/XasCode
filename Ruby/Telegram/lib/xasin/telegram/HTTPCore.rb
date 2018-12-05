@@ -35,28 +35,35 @@ module Telegram
 
 			# Rescue-construct to prevent a HTTP error from
 			# crashing our system.
-			# TODO Add a max retry count and failure reporting.
+			timeoutLen = data[:timeout]*2 if data.is_a? Hash
+			timeoutLen ||= 3;
+			retryCount = 0;
 			begin
-				if data
-					outData = Hash.new();
-					# JSON-Ify nested Hashes and Arrays to a String before the main
-					# POST request is performed. Needed by Telegram, it seems.
-					data.each do |key, val|
-						if(val.is_a? Hash or val.is_a? Array)
-							outData[key] = val.to_json
-						else
-							outData[key] = val;
+				Timeout.timeout(timeoutLen) do
+					if data
+						outData = Hash.new();
+						# JSON-Ify nested Hashes and Arrays to a String before the main
+						# POST request is performed. Needed by Telegram, it seems.
+						data.each do |key, val|
+							if(val.is_a? Hash or val.is_a? Array)
+								outData[key] = val.to_json
+							else
+								outData[key] = val;
+							end
 						end
-					end
 
-					response = Net::HTTP.post_form(callAddress, outData);
-				else
-					response = Net::HTTP.get callAddress
+						response = Net::HTTP.post_form(callAddress, outData);
+					else
+						response = Net::HTTP.get callAddress
+					end
 				end
 
 				# JSON-Ify the HTTP response for prettiness reasons.
 				response = JSON.parse(response.body, symbolize_names: true);
 			rescue
+				retryCount += 1;
+				return {} if retryCount >= 3;
+
 				sleep 0.5;
 				retry
 			end
