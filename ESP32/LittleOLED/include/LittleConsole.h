@@ -27,7 +27,7 @@ private:
 
 	char *printfBuffer;
 
-	SSD1306 &display;
+	DrawBox &display;
 
 	std::array<std::string, 4> currentLines;
 	uint8_t lineShift;
@@ -39,7 +39,7 @@ private:
 public:
 	void raw_update();
 
-	LittleConsole(SSD1306 &display);
+	LittleConsole(DrawBox &display);
 
 	void update();
 

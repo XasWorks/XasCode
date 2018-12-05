@@ -12,10 +12,14 @@
 #include <array>
 #include "MasterAction.h"
 
+#include "DrawBox.h"
+
+#include "fonttype.h"
+
 namespace Peripheral {
 namespace OLED {
 
-class SSD1306 {
+class SSD1306 : public DrawBox {
 public:
 	enum CONTROL_BYTE : uint8_t {
 		CMD_SINGLE  = 0x80,
@@ -76,10 +80,7 @@ public:
 	void clear();
 	void push_entire_screen();
 
-	void set_pixel(uint8_t x, uint8_t y, bool on = true);
-
-	void write_char(char c, uint8_t x, uint8_t y, bool invert=false);
-	void write_string(std::string input, uint8_t x, uint8_t y, bool invert=false);
+	void set_pixel(int x, int y, bool on = true);
 };
 
 } /* namespace OLED */

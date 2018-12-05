@@ -23,7 +23,7 @@ void LittleConsole::callUpdate(void *args) {
 	}
 }
 
-LittleConsole::LittleConsole(SSD1306 &display)
+LittleConsole::LittleConsole(DrawBox &display)
 	: display(display),
 	  currentLines(), lineShift(0), lastCharWasNewline(false),
 	  updateTask(nullptr) {
@@ -39,7 +39,7 @@ void LittleConsole::raw_update() {
 
 	xSemaphoreTake(updateMutex, portMAX_DELAY);
 	for(uint8_t line=0; line<currentLines.size(); line++) {
-		display.write_string(currentLines[(line+lineShift)%4], 0, 8*line);
+		display.write_string(0, 8*line, currentLines[(line+lineShift)%4]);
 	}
 	xSemaphoreGive(updateMutex);
 
@@ -74,10 +74,10 @@ void LittleConsole::put_string(const char *input, size_t length) {
 		else if(*input == '\r') {
 			currentLines[(3+lineShift)%4].clear();
 		}
-		else if(currentLines[(3+lineShift)%4].size() < 24){
+		else if(currentLines[(3+lineShift)%4].size() < 18){
 			currentLines[(3+lineShift)%4] += *input;
 
-			if(currentLines[(3+lineShift)%4].size() == 24)
+			if(currentLines[(3+lineShift)%4].size() == 18)
 				lastCharWasNewline = true;
 		}
 

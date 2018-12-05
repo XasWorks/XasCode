@@ -10,10 +10,12 @@
 namespace Peripheral {
 namespace OLED {
 
-#include "font-5x8.c"
-#include "font-6x8.c"
+#include "fonts/font-5x8.c"
+#include "fonts/font-6x8.c"
+#include "fonts/font-7x9.c"
 
 SSD1306::SSD1306() :
+		DrawBox(128, 32),
 		currentAction(nullptr), cmdBuffer(),
 		screenBuffer() {
 }
@@ -111,7 +113,12 @@ void SSD1306::push_entire_screen() {
 	}
 }
 
-void SSD1306::set_pixel(uint8_t x, uint8_t y, bool on) {
+void SSD1306::set_pixel(int x, int y, bool on) {
+	if(x < 0)
+		return;
+	if(y < 0)
+		return;
+
 	uint8_t page   = y / 8;
 	uint8_t page_y = y%8;
 
@@ -126,30 +133,6 @@ void SSD1306::set_pixel(uint8_t x, uint8_t y, bool on) {
 		dByte |= 1<<page_y;
 	else
 		dByte &= ~(1<<page_y);
-}
-
-void SSD1306::write_char(char c, uint8_t x, uint8_t y, bool invert) {
-	const char *fontChar = console_font_5x8 + 8*c;
-
-	for(uint8_t dy=0; dy<8; dy++) {
-		for(uint8_t dx=0; dx<5; dx++)
-			set_pixel(x+dx, y+dy, ((fontChar[dy]>>(7-dx)) & 1) != invert);
-	}
-}
-void SSD1306::write_string(std::string outString, uint8_t x, uint8_t y, bool invert) {
-
-	uint8_t  dL  = 0;
-	uint16_t dLx = 0;
-
-	for(uint8_t dc = 0; dc<outString.size(); dc++) {
-		char next = outString[dc];
-		if(next == '\n') {
-			dL++;
-			dLx = x + 5*(1+dc);
-		}
-		else
-			write_char(outString[dc], x + 5*dc - dLx, y + 8*dL, invert);
-	}
 }
 
 } /* namespace OLED */
