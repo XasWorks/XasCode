@@ -1,0 +1,7 @@
+
+guard :minitest, test_folders: ["tests"], test_file_patterns: ["*"], cli: ""  do
+	watch(%r{^lib/xasin/telegram/(.+)\.rb$}) do |m|
+		"tests/tc_#{m[1]}\.rb"
+	end
+	watch(%r{^tests/tc_(.+).rb$})
+end
