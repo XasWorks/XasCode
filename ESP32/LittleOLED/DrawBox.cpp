@@ -7,6 +7,8 @@
 
 #include "DrawBox.h"
 
+#include <stdio.h>
+
 namespace Peripheral {
 namespace OLED {
 
@@ -32,12 +34,28 @@ DrawBox::~DrawBox() {
 
 }
 
+void DrawBox::set_head(DrawBox *head) {
+	if(this->topBox != nullptr)
+		for(auto box = topBox->bottomBoxes.begin(); box < topBox->bottomBoxes.end(); box++)
+			if((*box) == this)
+				topBox->bottomBoxes.erase(box);
+
+	if(head != nullptr)
+		head->bottomBoxes.push_back(this);
+
+	this->topBox = head;
+}
+
 void DrawBox::redraw() {
 	for(auto subBox = bottomBoxes.rbegin(); subBox != bottomBoxes.rend(); subBox++)
 		(*subBox)->redraw();
 
 	if(onRedraw != nullptr)
 		onRedraw();
+}
+void DrawBox::request_redraw() {
+	if(topBox != nullptr)
+		topBox->request_redraw();
 }
 
 void DrawBox::set_pixel(int x, int y, bool on) {
@@ -63,8 +81,8 @@ void DrawBox::set_pixel(int x, int y, bool on) {
 	int rY = y;
 	switch(rotation%4) {
 	case 1:
-		rY = x;
-		rX = -y;
+		rY = -x;
+		rX = y;
 	break;
 	case 2:
 		rX = -x;
@@ -72,13 +90,13 @@ void DrawBox::set_pixel(int x, int y, bool on) {
 	break;
 
 	case 3:
-		rY = -x;
-		rX = y;
+		rY = x;
+		rX = -y;
 	break;
 	default: break;
 	}
 
-	topBox->set_pixel(rX, rY, on);
+	topBox->set_pixel(rX + offsetX, rY + offsetY, on);
 }
 
 int DrawBox::get_line_width(FontType *font) {
@@ -110,8 +128,7 @@ void DrawBox::write_char(int x, int y, char c, bool invert, FontType *font) {
 	}
 }
 void DrawBox::write_string(int x, int y, const std::string oString, bool invert, FontType *font) {
-	if(font == nullptr)
-		font = &console_font_7x9;
+	FONTCHECK
 
 	uint8_t  dL  = 0;
 	uint16_t dLx = 0;
@@ -123,7 +140,7 @@ void DrawBox::write_string(int x, int y, const std::string oString, bool invert,
 			dLx = x + font->width*(1+dc);
 		}
 		else
-			write_char(oString[dc], x + font->width*dc - dLx, y + font->height*dL, invert, font);
+			write_char(x + font->width*dc - dLx, y + font->height*dL, oString[dc], invert, font);
 	}
 }
 

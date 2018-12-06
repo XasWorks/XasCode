@@ -10,44 +10,25 @@
 namespace Peripheral {
 namespace OLED {
 
-void LittleConsole::callUpdate(void *args) {
-	puts("Started updater thread!");
-
-	uint32_t dummy;
-	while(true) {
-		xTaskNotifyWait(0, 0, &dummy, 2000/portTICK_PERIOD_MS);
-
-		reinterpret_cast<LittleConsole *>(args)->raw_update();
-
-		vTaskDelay(100/portTICK_PERIOD_MS);
-	}
-}
-
 LittleConsole::LittleConsole(DrawBox &display)
 	: display(display),
-	  currentLines(), lineShift(0), lastCharWasNewline(false),
-	  updateTask(nullptr) {
+	  currentLines(), lineShift(0), lastCharWasNewline(false) {
 
-	xTaskCreate(LittleConsole::callUpdate, "Little Updater", 2048, this, 3, &updateTask);
+	display.onRedraw = [this]() {
+		this->raw_update();
+	};
+
 	updateMutex = xSemaphoreCreateMutex();
 
 	printfBuffer = new char[255];
 }
 
 void LittleConsole::raw_update() {
-	display.clear();
-
 	xSemaphoreTake(updateMutex, portMAX_DELAY);
 	for(uint8_t line=0; line<currentLines.size(); line++) {
 		display.write_string(0, 8*line, currentLines[(line+lineShift)%4]);
 	}
 	xSemaphoreGive(updateMutex);
-
-	display.push_entire_screen();
-}
-
-void LittleConsole::update() {
-	xTaskNotifyFromISR(updateTask, 0, eNoAction, nullptr);
 }
 
 void LittleConsole::put_string(const char *input, size_t length) {
@@ -85,7 +66,7 @@ void LittleConsole::put_string(const char *input, size_t length) {
 	}
 	xSemaphoreGive(updateMutex);
 
-	update();
+	display.request_redraw();
 }
 
 int LittleConsole::vprintf(const char *input, va_list args) {

@@ -30,6 +30,8 @@ private:
 protected:
 	std::vector<DrawBox *>bottomBoxes;
 
+	virtual void redraw();
+
 public:
 	int  offsetX;
 	int  offsetY;
@@ -49,7 +51,7 @@ public:
 
 	void set_head(DrawBox *headBox);
 
-	virtual void redraw();
+	virtual void request_redraw();
 
 	virtual void set_pixel(int x, int y, bool on = true);
 

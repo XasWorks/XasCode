@@ -10,6 +10,10 @@
 
 #include <vector>
 #include <array>
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
 #include "MasterAction.h"
 
 #include "DrawBox.h"
@@ -54,11 +58,15 @@ public:
 	};
 
 private:
+	static void call_raw_update(void *args);
+
 	XaI2C::MasterAction *currentAction;
 
 	std::vector<char> cmdBuffer;
 
 	std::array<std::array<uint8_t, 128>, 4> screenBuffer;
+
+	TaskHandle_t updateTask;
 
 	XaI2C::MasterAction* start_cmd_set();
 
@@ -70,7 +78,6 @@ private:
 	void data_write(void *data, size_t length);
 
 public:
-
 	SSD1306();
 
 	void initialize();
@@ -79,6 +86,9 @@ public:
 
 	void clear();
 	void push_entire_screen();
+
+	void request_redraw();
+	void raw_update();
 
 	void set_pixel(int x, int y, bool on = true);
 };

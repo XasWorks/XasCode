@@ -14,10 +14,24 @@ namespace OLED {
 #include "fonts/font-6x8.c"
 #include "fonts/font-7x9.c"
 
+void SSD1306::call_raw_update(void *args) {
+	puts("Started updater thread!");
+
+	uint32_t dummy;
+	while(true) {
+		xTaskNotifyWait(0, 0, &dummy, 2000/portTICK_PERIOD_MS);
+
+		reinterpret_cast<SSD1306 *>(args)->raw_update();
+
+		vTaskDelay(100/portTICK_PERIOD_MS);
+	}
+}
+
 SSD1306::SSD1306() :
 		DrawBox(128, 32),
 		currentAction(nullptr), cmdBuffer(),
-		screenBuffer() {
+		screenBuffer(),
+		updateTask(nullptr) {
 }
 
 void SSD1306::initialize() {
@@ -43,6 +57,7 @@ void SSD1306::initialize() {
 
 	push_entire_screen();
 
+	xTaskCreate(SSD1306::call_raw_update, "SSD1306 Updater", 2048, this, 3, &updateTask);
 	puts("SSD initialized!");
 }
 
@@ -111,6 +126,16 @@ void SSD1306::push_entire_screen() {
 	for(uint8_t page = 0; page < screenBuffer.size(); page++) {
 		data_write(screenBuffer[page].begin(), screenBuffer[page].size());
 	}
+}
+
+void SSD1306::request_redraw() {
+	xTaskNotifyFromISR(updateTask, 0, eNoAction, nullptr);
+}
+
+void SSD1306::raw_update() {
+	this->clear();
+	this->redraw();
+	this->push_entire_screen();
 }
 
 void SSD1306::set_pixel(int x, int y, bool on) {
