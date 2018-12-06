@@ -55,6 +55,9 @@ public:
 
 	virtual void set_pixel(int x, int y, bool on = true);
 
+	virtual void draw_line(int x, int y, int l, int r, bool on = true);
+	virtual void draw_box(int x, int y, int width, int height, bool filled = true);
+
 	int get_line_width(FontType *font = nullptr);
 	int get_lines(FontType *font = nullptr);
 

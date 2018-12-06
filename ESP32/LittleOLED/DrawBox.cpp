@@ -99,6 +99,37 @@ void DrawBox::set_pixel(int x, int y, bool on) {
 	topBox->set_pixel(rX + offsetX, rY + offsetY, on);
 }
 
+void DrawBox::draw_line(int x, int y, int l, int r, bool on) {
+	short xF = 0;
+	short yF = 0;
+
+	switch(r%4) {
+	default: xF = 1; break;
+	case 1: yF =  1; break;
+	case 2: xF = -1; break;
+	case 3: yF = -1; break;
+	}
+
+	for(int d = 0; d<r; d++)
+		set_pixel(x + xF*d, y + yF*d, on);
+}
+void DrawBox::draw_box(int x, int y, int width, int height, bool filled) {
+	width 	-= 1;
+	height  -= 1;
+
+	if(filled) {
+		for(int dX = 0; dX < width; dX++) {
+			draw_line(x+dX, y, height, 1);
+		}
+	}
+	else {
+		draw_line(x, y, width, 0);
+		draw_line(x, y, height, 1);
+		draw_line(x+width, y+height, width, 2);
+		draw_line(x+width, y+height, height, 3);
+	}
+}
+
 int DrawBox::get_line_width(FontType *font) {
 	FONTCHECK
 	return this->width/(font->width);
