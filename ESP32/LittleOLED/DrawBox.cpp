@@ -110,13 +110,10 @@ void DrawBox::draw_line(int x, int y, int l, int r, bool on) {
 	case 3: yF = -1; break;
 	}
 
-	for(int d = 0; d<r; d++)
+	for(int d = 0; d<l; d++)
 		set_pixel(x + xF*d, y + yF*d, on);
 }
 void DrawBox::draw_box(int x, int y, int width, int height, bool filled) {
-	width 	-= 1;
-	height  -= 1;
-
 	if(filled) {
 		for(int dX = 0; dX < width; dX++) {
 			draw_line(x+dX, y, height, 1);
@@ -125,8 +122,8 @@ void DrawBox::draw_box(int x, int y, int width, int height, bool filled) {
 	else {
 		draw_line(x, y, width, 0);
 		draw_line(x, y, height, 1);
-		draw_line(x+width, y+height, width, 2);
-		draw_line(x+width, y+height, height, 3);
+		draw_line(x+width-1, y+height-1, width, 2);
+		draw_line(x+width-1, y+height-1, height, 3);
 	}
 }
 

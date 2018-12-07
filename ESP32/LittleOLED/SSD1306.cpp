@@ -19,7 +19,7 @@ void SSD1306::call_raw_update(void *args) {
 
 	uint32_t dummy;
 	while(true) {
-		xTaskNotifyWait(0, 0, &dummy, 2000/portTICK_PERIOD_MS);
+		xTaskNotifyWait(0, 0, &dummy, 200/portTICK_PERIOD_MS);
 
 		reinterpret_cast<SSD1306 *>(args)->raw_update();
 
