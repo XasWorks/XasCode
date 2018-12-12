@@ -31,16 +31,16 @@ DrawBox::DrawBox(int width, int height, DrawBox *headBox)
 }
 
 DrawBox::~DrawBox() {
-
+	set_head(nullptr);
 }
 
-void DrawBox::set_head(DrawBox *head) {
+void DrawBox::set_head(DrawBox *head, bool registerCB) {
 	if(this->topBox != nullptr)
 		for(auto box = topBox->bottomBoxes.begin(); box < topBox->bottomBoxes.end(); box++)
 			if((*box) == this)
 				topBox->bottomBoxes.erase(box);
 
-	if(head != nullptr)
+	if(registerCB && (head != nullptr))
 		head->bottomBoxes.push_back(this);
 
 	this->topBox = head;

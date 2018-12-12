@@ -49,7 +49,7 @@ public:
 	DrawBox(int width, int height, DrawBox *headBox);
 	virtual ~DrawBox();
 
-	void set_head(DrawBox *headBox);
+	void set_head(DrawBox *headBox, bool registerCB = true);
 
 	virtual void request_redraw();
 
