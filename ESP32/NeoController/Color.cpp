@@ -20,6 +20,9 @@ Color::Color(uint32_t cCode, uint8_t brightness) : Color() {
 	set(cCode);
 	bMod(brightness);
 }
+Color::Color(uint32_t cCode, uint8_t brightness, uint8_t alpha) : Color(cCode, brightness) {
+	this->alpha = alpha;
+}
 
 Color::ColorData Color::getLEDValue() const {
 	ColorData out = {};

@@ -44,6 +44,7 @@ public:
 
 	Color();
 	Color(uint32_t cCode, uint8_t brightness = 255);
+	Color(uint32_t cCode, uint8_t brightness, uint8_t alpha);
 
 	ColorData getLEDValue() const;
 
