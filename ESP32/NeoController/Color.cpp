@@ -9,6 +9,34 @@
 
 namespace Peripheral {
 
+Color Color::HSV(int16_t H, uint8_t S, uint8_t V) {
+	H %= 360;
+	if(H < 0)
+		H += 360;
+
+	uint16_t h = (H/60);
+	uint16_t f = ((uint32_t(H)*255)/60) % 255;
+
+	uint16_t p = uint16_t(V) * (255 - S);
+	uint16_t q = uint16_t(V) * (255 - (S*f)/255);
+	uint16_t t = uint16_t(V) * (255 - (S*(255 - f))/255);
+
+	printf("H:%3d f:%3d p:%3d q:%3d t:%3d\n", H, f, p, q, t);
+
+	Color oC = Color();
+
+	switch(h) {
+	default:oC.r = V*255; oC.g = t; oC.b = p; break;
+	case 1: oC.r = q; oC.g = V*255; oC.b = p; break;
+	case 2: oC.r = p; oC.g = V*255; oC.b = t; break;
+	case 3: oC.r = p; oC.g = q; oC.b = V*255; break;
+	case 4: oC.r = t; oC.g = p; oC.b = V*255; break;
+	case 5: oC.r = V*255; oC.g = p; oC.b = q; break;
+	}
+
+	return oC;
+}
+
 Color::Color() {
 	r = 0;
 	g = 0;

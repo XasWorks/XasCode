@@ -21,6 +21,7 @@ namespace Peripheral {
 
 		Layer(const int length);
 		Layer(const Layer &source);
+		Layer(Color color);
 
 		int length() const;
 

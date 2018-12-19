@@ -11,6 +11,9 @@ Layer::Layer(const int length) : colors(length) {
 Layer::Layer(const Layer &source) : colors(source.colors) {
 	alpha = source.alpha;
 }
+Layer::Layer(Color color) : Layer(1) {
+	colors[0] = color;
+}
 
 int Layer::length() const {
 	return colors.size();
