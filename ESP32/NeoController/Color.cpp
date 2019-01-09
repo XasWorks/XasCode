@@ -21,8 +21,6 @@ Color Color::HSV(int16_t H, uint8_t S, uint8_t V) {
 	uint16_t q = uint16_t(V) * (255 - (S*f)/255);
 	uint16_t t = uint16_t(V) * (255 - (S*(255 - f))/255);
 
-	printf("H:%3d f:%3d p:%3d q:%3d t:%3d\n", H, f, p, q, t);
-
 	Color oC = Color();
 
 	switch(h) {
