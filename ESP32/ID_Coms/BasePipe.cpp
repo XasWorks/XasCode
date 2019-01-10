@@ -17,7 +17,7 @@ BasePipe::BasePipe()
 bool BasePipe::is_connected() {
 	return false;
 }
-bool BasePipe::send_packet(unsigned short id, const void *data, size_t length) {
+bool BasePipe::send_packet(int id, const void *data, size_t length) {
 	return false;
 }
 

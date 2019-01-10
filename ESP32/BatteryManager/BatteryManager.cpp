@@ -12,25 +12,19 @@
 namespace Housekeeping {
 
 BatteryManager::BatteryManager()
-	: top_voltage(4200), cutoff_voltage(3600) {
+	: cutoff_voltage(3500) {
 
-	cutoff_percentage = 0;
-	cutoff_percentage = capacity_for_voltage(cutoff_voltage);
+	cutoff_percentage = raw_capacity_for_voltage(cutoff_voltage);
 }
 
-uint8_t BatteryManager::capacity_for_voltage(uint16_t millivolts) {
-	if(millivolts >= top_voltage)
-		return 100;
+uint8_t BatteryManager::raw_capacity_for_voltage(uint16_t millivolts) {
+	if(millivolts >= discharge_curve[0].voltage)
+			return discharge_curve[0].percentage;
 
-	uint8_t raw_percent = 100;
-
-	CHARGE_POINT lastCharge = {100, 4200};
-	for(CHARGE_POINT c : discharge_curve) {
+	auto lastCharge = discharge_curve[0];
+	for(auto c : discharge_curve) {
 		if(millivolts == c.voltage)
-			return 100;
-
-		if(c.voltage >= top_voltage)
-			continue;
+			return c.percentage;
 
 		if(millivolts > c.voltage) {
 			uint16_t mVPlus = millivolts - c.voltage;
@@ -38,16 +32,48 @@ uint8_t BatteryManager::capacity_for_voltage(uint16_t millivolts) {
 			uint16_t mVSpan = lastCharge.voltage - c.voltage;
 			uint8_t  percentSpan = lastCharge.percentage - c.percentage;
 
-			raw_percent = (percentSpan * (100*mVPlus) / mVSpan)/100 + c.percentage;
-			break;
+			return (percentSpan * mVPlus / mVSpan) + c.percentage;
 		}
 		lastCharge = c;
 	}
 
+	return 0;
+}
+
+uint8_t BatteryManager::capacity_for_voltage(uint16_t millivolts) {
+	uint8_t raw_percent = raw_capacity_for_voltage(millivolts);
 	if(raw_percent < cutoff_percentage)
 		return 0;
 
 	return 100 - (100-raw_percent)*100 / (100-cutoff_percentage);
+}
+
+uint16_t BatteryManager::voltage_for_raw_capacity(uint8_t percentage) {
+	if(percentage >= 100)
+		return discharge_curve[0].voltage;
+
+	auto lastCharge = discharge_curve[0];
+	for(auto c : discharge_curve) {
+		if(percentage == c.percentage)
+			return c.voltage;
+
+		if(percentage > c.percentage) {
+			uint8_t 	pSpan 	= lastCharge.percentage - c.percentage;
+			uint16_t 	mvSpan	= lastCharge.voltage	- c.voltage;
+
+			uint8_t		pPlus	= percentage - c.percentage;
+
+			return (pPlus * mvSpan) / pSpan + c.voltage;
+		}
+
+		lastCharge = c;
+	}
+
+	return discharge_curve[discharge_curve.size()-1].voltage;
+}
+uint16_t BatteryManager::voltage_for_capacity(uint8_t percentage) {
+	return voltage_for_raw_capacity(100 - (100 - percentage) * (100 - cutoff_percentage) / 100);
+
 }
 
 } /* namespace Housekeeping */

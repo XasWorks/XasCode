@@ -14,9 +14,15 @@
 namespace Xasin {
 namespace Communication {
 
-class BLE_Pipe: public BasePipe, private Peripheral::BLE_Handler {
+class BLE_Pipe: public BasePipe {
+private:
+	Peripheral::BLE_Handler ble_connection;
+
 public:
 	BLE_Pipe(const char *name);
+
+	bool is_connected();
+	bool send_packet(uint16_t id, Data_Packet data);
 };
 
 } /* namespace Communication */
