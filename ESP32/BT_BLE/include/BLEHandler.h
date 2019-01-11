@@ -83,6 +83,8 @@ public:
 
 	BLE_Handler(const char *name);
 
+	bool is_connected();
+
 	esp_ble_adv_data_t get_GAP_defaults();
 	void set_GAP_param(esp_ble_adv_data_t params);
 

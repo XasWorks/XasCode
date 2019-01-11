@@ -208,6 +208,10 @@ BLE_Handler::BLE_Handler(const char *name) :
 	ret = esp_bt_controller_disable();
 }
 
+bool BLE_Handler::is_connected() {
+	return BT_status == CONNECTED;
+}
+
 esp_ble_adv_data_t BLE_Handler::get_GAP_defaults() {
 	esp_ble_adv_data_t o = {};
 	o.set_scan_rsp = false;

@@ -29,7 +29,7 @@ namespace Communication {
 
 struct Data_Packet {
 	size_t length;
-	void * const data;
+	void const * data;
 };
 
 class BasePipe {
@@ -40,7 +40,15 @@ public:
 	std::map<uint16_t, std::function<void (Data_Packet data)>> on_received;
 
 	virtual bool is_connected();
-	virtual bool send_packet(int id, const void *data, size_t length);
+
+	virtual bool send_packet(uint16_t id, Data_Packet data);
+	bool send_packet(uint16_t id, size_t length, void const * data);
+	bool send_packet(uint16_t id, const std::string &data);
+
+	template<class T>
+	bool send_packet(uint16_t id, T &data) {
+		return send_packet(id, sizeof(T), *data);
+	};
 };
 
 } /* namespace Communication */
