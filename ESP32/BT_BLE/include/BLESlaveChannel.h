@@ -19,17 +19,20 @@ namespace Communication {
 
 class BLE_SlaveChannel: public SlaveChannel {
 private:
-	Peripheral::BLE_Handler *ble_connection;
-	Peripheral::Service		*ble_service;
-	Peripheral::Characteristic *ble_characteristic;
+	BLE_Handler *ble_connection;
+	Bluetooth::Service		*ble_service;
+	Bluetooth::Characteristic *ble_characteristic;
+	Bluetooth::Characteristic *ble_char_descriptor;
+	uint16_t ble_char_desc_data;
+
+	std::array<uint8_t, 20> data_buffer;
 
 public:
 	BLE_SlaveChannel(const char *name, RegisterBlock &registerBlock);
 
 	void start();
 
-//	bool is_connected();
-//	bool send_packet(uint16_t id, Data_Packet data);
+	void send_update(uint16_t ID, Data_Packet data);
 };
 
 } /* namespace Communication */

@@ -9,7 +9,7 @@
 #include "Service.h"
 #include "BLEHandler.h"
 
-namespace Peripheral {
+namespace Xasin 	{
 namespace Bluetooth {
 
 void Characteristic::read_reply(read_dataset readEvent) {
@@ -34,7 +34,8 @@ void Characteristic::handle_write(esp_ble_gatts_cb_param_t::gatts_write_evt_para
 Characteristic::Characteristic(Service * service) :
 		attr_handle(0),
 		service(service),
-		id(), perm(), prop(), autoResp(), value() {
+		id(), perm(), prop(), autoResp(), value(),
+		is_descriptor(false) {
 
 	write_cb = nullptr;
 	read_cb  = nullptr;

@@ -8,7 +8,7 @@
 #include "BLEHandler.h"
 #include "services/BatteryService.h"
 
-namespace Peripheral {
+namespace Xasin		{
 namespace Bluetooth {
 
 BatteryService::BatteryService(BLE_Handler *handler, uint16_t vLow, uint16_t vHigh) :

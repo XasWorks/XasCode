@@ -9,7 +9,7 @@
 
 #include "esp_bt.h"
 
-namespace Peripheral {
+namespace Xasin {
 
 BLE_Handler *BLE_Handler::masterHandler = nullptr;
 
@@ -124,6 +124,27 @@ void BLE_Handler::process_GATTs(esp_gatts_cb_event_t event, esp_gatt_if_t iface,
 			}
 		break;
 		}
+	case ESP_GATTS_ADD_CHAR_DESCR_EVT: {
+		auto p = param->add_char_descr;
+		printf("GATT: Char desc. UUID: 0x%X; Attr. Handle: %d; Service Handle: %d; Status: %d\n", p.descr_uuid.uuid.uuid32, p.attr_handle, p.service_handle, p.status);
+		Bluetooth::Service *service = nullptr;
+		for(auto s: services) {
+			if(s->handle == p.service_handle) {
+				service = s;
+				break;
+			}
+		}
+
+		if(service == nullptr) break;
+
+		for(auto c: service->characteristics) {
+			if(c->is_uuid(p.descr_uuid)) {
+				c->attr_handle = p.attr_handle;
+				break;
+			}
+		}
+		break;
+	}
 	case ESP_GATTS_START_EVT:
 	break;
 	case ESP_GATTS_CONNECT_EVT:
@@ -204,8 +225,6 @@ BLE_Handler::BLE_Handler(const char *name) :
 
 	ret = esp_bluedroid_init();
 	ESP_ERROR_CHECK(ret);
-
-	ret = esp_bt_controller_disable();
 }
 
 bool BLE_Handler::is_connected() {
@@ -249,7 +268,7 @@ void BLE_Handler::setup_GATTS() {
 
 	puts("BT: First initialisation");
 
-	auto ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
+	auto ret = ESP_OK; //esp_bt_controller_enable(ESP_BT_MODE_BLE);
 	ESP_ERROR_CHECK(ret);
 
 //	ret = esp_bluedroid_init();
@@ -277,7 +296,7 @@ void BLE_Handler::setup_GATTS() {
 	ret = esp_ble_gatts_app_register(1);
 	ESP_ERROR_CHECK(ret);
 
-	vTaskDelay(10);
+	vTaskDelay(20);
 
 	BT_status = IDLE;
 }

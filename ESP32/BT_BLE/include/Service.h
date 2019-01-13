@@ -15,7 +15,7 @@
 
 #include "Characteristic.h"
 
-namespace Peripheral {
+namespace Xasin {
 class BLE_Handler;
 
 namespace Bluetooth {

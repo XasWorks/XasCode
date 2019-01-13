@@ -8,13 +8,19 @@
 #include "Service.h"
 #include "BLEHandler.h"
 
-namespace Peripheral {
+namespace Xasin		{
 namespace Bluetooth {
 
 void Service::register_characteristic(Characteristic *nC) {
 	assert(handle != 0);
-	auto ret = esp_ble_gatts_add_char(handle, &nC->id, nC->perm, nC->prop, &(nC->value), &(nC->autoResp));
-	ESP_ERROR_CHECK(ret);
+	if(nC->is_descriptor) {
+		auto ret = esp_ble_gatts_add_char_descr(handle, &(nC->id), nC->perm, &(nC->value), &(nC->autoResp));
+		ESP_ERROR_CHECK(ret);
+	}
+	else {
+		auto ret = esp_ble_gatts_add_char(handle, &(nC->id), nC->perm, nC->prop, &(nC->value), &(nC->autoResp));
+		ESP_ERROR_CHECK(ret);
+	}
 }
 
 uint8_t Service::get_no_handles() {

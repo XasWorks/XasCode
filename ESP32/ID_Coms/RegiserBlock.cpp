@@ -14,16 +14,22 @@ namespace Communication {
 
 SlaveChannel::SlaveChannel(RegisterBlock &mainRegister)
 	: mainRegister(mainRegister) {
+
+	mainRegister.channels.push_back(this);
 }
 
-void SlaveChannel::send_update(uint16_t ID, Data_Packet data) {}
+void SlaveChannel::send_update(uint16_t ID, Data_Packet data) {
+}
 
-ComRegister::ComRegister(uint16_t ID, RegisterBlock &registers, Data_Packet dataLoc, bool write_allowed)
+ComRegister::ComRegister(uint16_t ID, RegisterBlock &registers, void *dataLoc, size_t dataLen, bool write_allowed)
 	: registerBlock(registers),
-	  dataLocation(nullptr), dataLength(0),
+	  dataLocation(dataLoc), dataLength(dataLen),
 	  write_cb(nullptr),
 	  ID(ID),
-	  write_allowed(write_allowed) {}
+	  write_allowed(write_allowed) {
+
+	registerBlock.comRegisters[ID] = this;
+}
 
 void ComRegister::update(Data_Packet data) {
 	registerBlock.send_update(this->ID, data);
@@ -48,6 +54,12 @@ void RegisterBlock::write_register(uint16_t ID, const Data_Packet data) {
 			memcpy(r.dataLocation, data.data, data.length);
 			this->send_update(ID, data);
 		}
+	}
+}
+
+void RegisterBlock::send_update(uint16_t ID, Data_Packet data) {
+	for(auto c : channels) {
+		c->send_update(ID, data);
 	}
 }
 

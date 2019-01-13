@@ -27,8 +27,7 @@
 
 #include "Service.h"
 
-namespace Peripheral {
-
+namespace Xasin {
 using namespace Bluetooth;
 
 class BLE_Handler {

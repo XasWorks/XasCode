@@ -35,7 +35,7 @@ struct Data_Packet {
 class RegisterBlock;
 
 class SlaveChannel {
-private:
+protected:
 	RegisterBlock &mainRegister;
 
 public:
@@ -60,7 +60,7 @@ public:
 	const uint16_t ID;
 	const bool write_allowed;
 
-	ComRegister(uint16_t ID, RegisterBlock &regBlock, Data_Packet dataLoc = {0, nullptr}, bool write_allowed = false);
+	ComRegister(uint16_t ID, RegisterBlock &regBlock, void *dataLoc = nullptr, size_t dataLen = 0, bool write_allowed = false);
 
 	void update(const Data_Packet data);
 	void update();
@@ -75,13 +75,15 @@ public:
 class RegisterBlock {
 protected:
 	friend SlaveChannel;
+	friend ComRegister;
+
 	std::vector<SlaveChannel *> channels;
 	std::map<uint16_t, ComRegister  *> comRegisters;
 
+public:
 	void write_register(uint16_t ID, const Data_Packet data);
 	const Data_Packet read_register(uint16_t ID);
 
-public:
 	RegisterBlock();
 
 	void send_update(uint16_t ID, const Data_Packet data);

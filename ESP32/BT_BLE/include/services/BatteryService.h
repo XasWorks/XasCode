@@ -10,7 +10,7 @@
 #ifndef COMPONENTS_BLUETOOTH_SERVICES_BATTERYSERVICE_H_
 #define COMPONENTS_BLUETOOTH_SERVICES_BATTERYSERVICE_H_
 
-namespace Peripheral {
+namespace Xasin		{
 namespace Bluetooth {
 
 class BatteryService: public Service {

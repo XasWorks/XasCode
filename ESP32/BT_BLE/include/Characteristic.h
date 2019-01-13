@@ -13,8 +13,7 @@
 #include "esp_gatts_api.h"
 #include "esp_bt.h"
 
-namespace Peripheral {
-
+namespace Xasin {
 class BLE_Handler;
 
 namespace Bluetooth {
@@ -45,6 +44,8 @@ public:
 	esp_attr_control_t 		autoResp;
 
 	esp_attr_value_t 		value;
+
+	bool is_descriptor;
 
 	std::function<void (write_dataset)> write_cb;
 	std::function<void (read_dataset)>  read_cb;
