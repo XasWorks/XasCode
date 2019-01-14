@@ -80,12 +80,19 @@ Color& Color::operator=(const Color& nColor) {
 	return *this;
 }
 
-void Color::bMod(uint8_t factor) {
+Color &Color::bMod(uint8_t factor) {
 	uint32_t bFact = factor;
 
 	r = ((r*bFact)/255);
 	g = ((g*bFact)/255);
 	b = ((b*bFact)/255);
+
+	return *this;
+}
+Color Color::bMod(uint8_t factor) const {
+	Color oColor = *this;
+
+	return oColor.bMod(factor);
 }
 
 Color Color::overlay(Color topColor, uint8_t alpha) {

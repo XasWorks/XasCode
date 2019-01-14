@@ -55,7 +55,8 @@ public:
 	void set(Color color);
 	Color& operator=(const Color& nColor);
 
-	void bMod(uint8_t div);
+	Color& bMod(uint8_t div);
+	Color  bMod(uint8_t div) const;
 
 	Color overlay(Color topColor, uint8_t level);
 	void  overlay(Color bottom, Color top, uint8_t alpha);
