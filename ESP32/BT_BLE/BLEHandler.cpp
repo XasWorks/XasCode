@@ -209,22 +209,6 @@ BLE_Handler::BLE_Handler(const char *name) :
 		client_connection_time(0) {
 	assert(masterHandler == nullptr);
 	masterHandler = this;
-
-	puts("Starting BT handler.");
-
-	xTaskCreate([](void *args) {
-		((BLE_Handler*)args)->power_task();
-	}, "BLE Power", 2048, this, 2, &powerTask_handle);
-
-	esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
-	auto ret = esp_bt_controller_init(&bt_cfg);
-	ESP_ERROR_CHECK(ret);
-
-	ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
-	ESP_ERROR_CHECK(ret);
-
-	ret = esp_bluedroid_init();
-	ESP_ERROR_CHECK(ret);
 }
 
 bool BLE_Handler::is_connected() {
@@ -268,7 +252,21 @@ void BLE_Handler::setup_GATTS() {
 
 	puts("BT: First initialisation");
 
-	auto ret = ESP_OK; //esp_bt_controller_enable(ESP_BT_MODE_BLE);
+	xTaskCreate([](void *args) {
+		((BLE_Handler*)args)->power_task();
+	}, "BLE Power", 2048, this, 2, &powerTask_handle);
+
+	esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
+	auto ret = esp_bt_controller_init(&bt_cfg);
+	ESP_ERROR_CHECK(ret);
+
+	ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
+	ESP_ERROR_CHECK(ret);
+
+	ret = esp_bluedroid_init();
+	ESP_ERROR_CHECK(ret);
+
+	ret = ESP_OK; //esp_bt_controller_enable(ESP_BT_MODE_BLE);
 	ESP_ERROR_CHECK(ret);
 
 //	ret = esp_bluedroid_init();

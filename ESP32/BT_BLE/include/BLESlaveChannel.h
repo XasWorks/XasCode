@@ -19,10 +19,10 @@ namespace Communication {
 
 class BLE_SlaveChannel: public SlaveChannel {
 private:
-	BLE_Handler *ble_connection;
-	Bluetooth::Service		*ble_service;
-	Bluetooth::Characteristic *ble_characteristic;
-	Bluetooth::Characteristic *ble_char_descriptor;
+	BLE_Handler ble_connection;
+	Bluetooth::Service		  ble_service;
+	Bluetooth::Characteristic ble_characteristic;
+	Bluetooth::Characteristic ble_char_descriptor;
 	uint16_t ble_char_desc_data;
 
 	std::array<uint8_t, 20> data_buffer;

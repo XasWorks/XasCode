@@ -11,33 +11,26 @@ namespace Xasin {
 namespace Communication {
 
 BLE_SlaveChannel::BLE_SlaveChannel(const char *name, RegisterBlock &registerBlock) : SlaveChannel(registerBlock),
-		ble_connection(nullptr), ble_service(nullptr),
-		ble_characteristic(nullptr),
-		ble_char_descriptor(nullptr), ble_char_desc_data(0),
+		ble_connection(name), ble_service(&ble_connection),
+		ble_characteristic(&ble_service),
+		ble_char_descriptor(&ble_service), ble_char_desc_data(0),
 		data_buffer() {
 }
 
 void BLE_SlaveChannel::start() {
-	ble_connection 	= new Xasin::BLE_Handler("TestName");
+	ble_connection.set_GAP_param(ble_connection.get_GAP_defaults());
 
-	ble_connection->set_GAP_param(ble_connection->get_GAP_defaults());
+	ble_characteristic.set_uuid32('XSPP');
+	ble_char_descriptor.set_uuid16(0x2902);
 
-	ble_service		= new Xasin::Bluetooth::Service(ble_connection);
+	ble_characteristic.set_value(&ble_char_desc_data, 1);
+	ble_char_descriptor.set_value(&ble_char_desc_data, 2, 2);
 
-	ble_characteristic = new Xasin::Bluetooth::Characteristic(ble_service);
-	ble_char_descriptor = new Xasin::Bluetooth::Characteristic(ble_service);
+	ble_characteristic.can_write(true);
+	ble_characteristic.can_read(true);
+	ble_characteristic.can_indicate(true);
 
-	ble_characteristic->set_uuid32('XSPP');
-	ble_char_descriptor->set_uuid16(0x2902);
-
-	ble_characteristic->set_value(&ble_char_desc_data, 1);
-	ble_char_descriptor->set_value(&ble_char_desc_data, 2, 2);
-
-	ble_characteristic->can_write(true);
-	ble_characteristic->can_read(true);
-	ble_characteristic->can_indicate(true);
-
-	ble_characteristic->write_cb = [this](Xasin::Bluetooth::Characteristic::write_dataset wD) {
+	ble_characteristic.write_cb = [this](Xasin::Bluetooth::Characteristic::write_dataset wD) {
 		if(wD.length < 2)
 			return;
 
@@ -48,20 +41,20 @@ void BLE_SlaveChannel::start() {
 		mainRegister.write_register(ID, {size_t(wD.length -2), wD.data + 2});
 	};
 
-	ble_char_descriptor->is_descriptor = true;
-	ble_char_descriptor->can_write(true);
+	ble_char_descriptor.is_descriptor = true;
+	ble_char_descriptor.can_write(true);
 
-	ble_service->add_char(ble_characteristic);
-	ble_service->add_char(ble_char_descriptor);
+	ble_service.add_char(&ble_characteristic);
+	ble_service.add_char(&ble_char_descriptor);
 
-	ble_service->set_uuid32('XSPP');
+	ble_service.set_uuid32('XSPP');
 
-	ble_connection->add_service(ble_service);
+	ble_connection.add_service(&ble_service);
 
-	ble_connection->setup_GATTS();
+	ble_connection.setup_GATTS();
 
 	vTaskDelay(1000);
-	ble_connection->start_advertising();
+	ble_connection.start_advertising();
 }
 
 void BLE_SlaveChannel::send_update(uint16_t ID, Data_Packet data) {
@@ -71,7 +64,7 @@ void BLE_SlaveChannel::send_update(uint16_t ID, Data_Packet data) {
 	*reinterpret_cast<uint16_t*>(data_buffer.data()) = ID;
 	memcpy(data_buffer.data() +2, data.data, data.length);
 
-	ble_characteristic->send_notify(data_buffer.data(), data.length +2, false);
+	ble_characteristic.send_notify(data_buffer.data(), data.length +2, false);
 }
 } /* namespace Communication */
 } /* namespace Xasin */
