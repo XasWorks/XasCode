@@ -40,13 +40,12 @@ private:
 	int samplerate;
 public:
 	const i2s_port_t i2s_port;
-	const i2s_dac_mode_t dac_mode;
 
 	void _audio_task();
 
-	AudioHandler(int samplerate = 22050, i2s_port_t i2s_port = I2S_NUM_0, i2s_dac_mode_t dac_mode = I2S_DAC_CHANNEL_BOTH_EN);
+	AudioHandler(int samplerate = 44100, i2s_port_t i2s_port = I2S_NUM_0);
 
-	void start_thread();
+	void start_thread(const i2s_pin_config_t &pinCFG);
 
 	void insert_cassette(AudioCassette &cas);
 };
