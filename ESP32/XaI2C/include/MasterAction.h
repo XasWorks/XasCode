@@ -33,7 +33,7 @@ public:
 	void read(uint8_t cCode, void *data, size_t length);
 	void read(void *data, size_t length);
 
-	void execute(i2c_port_t port = I2C_NUM_0);
+	esp_err_t execute(i2c_port_t port = I2C_NUM_0);
 };
 
 } /* namespace XaI2C */

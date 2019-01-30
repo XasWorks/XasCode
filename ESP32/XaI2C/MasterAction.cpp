@@ -51,15 +51,29 @@ void MasterAction::write(uint8_t cCode, void *data, size_t length) {
 		i2c_master_write(cmd, reinterpret_cast<unsigned char *>(data), length, true);
 }
 
-void MasterAction::execute(i2c_port_t port) {
+void MasterAction::read(void *data, size_t length) {
+	assert(data != nullptr);
+
+	send_start(true);
+
+	i2c_master_read(cmd, reinterpret_cast<unsigned char *>(data), length, I2C_MASTER_LAST_NACK);
+}
+void MasterAction::read(uint8_t cCode, void *data, size_t length) {
+	write(cCode);
+	read(data, length);
+}
+
+esp_err_t MasterAction::execute(i2c_port_t port) {
 	assert(!executed);
 
 	i2c_master_stop(cmd);
 
 	executed = true;
-	auto ret = i2c_master_cmd_begin(port, cmd, 1000);
+	esp_err_t ret = i2c_master_cmd_begin(port, cmd, 1000);
 
 	i2c_cmd_link_delete(cmd);
+
+	return ret;
 }
 
 } /* namespace XaI2C */
