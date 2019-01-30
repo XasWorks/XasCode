@@ -33,6 +33,8 @@ public:
 	void start();
 
 	void send_update(uint16_t ID, Data_Packet data);
+
+	bool is_connected();
 };
 
 } /* namespace Communication */

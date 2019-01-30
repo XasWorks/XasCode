@@ -54,9 +54,9 @@ protected:
 	void 	*dataLocation;
 	size_t 	dataLength;
 
+public:
 	std::function<void (const Data_Packet)> write_cb;
 
-public:
 	const uint16_t ID;
 	const bool write_allowed;
 

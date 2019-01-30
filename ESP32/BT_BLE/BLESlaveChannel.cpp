@@ -66,5 +66,9 @@ void BLE_SlaveChannel::send_update(uint16_t ID, Data_Packet data) {
 
 	ble_characteristic.send_notify(data_buffer.data(), data.length +2, false);
 }
+
+bool BLE_SlaveChannel::is_connected() {
+	return ble_connection.is_connected();
+}
 } /* namespace Communication */
 } /* namespace Xasin */
