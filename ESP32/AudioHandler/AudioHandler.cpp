@@ -5,10 +5,12 @@
  *      Author: xasin
  */
 
-#include "AudioHandler.h"
 #include <cstring>
-
 #include <array>
+
+#include "AudioHandler.h"
+
+#include "driver/gpio.h"
 
 namespace Xasin {
 namespace Peripheral {
@@ -21,9 +23,29 @@ AudioCassette::AudioCassette(const uint8_t *start, size_t length)
 	: readStart(start), readHead(readStart), readEnd(readStart + length) {
 }
 
+AudioCassette::AudioCassette(const AudioCassette &top) :
+	AudioCassette(top.readStart, top.readEnd - top.readStart) {
+}
+
+AudioCassette::AudioCassette() : readStart(nullptr), readHead(nullptr), readEnd(nullptr) {
+}
+
+int16_t AudioCassette::get_chunk() {
+	if(readHead >= readEnd)
+		return 0;
+
+	int16_t rData = *readHead;
+	readHead++;
+
+	return (rData - 127)*40;
+}
+bool AudioCassette::is_done() {
+	return readHead >= readEnd;
+}
+
 AudioHandler::AudioHandler(int samplerate, i2s_port_t i2s_port)
 	: audioTask(nullptr),
-	  currentCassette(nullptr),
+	  currentCassettes(),
 	  samplerate(samplerate), i2s_port(i2s_port) {
 
 }
@@ -32,25 +54,26 @@ void AudioHandler::_audio_task() {
 	std::array<int16_t, 512> audioBuffer;
 
 	while(true) {
-		while(currentCassette == nullptr)
+		while(currentCassettes.empty())
 			xTaskNotifyWait(0, 0, nullptr, portMAX_DELAY);
 
-		int samples_to_write = currentCassette->readEnd - currentCassette->readHead;
-		if(samples_to_write > 512)
-			samples_to_write = 512;
-
-		for(uint16_t i=0; i<samples_to_write; i++) {
-			audioBuffer[i] = (currentCassette->readHead[i] - 127) * 100;
+		audioBuffer.fill(0);
+		for(uint16_t i=0; i<audioBuffer.size(); i++) {
+			for(auto &c : currentCassettes)
+				audioBuffer[i] += c.get_chunk();
 		}
 
 		size_t written_samples = 0;
-		i2s_write(i2s_port, audioBuffer.data(), samples_to_write*2, &written_samples, portMAX_DELAY);
+		i2s_write(i2s_port, audioBuffer.data(), 1024, &written_samples, portMAX_DELAY);
 
-		currentCassette->readHead += written_samples/2;
-		if(currentCassette->readHead >= currentCassette->readEnd) {
-			i2s_zero_dma_buffer(i2s_port);
-			currentCassette = nullptr;
+
+		for(auto i=currentCassettes.begin(); i<currentCassettes.end(); i++) {
+			if(i->is_done())
+				currentCassettes.erase(i);
 		}
+
+		if(currentCassettes.empty())
+			i2s_zero_dma_buffer(i2s_port);
 	}
 }
 
@@ -61,7 +84,7 @@ void AudioHandler::start_thread(const i2s_pin_config_t &pinCFG) {
 	cfg.mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_TX);
 	cfg.sample_rate = samplerate;
 	cfg.bits_per_sample = i2s_bits_per_sample_t(16);
-	cfg.channel_format = I2S_CHANNEL_FMT_ONLY_RIGHT;
+	cfg.channel_format = I2S_CHANNEL_FMT_ONLY_LEFT;
 	cfg.communication_format = I2S_COMM_FORMAT_I2S_MSB;
 	cfg.intr_alloc_flags = 0;
 	cfg.dma_buf_count = 2;
@@ -73,14 +96,19 @@ void AudioHandler::start_thread(const i2s_pin_config_t &pinCFG) {
 	xTaskCreatePinnedToCore(start_audio_task, "Audio", 5*1024, this, configMAX_PRIORITIES - 1, &audioTask, 1);
 }
 
-void AudioHandler::insert_cassette(AudioCassette &cassette) {
+void AudioHandler::insert_cassette(const AudioCassette &cassette) {
 	if(audioTask == nullptr)
 		return;
 
-	cassette.readHead = cassette.readStart;
-	currentCassette = &cassette;
+	currentCassettes.push_back(cassette);
 
 	xTaskNotify(audioTask, 0, eNoAction);
+}
+
+void AudioHandler::insert_cassette(const CassetteCollection &cassettes) {
+	if(cassettes.size() == 0)
+		return;
+	insert_cassette(cassettes.at(esp_random()%cassettes.size()));
 }
 
 } /* namespace Peripheral */

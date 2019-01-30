@@ -21,21 +21,30 @@ namespace Peripheral {
 class AudioHandler;
 
 class AudioCassette {
-public:
+protected:
 	friend AudioHandler;
 
 	uint8_t const *readStart;
 	uint8_t const *readHead;
 	uint8_t const *readEnd;
 
+	int16_t get_chunk();
+	bool is_done();
+
+public:
 	AudioCassette(const uint8_t *start, size_t length);
+	AudioCassette(const AudioCassette &top);
+
+	AudioCassette();
 };
+
+typedef std::vector<AudioCassette> CassetteCollection;
 
 class AudioHandler {
 private:
 	TaskHandle_t audioTask;
 
-	AudioCassette *currentCassette;
+	std::vector<AudioCassette> currentCassettes;
 
 	int samplerate;
 public:
@@ -47,7 +56,8 @@ public:
 
 	void start_thread(const i2s_pin_config_t &pinCFG);
 
-	void insert_cassette(AudioCassette &cas);
+	void insert_cassette(const AudioCassette &cas);
+	void insert_cassette(const CassetteCollection &cassettes);
 };
 
 } /* namespace Peripheral */
