@@ -6,13 +6,14 @@
  */
 
 #include "BatteryManager.h"
-
 #include "LiPoChargeTable.h"
 
 namespace Housekeeping {
 
 BatteryManager::BatteryManager()
-	: cutoff_voltage(3500) {
+	: current_mv_var(3600),
+	  cutoff_voltage(3500),
+	  is_charging(false) {
 
 	cutoff_percentage = raw_capacity_for_voltage(cutoff_voltage);
 }
@@ -74,6 +75,10 @@ uint16_t BatteryManager::voltage_for_raw_capacity(uint8_t percentage) {
 uint16_t BatteryManager::voltage_for_capacity(uint8_t percentage) {
 	return voltage_for_raw_capacity(100 - (100 - percentage) * (100 - cutoff_percentage) / 100);
 
+}
+
+void BatteryManager::set_voltage(uint16_t millivolts) {
+	current_mv_var = millivolts;
 }
 
 } /* namespace Housekeeping */
