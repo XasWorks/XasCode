@@ -81,4 +81,11 @@ void BatteryManager::set_voltage(uint16_t millivolts) {
 	current_mv_var = millivolts;
 }
 
+uint8_t BatteryManager::current_capacity() {
+	return capacity_for_voltage(current_mv_var);
+}
+uint16_t BatteryManager::current_mv() {
+	return current_mv_var;
+}
+
 } /* namespace Housekeeping */
