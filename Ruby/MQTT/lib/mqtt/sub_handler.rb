@@ -67,7 +67,9 @@ class SubHandler
 		@callbackList.each do |h|
 			tMatch = SubHandler.getTopicMatch(topic, h.topic_split);
 			if tMatch
-				h.offer(tMatch, data)
+				Timeout.timeout(3) {
+					h.offer(tMatch, data)
+				}
 				topicHasReceivers = true;
 			end
 		end
