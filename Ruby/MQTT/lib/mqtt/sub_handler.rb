@@ -67,9 +67,13 @@ class SubHandler
 		@callbackList.each do |h|
 			tMatch = SubHandler.getTopicMatch(topic, h.topic_split);
 			if tMatch
-				Timeout.timeout(3) {
-					h.offer(tMatch, data)
-				}
+				begin
+					Timeout.timeout(10) {
+						h.offer(tMatch, data)
+					}
+				rescue Timeout::Error
+					STDERR.puts "MQTT Callback Timeout #{h}"
+				end
 				topicHasReceivers = true;
 			end
 		end
