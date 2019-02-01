@@ -220,6 +220,7 @@ class SubHandler
 			data = data.to_json
 		end
 
+		retryCount = 0;
 		begin
 			@conChangeMutex.lock
 			if not @connected
@@ -230,6 +231,12 @@ class SubHandler
 				@mqtt.publish(topic, data, retain);
 			end
 		rescue MQTT::Exception, SocketError, SystemCallError
+			retryCount += 1;
+			if(qos == 0 && retryCount == 3)
+				STDERR.puts "Publish to #{topic} dropped!"
+				return;
+			end
+
 			sleep 0.05;
 			retry
 		end
