@@ -149,7 +149,7 @@ Color& Color::merge_add(const Color &top, uint8_t alpha) {
 
 	for(uint8_t i=0; i<3; i++) {
 		uint16_t& c = (&r)[i];
-		uint32_t cB = c + (&top.r)[i];
+		uint32_t cB = c + ((&top.r)[i]*total_alpha/255);
 		if(cB > 65535)
 			cB = 65535;
 
