@@ -19,6 +19,8 @@
 namespace Xasin {
 namespace MQTT {
 
+extern const char *mqtt_tag;
+
 typedef esp_mqtt_client_config_t mqtt_cfg;
 
 struct MQTT_Packet {
