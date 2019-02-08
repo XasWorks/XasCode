@@ -7,6 +7,7 @@
 
 #include "RegisterBlock.h"
 
+#include <stdio.h>
 #include <cstring>
 
 namespace Xasin {
@@ -18,7 +19,7 @@ SlaveChannel::SlaveChannel(RegisterBlock &mainRegister)
 	mainRegister.channels.push_back(this);
 }
 
-void SlaveChannel::send_update(uint16_t ID, Data_Packet data) {
+void SlaveChannel::send_update(uint16_t ID, Data_Packet data, bool retained) {
 }
 
 ComRegister::ComRegister(uint16_t ID, RegisterBlock &registers, void *dataLoc, size_t dataLen, bool write_allowed)
@@ -26,13 +27,16 @@ ComRegister::ComRegister(uint16_t ID, RegisterBlock &registers, void *dataLoc, s
 	  dataLocation(dataLoc), dataLength(dataLen),
 	  write_cb(nullptr),
 	  ID(ID),
-	  write_allowed(write_allowed) {
+	  write_allowed(write_allowed),
+	  retained(false) {
 
+
+	printf("New register with ID %d!\n", ID);
 	registerBlock.comRegisters[ID] = this;
 }
 
 void ComRegister::update(Data_Packet data) {
-	registerBlock.send_update(this->ID, data);
+	registerBlock.send_update(this->ID, data, this->retained);
 }
 void ComRegister::update() {
 	registerBlock.send_update(this->ID, {dataLength, dataLocation});
@@ -55,11 +59,13 @@ void RegisterBlock::write_register(uint16_t ID, const Data_Packet data) {
 			this->send_update(ID, data);
 		}
 	}
+	else
+		printf("No register found for %d\n", ID);
 }
 
-void RegisterBlock::send_update(uint16_t ID, Data_Packet data) {
+void RegisterBlock::send_update(uint16_t ID, Data_Packet data, bool retained) {
 	for(auto c : channels) {
-		c->send_update(ID, data);
+		c->send_update(ID, data, retained);
 	}
 }
 
