@@ -7,7 +7,6 @@
 
 #include "xasin/mqtt/Subscription.h"
 
-#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG // FIXME
 #include "esp_log.h"
 
 namespace Xasin {

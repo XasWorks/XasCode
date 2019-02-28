@@ -8,13 +8,42 @@
 #include "xasin/mqtt/Handler.h"
 #include "xasin/mqtt/Subscription.h"
 
-#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG //FIXME
+#define LOG_LOCAL_LEVEL ESP_LOG_INFO
 #include "esp_log.h"
 
 namespace Xasin {
 namespace MQTT {
 
 const char *mqtt_tag = "XAQTT";
+
+void Handler::start_wifi(const char *SSID, const char *PSWD) {
+	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+
+	ESP_ERROR_CHECK( esp_wifi_init(&cfg) );
+	ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_RAM) );
+	ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_STA) );
+
+	wifi_config_t wifi_cfg = {};
+	wifi_sta_config_t* sta_cfg = &(wifi_cfg.sta);
+
+	memcpy(sta_cfg->password, PSWD, strlen(PSWD));
+	memcpy(sta_cfg->ssid, SSID, strlen(SSID));
+
+	ESP_ERROR_CHECK( esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_cfg) );
+	ESP_ERROR_CHECK( esp_wifi_start() );
+}
+void Handler::try_wifi_reconnect(system_event_t *event) {
+	switch(event->event_id) {
+	case SYSTEM_EVENT_STA_START:
+		esp_wifi_connect();
+		break;
+	case SYSTEM_EVENT_STA_DISCONNECTED:
+		esp_wifi_connect();
+		break;
+	default: break;
+	}
+}
+
 
 esp_err_t mqtt_handle_caller(esp_mqtt_event_t *event) {
 	reinterpret_cast<Handler*>(event->user_context)->mqtt_handler(event);
@@ -113,6 +142,16 @@ void Handler::subscribe_to(const std::string &topic, mqtt_callback cb, int qos) 
 	auto nSub = new Subscription(*this, topic, qos);
 	nSub->on_received = cb;
 }
+
+uint8_t Handler::is_disconnected() {
+	if(mqtt_connected)
+		return 0;
+	if(wifi_connected)
+		return 1;
+
+	return 2;
+}
+
 
 } /* namespace MQTT */
 } /* namespace Xasin */

@@ -9,6 +9,7 @@
 #define ESP32_MQTT_SUBHANDLER_HANDLER_H_
 
 #include "esp_event.h"
+#include "esp_wifi.h"
 
 #include "mqtt_client.h"
 
@@ -43,6 +44,9 @@ protected:
 	bool mqtt_connected;
 
 public:
+	static void start_wifi(const char *SSID, const char *PSWD);
+	static void try_wifi_reconnect(system_event_t *event);
+
 	Handler();
 
 	void start(const mqtt_cfg &config);
@@ -53,6 +57,8 @@ public:
 
 	void publish_to(const std::string &topic, void const *data, size_t length, bool retain = false, int qos = 0);
 	void subscribe_to(const std::string &topic, mqtt_callback callback, int qos = 0);
+
+	uint8_t is_disconnected();
 };
 
 } /* namespace MQTT */
