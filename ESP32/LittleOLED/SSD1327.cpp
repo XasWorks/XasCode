@@ -19,7 +19,7 @@ void SSD1327::call_raw_update(void *args) {
 
 	uint32_t dummy;
 	while(true) {
-		xTaskNotifyWait(0, 0, &dummy, 200/portTICK_PERIOD_MS);
+		xTaskNotifyWait(0, 0, &dummy, 2000/portTICK_PERIOD_MS);
 
 		reinterpret_cast<SSD1327 *>(args)->raw_update();
 
@@ -50,7 +50,7 @@ void SSD1327::initialize() {
 
 XaI2C::MasterAction* SSD1327::start_cmd_set() {
 	assert(currentAction == nullptr);
-	this->currentAction = new XaI2C::MasterAction(0b0111100);
+	this->currentAction = new XaI2C::MasterAction(0b0111101);
 
 	return currentAction;
 }
@@ -72,7 +72,9 @@ void SSD1327::end_cmd_set() {
 
 	currentAction->write(0x00, cmdBuffer.data(), cmdBuffer.size());
 
-	currentAction->execute();
+	auto ret = currentAction->execute();
+
+	ESP_ERROR_CHECK(ret);
 
 	cmdBuffer.clear();
 	delete currentAction;
@@ -82,7 +84,7 @@ void SSD1327::end_cmd_set() {
 void SSD1327::data_write(void *data, size_t length) {
 	assert(currentAction == nullptr);
 
-	currentAction = new XaI2C::MasterAction(0b0111100);
+	currentAction = new XaI2C::MasterAction(0b0111101);
 
 	currentAction->write(DATA_STREAM, data, length);
 	currentAction->execute();
@@ -122,7 +124,7 @@ void SSD1327::push_entire_screen() {
 					if(displayByte & 0b01)
 						greyscaleBuffer[gScalePos] |= 0b1111;
 					if(displayByte & 0b10)
-						greyscaleBuffer[gScalePos] |= 0b1111;
+						greyscaleBuffer[gScalePos] |= 0b1111<<4;
 
 					gScalePos++;
 					displayByte >>= 2;
