@@ -38,6 +38,7 @@ void SSD1327::initialize() {
 	start_cmd_set();
 
 	send_cmd(ENABLE_LIN_GREYSCALE);
+	send_cmd(SET_REMAP, 1<<6);
 	send_cmd(DISPLAY_ENABLE);
 
 	end_cmd_set();
@@ -122,9 +123,9 @@ void SSD1327::push_entire_screen() {
 				for(uint8_t bit = 0; bit < 8; bit+=2) {
 					greyscaleBuffer[gScalePos] = 0;
 					if(displayByte & 0b01)
-						greyscaleBuffer[gScalePos] |= 0b1111;
+						greyscaleBuffer[gScalePos] |= 0b110;
 					if(displayByte & 0b10)
-						greyscaleBuffer[gScalePos] |= 0b1111<<4;
+						greyscaleBuffer[gScalePos] |= (0b110<<4);
 
 					gScalePos++;
 					displayByte >>= 2;

@@ -50,6 +50,7 @@ public:
 		SET_ROW_RANGE		= 0x75,
 
 		SET_MUX_RATIO		= 0xA8,
+		SET_REMAP			= 0xA0,
 		SELECT_VDD_SRC		= 0xAB,
 	};
 

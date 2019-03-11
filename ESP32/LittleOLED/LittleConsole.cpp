@@ -26,7 +26,7 @@ LittleConsole::LittleConsole(DrawBox &display)
 void LittleConsole::raw_update() {
 	xSemaphoreTake(updateMutex, portMAX_DELAY);
 	for(uint8_t line=0; line<currentLines.size(); line++) {
-		display.write_string(0, 8*line, currentLines[(line+lineShift)%4]);
+		display.write_string(0, 8*line, currentLines[(line+lineShift)%currentLines.size()]);
 	}
 	xSemaphoreGive(updateMutex);
 }
@@ -39,6 +39,8 @@ void LittleConsole::put_string(const char *input, size_t length) {
 		return;
 
 	xSemaphoreTake(updateMutex, portMAX_DELAY);
+	uint8_t nLines = currentLines.size();
+
 	while(length-- != 0) {
 		if(lastCharWasNewline) {
 			lastCharWasNewline = false;
@@ -47,18 +49,18 @@ void LittleConsole::put_string(const char *input, size_t length) {
 			if(lineShift >= currentLines.size())
 				lineShift = 0;
 
-			currentLines[(3+lineShift)%4].clear();
+			currentLines[(nLines-1+lineShift)%nLines].clear();
 		}
 		if(*input == '\n') {
 			lastCharWasNewline = true;
 		}
 		else if(*input == '\r') {
-			currentLines[(3+lineShift)%4].clear();
+			currentLines[(nLines-1+lineShift)%nLines].clear();
 		}
-		else if(currentLines[(3+lineShift)%4].size() < 18){
-			currentLines[(3+lineShift)%4] += *input;
+		else if(currentLines[(nLines-1+lineShift)%nLines].size() < 18){
+			currentLines[(nLines-1+lineShift)%nLines] += *input;
 
-			if(currentLines[(3+lineShift)%4].size() == 18)
+			if(currentLines[(nLines-1+lineShift)%nLines].size() == 18)
 				lastCharWasNewline = true;
 		}
 
