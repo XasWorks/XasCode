@@ -104,6 +104,31 @@ void SSD1327::set_coordinates(uint8_t column, uint8_t page, uint8_t maxColumn, u
 	end_cmd_set();
 }
 
+void SSD1327::push_segment(uint8_t lColumn, uint8_t tRow, uint8_t rColumn, uint8_t bRow) {
+	set_coordinates(lColumn, tRow, rColumn, bRow);
+
+	uint16_t greyscaleBitpos = 0;
+	const uint8_t brightnessSteps[] = {1, 2, 6, 15};
+
+	for(uint8_t cRow = tRow; cRow <= bRow; cRow++) {
+		for(uint8_t cColumn = lColumn; cColumn <= rColumn; cColumn++) {
+			uint8_t dataByte = screenBuffer[cColumn/4][cRow] >> (4*(cColumn & 0b11));
+
+			greyscaleBuffer[greyscaleBitpos] = brightnessSteps[dataByte & 0b11];
+			greyscaleBuffer[greyscaleBitpos] |= brightnessSteps[(dataByte >> 2) & 0b11]<< 4;
+
+			if(++greyscaleBitpos >= greyscaleBuffer.size()) {
+				data_write(greyscaleBuffer.begin(), greyscaleBitpos);
+				greyscaleBitpos = 0;
+			}
+		}
+	}
+
+	if(greyscaleBitpos > 0)
+		data_write(greyscaleBuffer.begin(), greyscaleBitpos);
+}
+
+
 void SSD1327::clear() {
 	for(auto &page : screenBuffer) {
 		for(uint8_t i=0; i<page.size(); i++)
@@ -111,30 +136,7 @@ void SSD1327::clear() {
 	}
 }
 void SSD1327::push_entire_screen() {
-	set_coordinates();
-
-	for(uint8_t dataSet=0; dataSet<8; dataSet++) {
-
-		uint16_t gScalePos = 0;
-		for(uint8_t row=dataSet*16; row < (dataSet+1)*16; row++) {
-			for(uint8_t page=0; page < 16; page++) {
-				uint8_t displayByte = screenBuffer[page][row];
-
-				for(uint8_t bit = 0; bit < 8; bit+=2) {
-					greyscaleBuffer[gScalePos] = 0;
-					if(displayByte & 0b01)
-						greyscaleBuffer[gScalePos] |= 0b110;
-					if(displayByte & 0b10)
-						greyscaleBuffer[gScalePos] |= (0b110<<4);
-
-					gScalePos++;
-					displayByte >>= 2;
-				}
-			}
-		}
-
-		data_write(greyscaleBuffer.begin(), greyscaleBuffer.size());
-	}
+	push_segment(0, 0, 63, 127);
 }
 
 void SSD1327::request_redraw() {
@@ -147,7 +149,7 @@ void SSD1327::raw_update() {
 	this->push_entire_screen();
 }
 
-void SSD1327::set_pixel(int x, int y, bool on) {
+void SSD1327::set_pixel(int x, int y, uint8_t brightness) {
 	if(x < 0)
 		return;
 	if(y < 0)
@@ -161,12 +163,10 @@ void SSD1327::set_pixel(int x, int y, bool on) {
 	if(y >= screenBuffer[page].size())
 		return;
 
-	uint8_t &dByte = screenBuffer[page][y];
+	uint16_t &dByte = screenBuffer[page][y];
 
-	if(on)
-		dByte |= 1<<page_x;
-	else
-		dByte &= ~(1<<page_x);
+	dByte &= ~(0b11				<<(page_x*2));
+	dByte |= (brightness&0b11)	<<(page_x*2);
 }
 
 } /* namespace OLED */

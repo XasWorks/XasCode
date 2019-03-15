@@ -62,7 +62,7 @@ private:
 	std::vector<char> cmdBuffer;
 
 	std::array<uint8_t, 1024>	greyscaleBuffer;
-	std::array<std::array<uint8_t, 128>, 16> screenBuffer;
+	std::array<std::array<uint16_t, 128>, 16> screenBuffer;
 
 	TaskHandle_t updateTask;
 
@@ -80,15 +80,16 @@ public:
 
 	void initialize();
 
-	void set_coordinates(uint8_t column = 0, uint8_t page = 0, uint8_t maxColumn = 127, uint8_t maxPage = 127);
+	void set_coordinates(uint8_t column = 0, uint8_t page = 0, uint8_t maxColumn = 64, uint8_t maxPage = 127);
 
 	void clear();
+	void push_segment(uint8_t lColumn = 0, uint8_t tRow = 0, uint8_t rColumn = 64, uint8_t bRow = 128);
 	void push_entire_screen();
 
 	void request_redraw();
 	void raw_update();
 
-	void set_pixel(int x, int y, bool on = true);
+	void set_pixel(int x, int y, uint8_t brightness = 3);
 };
 
 } /* namespace OLED */
