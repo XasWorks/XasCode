@@ -16,7 +16,34 @@ namespace MQTT {
 
 const char *mqtt_tag = "XAQTT";
 
-void Handler::start_wifi(const char *SSID, const char *PSWD) {
+volatile int wifi_task_conn_counter = 0;
+TaskHandle_t wifi_task_handle = nullptr;
+void handler_wifi_checkup_task(void *eh) {
+	while(true) {
+		xTaskNotifyWait(0, 0, nullptr, portMAX_DELAY);
+
+		if(wifi_task_conn_counter == -1)
+			continue;
+
+		int delay = 1000;
+		if(wifi_task_conn_counter < 2)
+			delay = 2000;
+		else if(wifi_task_conn_counter < 4)
+			delay = 10000;
+		else
+			delay = 30000;
+
+		vTaskDelay(delay/portTICK_PERIOD_MS);
+
+		if(wifi_task_conn_counter == -1)
+			continue;
+		puts("Restarting WiFi");
+		esp_wifi_start();
+		//esp_wifi_connect();
+	}
+}
+
+void Handler::start_wifi(const char *SSID, const char *PSWD, uint8_t psMode) {
 	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 
 	ESP_ERROR_CHECK( esp_wifi_init(&cfg) );
@@ -29,17 +56,35 @@ void Handler::start_wifi(const char *SSID, const char *PSWD) {
 	memcpy(sta_cfg->password, PSWD, strlen(PSWD));
 	memcpy(sta_cfg->ssid, SSID, strlen(SSID));
 
+	sta_cfg->scan_method = WIFI_FAST_SCAN;
+	if(psMode >= 2) {
+			esp_wifi_set_max_tx_power(50);
+			sta_cfg->listen_interval = 5;
+	}
 	ESP_ERROR_CHECK( esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_cfg) );
+
+	xTaskCreate(handler_wifi_checkup_task, "XAQTT::Wifi", 1324, nullptr, 10, &wifi_task_handle);
+	if(psMode >= 1)
+		ESP_ERROR_CHECK( esp_wifi_set_ps(WIFI_PS_MAX_MODEM));
+
 	ESP_ERROR_CHECK( esp_wifi_start() );
 }
 void Handler::try_wifi_reconnect(system_event_t *event) {
 	switch(event->event_id) {
+	case SYSTEM_EVENT_STA_CONNECTED:
+		wifi_task_conn_counter = -1;
+		break;
 	case SYSTEM_EVENT_STA_START:
+		puts("Connecting wifi!");
 		esp_wifi_connect();
 		break;
 	case SYSTEM_EVENT_STA_DISCONNECTED:
-		esp_wifi_connect();
-		break;
+		puts("WiFi disconnected, pausing...");
+
+		esp_wifi_stop();
+		wifi_task_conn_counter++;
+		xTaskNotify(wifi_task_handle, 0, eNoAction);
+	break;
 	default: break;
 	}
 }

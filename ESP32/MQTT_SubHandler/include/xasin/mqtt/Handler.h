@@ -44,7 +44,7 @@ protected:
 	bool mqtt_connected;
 
 public:
-	static void start_wifi(const char *SSID, const char *PSWD);
+	static void start_wifi(const char *SSID, const char *PSWD, uint8_t psMode = 0);
 	static void try_wifi_reconnect(system_event_t *event);
 
 	Handler();
