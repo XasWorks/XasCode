@@ -31,7 +31,7 @@ ComRegister::ComRegister(uint16_t ID, RegisterBlock &registers, void *dataLoc, s
 	  retained(false) {
 
 
-	printf("New register with ID %d!\n", ID);
+	printf("New register with ID %0X!\n", ID);
 	registerBlock.comRegisters[ID] = this;
 }
 
