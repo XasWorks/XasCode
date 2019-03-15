@@ -14,7 +14,7 @@ void Control::char_detect_isr() {
 
 	uint64_t ISRDelay = esp_timer_get_time() - lastIntrTime;
 	lastIntrTime = esp_timer_get_time();
-	if(ISRDelay > 10000)
+	if(ISRDelay > 20000)
 		debounceCnt = 0;
 
 	if(++debounceCnt >= 4) {
@@ -29,7 +29,7 @@ void Control::char_detect_isr() {
 	touch_pad_clear_status();
 }
 
-Control::Control(touch_pad_t padNo) : padNo(padNo), charDetectHandle(nullptr) {
+Control::Control(touch_pad_t padNo, uint16_t threshold) : padNo(padNo), charDetectHandle(nullptr) {
 
 	lastIntrTime = esp_timer_get_time();
 	debounceCnt  = 0;
@@ -39,15 +39,16 @@ Control::Control(touch_pad_t padNo) : padNo(padNo), charDetectHandle(nullptr) {
 
 	touch_pad_set_voltage(TOUCH_HVOLT_2V7, TOUCH_LVOLT_0V5, TOUCH_HVOLT_ATTEN_1V);
 
-	touch_pad_config(padNo, 20);
+	touch_pad_config(padNo, threshold);
 	touch_pad_io_init(padNo);
 
 	touch_pad_isr_register([](void *args) {
 		((Control*)args)->char_detect_isr();
 	}, this);
 	touch_pad_intr_enable();
+	esp_sleep_enable_touchpad_wakeup();
 
-	touch_pad_set_meas_time(rtc_clk_slow_freq_get_hz()/200, 0x04FF);
+	touch_pad_set_meas_time(rtc_clk_slow_freq_get_hz()/200, 0x05FF);
 }
 
 uint16_t Control::read_raw() {
