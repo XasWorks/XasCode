@@ -26,7 +26,7 @@ LittleConsole::LittleConsole(DrawBox &display)
 void LittleConsole::raw_update() {
 	xSemaphoreTake(updateMutex, portMAX_DELAY);
 	for(uint8_t line=0; line<currentLines.size(); line++) {
-		display.write_string(0, 8*line, currentLines[(line+lineShift)%currentLines.size()]);
+		display.write_string(0, 8*line, currentLines[(line+lineShift)%currentLines.size()], line%4, 1);
 	}
 	xSemaphoreGive(updateMutex);
 }

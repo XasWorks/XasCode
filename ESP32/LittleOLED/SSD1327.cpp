@@ -23,7 +23,7 @@ void SSD1327::call_raw_update(void *args) {
 
 		reinterpret_cast<SSD1327 *>(args)->raw_update();
 
-		vTaskDelay(100/portTICK_PERIOD_MS);
+		vTaskDelay(10/portTICK_PERIOD_MS);
 	}
 }
 
@@ -108,7 +108,7 @@ void SSD1327::push_segment(uint8_t lColumn, uint8_t tRow, uint8_t rColumn, uint8
 	set_coordinates(lColumn, tRow, rColumn, bRow);
 
 	uint16_t greyscaleBitpos = 0;
-	const uint8_t brightnessSteps[] = {1, 2, 6, 15};
+	const uint8_t brightnessSteps[] = {0, 1, 7, 15};
 
 	for(uint8_t cRow = tRow; cRow <= bRow; cRow++) {
 		for(uint8_t cColumn = lColumn; cColumn <= rColumn; cColumn++) {
@@ -136,7 +136,8 @@ void SSD1327::clear() {
 	}
 }
 void SSD1327::push_entire_screen() {
-	push_segment(0, 0, 63, 127);
+	//push_segment(0, 0, 63, 127);
+	push_segment(15, 69, 50, 83);
 }
 
 void SSD1327::request_redraw() {
@@ -149,7 +150,9 @@ void SSD1327::raw_update() {
 	this->push_entire_screen();
 }
 
-void SSD1327::set_pixel(int x, int y, uint8_t brightness) {
+void SSD1327::set_pixel(int x, int y, int8_t brightness) {
+	if(brightness < 0)
+		return;
 	if(x < 0)
 		return;
 	if(y < 0)

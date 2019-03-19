@@ -89,7 +89,7 @@ public:
 	void request_redraw();
 	void raw_update();
 
-	void set_pixel(int x, int y, uint8_t brightness = 3);
+	void set_pixel(int x, int y, int8_t brightness = 3);
 };
 
 } /* namespace OLED */
