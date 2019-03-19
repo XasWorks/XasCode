@@ -62,7 +62,7 @@ void Handler::start_wifi(const char *SSID, const char *PSWD, uint8_t psMode) {
 	}
 	ESP_ERROR_CHECK( esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_cfg) );
 
-	xTaskCreate(handler_wifi_checkup_task, "XAQTT::Wifi", 1324, nullptr, 10, &wifi_task_handle);
+	xTaskCreate(handler_wifi_checkup_task, "XAQTT::Wifi", 2*1024, nullptr, 10, &wifi_task_handle);
 	if(psMode >= 1)
 		ESP_ERROR_CHECK( esp_wifi_set_ps(WIFI_PS_MAX_MODEM));
 
@@ -113,9 +113,20 @@ void Handler::start(const mqtt_cfg &config) {
 	if(wifi_connected)
 		esp_mqtt_client_start(mqtt_handle);
 }
-void Handler::start(const std::string uri) {
+void Handler::start(const std::string uri, const std::string status_topic) {
 	mqtt_cfg config = {};
 	config.uri = uri.data();
+
+	if(status_topic != "") {
+		config.lwt_topic = status_topic.data();
+		config.lwt_retain = true;
+		config.lwt_qos = 1;
+		config.lwt_msg_len = 0;
+
+		config.keepalive = 20;
+
+		this->status_topic = status_topic;
+	}
 
 	start(config);
 }
@@ -147,6 +158,8 @@ void Handler::mqtt_handler(esp_mqtt_event_t *event) {
 			for(auto s : subscriptions)
 				s->raw_subscribe();
 		}
+		if(status_topic != "")
+			this->publish_to(status_topic, status_msg.data(), status_msg.length(), true);
 		ESP_LOGI(mqtt_tag, "Reconnected and subscribed");
 	break;
 
@@ -169,6 +182,15 @@ void Handler::mqtt_handler(esp_mqtt_event_t *event) {
 
 	default: break;
 	}
+}
+
+void Handler::set_status(const std::string newStatus) {
+	if(status_topic == "")
+		return;
+
+	status_msg = newStatus;
+	if(mqtt_connected)
+		this->publish_to(status_topic, status_msg.data(), status_msg.length(), true);
 }
 
 void Handler::publish_to(const std::string &topic, const void *data, size_t length, bool retain, int qos) {

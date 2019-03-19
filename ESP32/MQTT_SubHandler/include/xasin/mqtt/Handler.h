@@ -43,6 +43,9 @@ protected:
 	bool wifi_connected;
 	bool mqtt_connected;
 
+	std::string status_topic;
+	std::string status_msg;
+
 public:
 	static void start_wifi(const char *SSID, const char *PSWD, uint8_t psMode = 0);
 	static void try_wifi_reconnect(system_event_t *event);
@@ -50,10 +53,12 @@ public:
 	Handler();
 
 	void start(const mqtt_cfg &config);
-	void start(const std::string URI);
+	void start(const std::string URI, const std::string status_topic = "");
 
 	void wifi_handler(system_event_t *event);
 	void mqtt_handler(esp_mqtt_event_t *event);
+
+	void set_status(const std::string newStatus);
 
 	void publish_to(const std::string &topic, void const *data, size_t length, bool retain = false, int qos = 0);
 	void subscribe_to(const std::string &topic, mqtt_callback callback, int qos = 0);
