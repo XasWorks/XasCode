@@ -37,9 +37,8 @@ void handler_wifi_checkup_task(void *eh) {
 
 		if(wifi_task_conn_counter == -1)
 			continue;
-		puts("Restarting WiFi");
+		ESP_LOGI("XAQTT:WiFi", "Retrying connection...");
 		esp_wifi_start();
-		//esp_wifi_connect();
 	}
 }
 
@@ -72,14 +71,14 @@ void Handler::start_wifi(const char *SSID, const char *PSWD, uint8_t psMode) {
 void Handler::try_wifi_reconnect(system_event_t *event) {
 	switch(event->event_id) {
 	case SYSTEM_EVENT_STA_CONNECTED:
+		ESP_LOGI("XAQTT:WiFi", "Reconnected");
 		wifi_task_conn_counter = -1;
 		break;
 	case SYSTEM_EVENT_STA_START:
-		puts("Connecting wifi!");
 		esp_wifi_connect();
 		break;
 	case SYSTEM_EVENT_STA_DISCONNECTED:
-		puts("WiFi disconnected, pausing...");
+		ESP_LOGW("XAQTT::WiFi", "Disconnected");
 
 		esp_wifi_stop();
 		wifi_task_conn_counter++;
@@ -152,7 +151,7 @@ void Handler::mqtt_handler(esp_mqtt_event_t *event) {
 	break;
 
 	case MQTT_EVENT_DISCONNECTED:
-		ESP_LOGI(mqtt_tag, "Disconnected from host!");
+		ESP_LOGW(mqtt_tag, "Disconnected from broker!");
 		mqtt_connected = false;
 	break;
 
@@ -184,6 +183,7 @@ void Handler::publish_to(const std::string &topic, const void *data, size_t leng
 				, length, qos, retain);
 }
 void Handler::subscribe_to(const std::string &topic, mqtt_callback cb, int qos) {
+	// NO subscribing necessary here, the subscription class already handles this
 	auto nSub = new Subscription(*this, topic, qos);
 	nSub->on_received = cb;
 }

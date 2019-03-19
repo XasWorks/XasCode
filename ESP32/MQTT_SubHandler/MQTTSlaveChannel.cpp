@@ -10,6 +10,8 @@
 #include <cstdlib>
 #include <cstring>
 
+#include "esp_log.h"
+
 namespace Xasin {
 namespace MQTT {
 
@@ -24,7 +26,7 @@ MQTTSlaveChannel::MQTTSlaveChannel(Handler &handler, const std::string baseTopic
 	subscription.on_received = [this](MQTT_Packet data) {
 		uint16_t ID = strtol(data.topic.c_str(), nullptr, 16);
 
-		printf("MQTT Got ID Com num: %d\n", ID);
+		ESP_LOGD("XAQTT:IDCOMM", "Got data for register: %d", ID);
 		this->mainRegister.write_register(ID, {data.data.length(), data.data.data()});
 	};
 

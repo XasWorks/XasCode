@@ -40,7 +40,7 @@ void ComRegister::update(Data_Packet data) {
 	registerBlock.send_update(this->ID, data, this->retained);
 }
 void ComRegister::update() {
-	registerBlock.send_update(this->ID, {dataLength, dataLocation});
+	registerBlock.send_update(this->ID, {dataLength, dataLocation}, this->retained);
 }
 void ComRegister::update(const std::string &data) {
 	update({data.length(), data.data()});
