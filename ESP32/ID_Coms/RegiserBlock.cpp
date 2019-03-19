@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <cstring>
 
+#include "esp_log.h"
+
 namespace Xasin {
 namespace Communication {
 
@@ -30,8 +32,7 @@ ComRegister::ComRegister(uint16_t ID, RegisterBlock &registers, void *dataLoc, s
 	  write_allowed(write_allowed),
 	  retained(false) {
 
-
-	printf("New register with ID %0X!\n", ID);
+	ESP_LOGI(IDCOMM_TAG, "Opened register with ID: %0X", ID);
 	registerBlock.comRegisters[ID] = this;
 }
 
@@ -60,7 +61,7 @@ void RegisterBlock::write_register(uint16_t ID, const Data_Packet data) {
 		}
 	}
 	else
-		printf("No register found for %d\n", ID);
+		ESP_LOGW(IDCOMM_TAG, "No register found for %d", ID);
 }
 
 void RegisterBlock::send_update(uint16_t ID, Data_Packet data, bool retained) {

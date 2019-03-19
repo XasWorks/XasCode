@@ -15,6 +15,8 @@
 #include <vector>
 #include <map>
 
+#define IDCOMM_TAG "IDCOM"
+
 namespace Xasin {
 namespace Communication {
 
