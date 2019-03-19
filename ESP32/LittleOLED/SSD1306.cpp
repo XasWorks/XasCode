@@ -138,7 +138,9 @@ void SSD1306::raw_update() {
 	this->push_entire_screen();
 }
 
-void SSD1306::set_pixel(int x, int y, bool on) {
+void SSD1306::set_pixel(int x, int y, int8_t brightness) {
+	if(brightness < 0)
+		return;
 	if(x < 0)
 		return;
 	if(y < 0)
@@ -154,7 +156,7 @@ void SSD1306::set_pixel(int x, int y, bool on) {
 
 	uint8_t &dByte = screenBuffer[page][x];
 
-	if(on)
+	if(brightness > 1)
 		dByte |= 1<<page_y;
 	else
 		dByte &= ~(1<<page_y);

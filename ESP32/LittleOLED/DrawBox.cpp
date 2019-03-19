@@ -58,7 +58,9 @@ void DrawBox::request_redraw() {
 		topBox->request_redraw();
 }
 
-void DrawBox::set_pixel(int x, int y, bool on) {
+void DrawBox::set_pixel(int x, int y, int8_t brightness) {
+	if(brightness < 0)
+		return;
 	if(topBox == nullptr)
 		return;
 	if(!visible)
@@ -67,9 +69,9 @@ void DrawBox::set_pixel(int x, int y, bool on) {
 		return;
 
 	if(inverted)
-		on = !on;
+		brightness = 3 - brightness;
 
-	if(transparent && !on)
+	if(transparent && (brightness == 0))
 		return;
 
 	if(x < 0 || x > width)
@@ -96,10 +98,13 @@ void DrawBox::set_pixel(int x, int y, bool on) {
 	default: break;
 	}
 
-	topBox->set_pixel(rX + offsetX, rY + offsetY, on);
+	topBox->set_pixel(rX + offsetX, rY + offsetY, brightness);
 }
 
-void DrawBox::draw_line(int x, int y, int l, int r, bool on) {
+void DrawBox::draw_line(int x, int y, int l, int r, int8_t brightness) {
+	if(brightness < 0)
+		return;
+
 	short xF = 0;
 	short yF = 0;
 
@@ -111,20 +116,20 @@ void DrawBox::draw_line(int x, int y, int l, int r, bool on) {
 	}
 
 	for(int d = 0; d<l; d++)
-		set_pixel(x + xF*d, y + yF*d, on);
+		set_pixel(x + xF*d, y + yF*d, brightness);
 }
-void DrawBox::draw_box(int x, int y, int width, int height, bool filled) {
-	if(filled) {
+void DrawBox::draw_box(int x, int y, int width, int height, int8_t oBrightness, int8_t iBrightness) {
+	if(iBrightness >= 0) {
 		for(int dX = 0; dX < width; dX++) {
-			draw_line(x+dX, y, height, 1);
+			draw_line(x+dX, y, height, 1, iBrightness);
 		}
 	}
-	else {
-		draw_line(x, y, width, 0);
-		draw_line(x, y, height, 1);
-		draw_line(x+width-1, y+height-1, width, 2);
-		draw_line(x+width-1, y+height-1, height, 3);
-	}
+
+	draw_line(x, y, width, 0, oBrightness);
+	draw_line(x, y, height, 1, oBrightness);
+	draw_line(x+width-1, y+height-1, width, 2, oBrightness);
+	draw_line(x+width-1, y+height-1, height, 3, oBrightness);
+
 }
 
 int DrawBox::get_line_width(FontType *font) {
@@ -136,7 +141,7 @@ int DrawBox::get_lines(FontType *font) {
 	return this->height/(font->lineHeight);
 }
 
-void DrawBox::write_char(int x, int y, char c, bool invert, FontType *font) {
+void DrawBox::write_char(int x, int y, char c, int8_t foreground, int8_t background, FontType *font) {
 	FONTCHECK
 
 	const char *fontChar = font->fontData + font->height*c;
@@ -152,10 +157,10 @@ void DrawBox::write_char(int x, int y, char c, bool invert, FontType *font) {
 
 	for(uint8_t dy=0; dy<font->height; dy++) {
 		for(uint8_t dx=0; dx<font->width; dx++)
-			set_pixel(x+dx, y+dy, ((fontChar[dy]>>(7-dx)) & 1) != invert);
+			set_pixel(x+dx, y+dy, ((fontChar[dy]>>(7-dx)) & 1) ? foreground : background);
 	}
 }
-void DrawBox::write_string(int x, int y, const std::string oString, bool invert, FontType *font) {
+void DrawBox::write_string(int x, int y, const std::string oString, int8_t foreground, int8_t background, FontType *font) {
 	FONTCHECK
 
 	uint8_t  dL  = 0;
@@ -168,7 +173,7 @@ void DrawBox::write_string(int x, int y, const std::string oString, bool invert,
 			dLx = x + font->width*(1+dc);
 		}
 		else
-			write_char(x + font->width*dc - dLx, y + font->height*dL, oString[dc], invert, font);
+			write_char(x + font->width*dc - dLx, y + font->height*dL, oString[dc], foreground, background, font);
 	}
 }
 

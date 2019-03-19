@@ -31,7 +31,7 @@ public:
 	void char_detect_isr();
 	void char_detect_task();
 
-	Control(touch_pad_t padNo);
+	Control(touch_pad_t padNo, uint16_t threshold = 20);
 
 	uint16_t read_raw();
 	bool touched();

@@ -13,6 +13,8 @@ static void IRAM_ATTR u8_to_WS2812(const void* source, rmt_item32_t* destination
 	size_t source_size, size_t wanted_elements,
 	size_t* translated_size, size_t* translated_items) {
 
+	const int8_t *srcPointer = reinterpret_cast<const int8_t*>(source);
+
 	*translated_size  = 0;
 	*translated_items = 0;
 
@@ -25,14 +27,14 @@ static void IRAM_ATTR u8_to_WS2812(const void* source, rmt_item32_t* destination
 
 	while(*translated_size < source_size && *translated_items < wanted_elements) {
 		for(uint8_t i=0; i<8; i++) {
-			destination->val = bits[(*reinterpret_cast<const int8_t *>(source))>>(7-i) & 1].val;
+			destination->val = bits[(*srcPointer)>>(7-i) & 1].val;
 
 			(*translated_items)++;
 			destination++;
 		}
 
 		(*translated_size)++;
-		source++;
+		srcPointer++;
 	}
 }
 
@@ -57,7 +59,7 @@ NeoController::NeoController(gpio_num_t pin, rmt_channel_t channel, uint8_t leng
 	cfg.rmt_mode = RMT_MODE_TX;
 	cfg.clk_div  = 4;
 	cfg.gpio_num = pinNo;
-	cfg.mem_block_num = 2;
+	cfg.mem_block_num = 1;
 
 	rmt_config(&cfg);
 	rmt_driver_install(channel, 0, 0);

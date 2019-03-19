@@ -32,7 +32,9 @@ protected:
 	bool is_done();
 
 public:
-	AudioCassette(const uint8_t *start, size_t length);
+	uint8_t volume;
+
+	AudioCassette(const uint8_t *start, size_t length, uint8_t volume = 50);
 	AudioCassette(const AudioCassette &top);
 
 	AudioCassette();

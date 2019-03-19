@@ -8,10 +8,14 @@
 #ifndef XASLIBS_ID_COMS_BASEPIPE_H_
 #define XASLIBS_ID_COMS_BASEPIPE_H_
 
+#include <string>
+
 #include <cstring>
 #include <functional>
 #include <vector>
 #include <map>
+
+#define IDCOMM_TAG "IDCOM"
 
 namespace Xasin {
 namespace Communication {
@@ -41,7 +45,7 @@ protected:
 public:
 	SlaveChannel(RegisterBlock &mainRegister);
 
-	virtual void send_update(uint16_t ID, const Data_Packet data);
+	virtual void send_update(uint16_t ID, const Data_Packet data, bool retained  = false);
 };
 
 class ComRegister {
@@ -59,6 +63,7 @@ public:
 
 	const uint16_t ID;
 	const bool write_allowed;
+	bool retained;
 
 	ComRegister(uint16_t ID, RegisterBlock &regBlock, void *dataLoc = nullptr, size_t dataLen = 0, bool write_allowed = false);
 
@@ -86,7 +91,7 @@ public:
 
 	RegisterBlock();
 
-	void send_update(uint16_t ID, const Data_Packet data);
+	void send_update(uint16_t ID, const Data_Packet data, bool retained = false);
 };
 
 } /* namespace Communication */

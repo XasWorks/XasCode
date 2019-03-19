@@ -19,15 +19,16 @@ void start_audio_task(void *data) {
 	reinterpret_cast<AudioHandler *>(data)->_audio_task();
 }
 
-AudioCassette::AudioCassette(const uint8_t *start, size_t length)
-	: readStart(start), readHead(readStart), readEnd(readStart + length) {
+AudioCassette::AudioCassette(const uint8_t *start, size_t length, uint8_t volume)
+	: readStart(start), readHead(readStart), readEnd(readStart + length), volume(volume) {
 }
 
 AudioCassette::AudioCassette(const AudioCassette &top) :
-	AudioCassette(top.readStart, top.readEnd - top.readStart) {
+	AudioCassette(top.readStart, top.readEnd - top.readStart, top.volume) {
 }
 
-AudioCassette::AudioCassette() : readStart(nullptr), readHead(nullptr), readEnd(nullptr) {
+AudioCassette::AudioCassette() :
+		readStart(nullptr), readHead(nullptr), readEnd(nullptr), volume(0) {
 }
 
 int16_t AudioCassette::get_chunk() {
@@ -37,7 +38,7 @@ int16_t AudioCassette::get_chunk() {
 	int16_t rData = *readHead;
 	readHead++;
 
-	return (rData - 127)*40;
+	return (rData - 127)*volume;
 }
 bool AudioCassette::is_done() {
 	return readHead >= readEnd;
