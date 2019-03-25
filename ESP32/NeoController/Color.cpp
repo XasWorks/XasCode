@@ -59,6 +59,12 @@ Color::ColorData Color::getLEDValue() const {
 	return out;
 }
 
+uint32_t Color::getPrintable() const {
+	auto data = this->getLEDValue();
+
+	return data.r << 16 | data.g << 8 | data.b;
+}
+
 void Color::set(Color color) {
 	for(uint8_t i=0; i<4; i++) {
 		*(&this->r + i) = *(&color.r + i);
