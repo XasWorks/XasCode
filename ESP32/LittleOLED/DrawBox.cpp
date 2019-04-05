@@ -15,8 +15,8 @@ namespace OLED {
 #define FONTCHECK if(font == nullptr) {font = &DEFAULT_FONT;}
 
 DrawBox::DrawBox(int width, int height) :
-	width(width), height(height),
 	topBox(nullptr), bottomBoxes(),
+	width(width), height(height),
 	offsetX(0), offsetY(0),
 	rotation(0),
 	transparent(false),
@@ -46,6 +46,41 @@ void DrawBox::set_head(DrawBox *head, bool registerCB) {
 	this->topBox = head;
 }
 
+Point DrawBox::remap_point(Point in) {
+	int rX = in.x;
+	int rY = in.y;
+	switch(rotation%4) {
+	case 1:
+		rY = -in.x;
+		rX = in.y;
+	break;
+	case 2:
+		rX = -in.x;
+		rY = -in.y;
+	break;
+
+	case 3:
+		rY = in.x;
+		rX = -in.y;
+	break;
+	default: break;
+	}
+
+	return {rX + offsetX, rY + offsetY};
+}
+
+void DrawBox::mark_dirty_area(DirtyArea area) {
+	if(topBox != nullptr) {
+		Point remapped = remap_point({area.startX, area.startY});
+		DirtyArea outArea = {remapped.x, 0, remapped.y, 0};
+
+		remapped = remap_point({area.endX, area.endY});
+		outArea.endX = remapped.x;
+		outArea.endY = remapped.y;
+
+		topBox->mark_dirty_area(outArea);
+	}
+}
 void DrawBox::redraw() {
 	for(auto subBox = bottomBoxes.rbegin(); subBox != bottomBoxes.rend(); subBox++)
 		(*subBox)->redraw();
@@ -79,26 +114,9 @@ void DrawBox::set_pixel(int x, int y, int8_t brightness) {
 	if(y < 0 || y > height)
 		return;
 
-	int rX = x;
-	int rY = y;
-	switch(rotation%4) {
-	case 1:
-		rY = -x;
-		rX = y;
-	break;
-	case 2:
-		rX = -x;
-		rY = -y;
-	break;
+	Point remapped = remap_point({x, y});
 
-	case 3:
-		rY = x;
-		rX = -y;
-	break;
-	default: break;
-	}
-
-	topBox->set_pixel(rX + offsetX, rY + offsetY, brightness);
+	topBox->set_pixel(remapped.x, remapped.y, brightness);
 }
 
 void DrawBox::draw_line(int x, int y, int l, int r, int8_t brightness) {

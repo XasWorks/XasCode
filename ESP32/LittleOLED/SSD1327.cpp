@@ -19,7 +19,7 @@ void SSD1327::call_raw_update(void *args) {
 
 	uint32_t dummy;
 	while(true) {
-		xTaskNotifyWait(0, 0, &dummy, 2000/portTICK_PERIOD_MS);
+		xTaskNotifyWait(0, 0, &dummy, portMAX_DELAY);
 
 		reinterpret_cast<SSD1327 *>(args)->raw_update();
 
@@ -30,7 +30,9 @@ void SSD1327::call_raw_update(void *args) {
 SSD1327::SSD1327() :
 		DrawBox(128, 128),
 		currentAction(nullptr), cmdBuffer(),
+		greyscaleBuffer(),
 		screenBuffer(),
+		redrawAreas(),
 		updateTask(nullptr) {
 }
 
@@ -43,9 +45,10 @@ void SSD1327::initialize() {
 
 	end_cmd_set();
 
+	clear();
 	push_entire_screen();
 
-	xTaskCreate(SSD1327::call_raw_update, "SSD1327 Updater", 2048, this, 3, &updateTask);
+	xTaskCreate(SSD1327::call_raw_update, "SSD1327 Updater", 2*2048, this, 3, &updateTask);
 	puts("SSD1327 initialized!");
 }
 
@@ -104,6 +107,13 @@ void SSD1327::set_coordinates(uint8_t column, uint8_t page, uint8_t maxColumn, u
 	end_cmd_set();
 }
 
+void SSD1327::push_dirty_areas() {
+	for(auto d : redrawAreas) {
+		push_segment(d.startX/2, d.startY, d.endX/2, d.endY);
+	}
+
+	redrawAreas.clear();
+}
 void SSD1327::push_segment(uint8_t lColumn, uint8_t tRow, uint8_t rColumn, uint8_t bRow) {
 	set_coordinates(lColumn, tRow, rColumn, bRow);
 
@@ -136,8 +146,8 @@ void SSD1327::clear() {
 	}
 }
 void SSD1327::push_entire_screen() {
-	//push_segment(0, 0, 63, 127);
-	push_segment(15, 69, 50, 83);
+	push_segment(0, 0, 63, 127);
+	//push_segment(15, 69, 50, 83);
 }
 
 void SSD1327::request_redraw() {
@@ -147,7 +157,12 @@ void SSD1327::request_redraw() {
 void SSD1327::raw_update() {
 	this->clear();
 	this->redraw();
-	this->push_entire_screen();
+
+	this->push_dirty_areas();
+}
+
+void SSD1327::mark_dirty_area(DirtyArea area) {
+	redrawAreas.push_back(area);
 }
 
 void SSD1327::set_pixel(int x, int y, int8_t brightness) {

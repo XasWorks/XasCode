@@ -64,6 +64,8 @@ private:
 	std::array<uint8_t, 1024>	greyscaleBuffer;
 	std::array<std::array<uint16_t, 128>, 16> screenBuffer;
 
+	std::vector<DirtyArea> redrawAreas;
+
 	TaskHandle_t updateTask;
 
 	XaI2C::MasterAction* start_cmd_set();
@@ -83,12 +85,14 @@ public:
 	void set_coordinates(uint8_t column = 0, uint8_t page = 0, uint8_t maxColumn = 64, uint8_t maxPage = 127);
 
 	void clear();
+	void push_dirty_areas();
 	void push_segment(uint8_t lColumn = 0, uint8_t tRow = 0, uint8_t rColumn = 64, uint8_t bRow = 128);
 	void push_entire_screen();
 
 	void request_redraw();
 	void raw_update();
 
+	void mark_dirty_area(DirtyArea area);
 	void set_pixel(int x, int y, int8_t brightness = 3);
 };
 

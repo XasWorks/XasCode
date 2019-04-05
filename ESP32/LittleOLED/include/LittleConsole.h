@@ -33,7 +33,6 @@ private:
 	uint8_t lineShift;
 	bool lastCharWasNewline;
 
-	TaskHandle_t updateTask;
 	SemaphoreHandle_t updateMutex;
 
 public:

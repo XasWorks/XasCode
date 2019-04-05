@@ -14,7 +14,7 @@
 #include "fonttype.h"
 
 #ifndef DEFAULT_FONT
-#define DEFAULT_FONT console_font_6x8
+#define DEFAULT_FONT console_font_7x9
 #endif
 
 #define MAX_BRIGHTNESS 2
@@ -23,25 +23,29 @@ namespace Peripheral {
 namespace OLED {
 
 struct DirtyArea {
-	uint8_t startX;
-	uint8_t endX;
-	uint8_t startY;
-	uint8_t endY;
+	int startX;
+	int endX;
+	int startY;
+	int endY;
+};
+
+struct Point {
+	int x;
+	int y;
 };
 
 class DrawBox {
-private:
-	int width;
-	int height;
-
+protected:
 	DrawBox *topBox;
 
-protected:
 	std::vector<DrawBox *>bottomBoxes;
 
 	virtual void redraw();
 
 public:
+	int width;
+	int height;
+
 	int  offsetX;
 	int  offsetY;
 
@@ -60,6 +64,9 @@ public:
 
 	void set_head(DrawBox *headBox, bool registerCB = true);
 
+	Point remap_point(Point in);
+
+	virtual void mark_dirty_area(DirtyArea area);
 	virtual void request_redraw();
 
 	virtual void set_pixel(int x, int y, int8_t brightness = 3);
