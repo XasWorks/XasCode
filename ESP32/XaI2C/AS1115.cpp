@@ -20,6 +20,7 @@ void AS1115::send_self_addressing(i2c_port_t i2c_port) {
 	auto i2c_cmd = XaI2C::MasterAction(0);
 
 	uint8_t payload = 1;
+	i2c_cmd.write(0b1100, &payload, 1); // Power up devices
 	i2c_cmd.write(0x2D, &payload, 1);
 	i2c_cmd.execute(i2c_port);
 }
@@ -32,8 +33,9 @@ void AS1115::send_cmd(uint8_t cmd, uint8_t val) {
 }
 
 void AS1115::init() {
-	send_cmd(0b1100, 1); 	// Start device
+	send_cmd(0b1100, 1 | 1<<7); // Start device
 	send_cmd(0x0B, 0x07); 	// Full scan range
+
 	send_cmd(0x0A, 0x0F);	// Full global brightness
 }
 
@@ -42,6 +44,16 @@ void AS1115::set_segment(uint8_t id, uint8_t code) {
 		return;
 
 	segments[id] = code;
+}
+
+uint16_t AS1115::get_buttons() {
+	uint16_t outVal = 0;
+
+	auto i2c_cmd = XaI2C::MasterAction(address);
+	i2c_cmd.read(0x1C, &outVal, 2);
+	i2c_cmd.execute();
+
+	return outVal;
 }
 
 void AS1115::update_segments() {

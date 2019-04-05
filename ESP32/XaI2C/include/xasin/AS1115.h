@@ -31,6 +31,7 @@ public:
 	void init();
 
 	void set_segment(uint8_t id, uint8_t code);
+	uint16_t get_buttons();
 
 	void update_segments();
 };
