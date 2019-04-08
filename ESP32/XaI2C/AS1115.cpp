@@ -53,7 +53,7 @@ uint16_t AS1115::get_buttons() {
 	i2c_cmd.read(0x1C, &outVal, 2);
 	i2c_cmd.execute();
 
-	return outVal;
+	return 0xFFFF ^ outVal;
 }
 
 void AS1115::update_segments() {
