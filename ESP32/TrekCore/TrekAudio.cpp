@@ -25,7 +25,7 @@ using namespace Peripheral;
 typedef const AudioCassette snippet;
 #define SNIP_DEF(name) snippet s_ ## name = snippet(name, sizeof(name), 250)
 
-snippet s_keypress = snippet(keypress, sizeof(keypress), 20);
+snippet s_keypress = snippet(keypress, sizeof(keypress), 4);
 
 SNIP_DEF(input_ok);
 SNIP_DEF(input_error);
