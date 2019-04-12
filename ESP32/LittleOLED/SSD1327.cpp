@@ -95,6 +95,8 @@ void SSD1327::data_write(void *data, size_t length) {
 
 	delete currentAction;
 	currentAction = nullptr;
+
+	vTaskDelay(1);
 }
 
 void SSD1327::set_coordinates(uint8_t column, uint8_t page, uint8_t maxColumn, uint8_t maxPage) {

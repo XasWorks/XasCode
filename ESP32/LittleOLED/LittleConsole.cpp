@@ -28,6 +28,9 @@ void LittleConsole::raw_update() {
 	for(uint8_t line=0; line<currentLines.size(); line++) {
 		display.write_string(0, 8*line, currentLines[(line+lineShift)%currentLines.size()]);
 	}
+
+	display.mark_dirty_area({0, 127, 0, 127});
+
 	xSemaphoreGive(updateMutex);
 }
 

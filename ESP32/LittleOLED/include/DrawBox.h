@@ -14,7 +14,7 @@
 #include "fonttype.h"
 
 #ifndef DEFAULT_FONT
-#define DEFAULT_FONT console_font_7x9
+#define DEFAULT_FONT console_font_6x8
 #endif
 
 #define MAX_BRIGHTNESS 2

@@ -61,7 +61,7 @@ private:
 
 	std::vector<char> cmdBuffer;
 
-	std::array<uint8_t, 1024>	greyscaleBuffer;
+	std::array<uint8_t, 254>	greyscaleBuffer;
 	std::array<std::array<uint16_t, 128>, 16> screenBuffer;
 
 	std::vector<DirtyArea> redrawAreas;
