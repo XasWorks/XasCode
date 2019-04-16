@@ -12,11 +12,17 @@
 namespace Peripheral {
 namespace OLED {
 
+StringPrimitive::StringPrimitive()
+	: StringPrimitive(0, 0, nullptr) {
+
+}
+
 StringPrimitive::StringPrimitive(int width, int height, DrawBox *headBox)
 	: DrawBox(width, height, headBox),
 	  wasChanged(false),
-	  oldString(""), newString(""), hCenter(false), vCenter(false),
-	  font(&DEFAULT_FONT) {
+	  oldString(""), hCenter(false), vCenter(false),
+	  font(&DEFAULT_FONT),
+	  newString("") {
 
 }
 
@@ -56,12 +62,17 @@ void StringPrimitive::redraw() {
 	oldString = newString;
 }
 
-void StringPrimitive::set(const std::string nextString) {
+std::string StringPrimitive::get() {
+	return newString;
+}
+void StringPrimitive::set(const std::string nextString, bool notify) {
 	if(nextString == oldString)
 		return;
 
 	newString = nextString;
-	request_redraw();
+
+	if(notify)
+		request_redraw();
 }
 
 void StringPrimitive::printf(const char *input, ...) {

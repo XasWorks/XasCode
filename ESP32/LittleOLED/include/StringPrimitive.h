@@ -24,7 +24,6 @@ private:
 	bool wasChanged;
 
 	std::string oldString;
-	std::string newString;
 
 	bool hCenter;
 	bool vCenter;
@@ -35,10 +34,13 @@ protected:
 	void redraw();
 
 public:
+	std::string newString;
 
+	StringPrimitive();
 	StringPrimitive(int width, int height, DrawBox *headBox);
 
-	void set(const std::string nextString);
+	std::string get();
+	void set(const std::string nextString, bool notify = true);
 	void printf(const char *input, ...);
 
 	void set_centering(bool hCenter, bool vCenter);

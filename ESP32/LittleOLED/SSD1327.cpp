@@ -96,7 +96,7 @@ void SSD1327::data_write(void *data, size_t length) {
 	delete currentAction;
 	currentAction = nullptr;
 
-	vTaskDelay(1);
+	vTaskDelay(0);
 }
 
 void SSD1327::set_coordinates(uint8_t column, uint8_t page, uint8_t maxColumn, uint8_t maxPage) {
@@ -120,7 +120,7 @@ void SSD1327::push_segment(uint8_t lColumn, uint8_t tRow, uint8_t rColumn, uint8
 	set_coordinates(lColumn, tRow, rColumn, bRow);
 
 	uint16_t greyscaleBitpos = 0;
-	const uint8_t brightnessSteps[] = {0, 1, 7, 15};
+	const uint8_t brightnessSteps[] = {1, 1, 7, 15}; // FIXME DEBUG
 
 	for(uint8_t cRow = tRow; cRow <= bRow; cRow++) {
 		for(uint8_t cColumn = lColumn; cColumn <= rColumn; cColumn++) {

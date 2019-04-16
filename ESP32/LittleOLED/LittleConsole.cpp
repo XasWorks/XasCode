@@ -14,24 +14,28 @@ LittleConsole::LittleConsole(DrawBox &display)
 	: display(display),
 	  currentLines(), lineShift(0), lastCharWasNewline(false) {
 
-	display.onRedraw = [this]() {
-		this->raw_update();
-	};
+	for(uint8_t i=0; i<currentLines.size(); i++) {
+		auto &str = currentLines[i];
+
+		str.set("TEST");
+
+		str.set_head(&display);
+		str.width = display.width;
+		str.height = 8;
+
+		str.offsetY = 8*i;
+	}
 
 	updateMutex = xSemaphoreCreateMutex();
 
 	printfBuffer = new char[255];
 }
 
-void LittleConsole::raw_update() {
-	xSemaphoreTake(updateMutex, portMAX_DELAY);
-	for(uint8_t line=0; line<currentLines.size(); line++) {
-		display.write_string(0, 8*line, currentLines[(line+lineShift)%currentLines.size()]);
-	}
+void LittleConsole::shift_lines() {
+	for(uint8_t i=1; i<currentLines.size(); i++)
+		currentLines[i-1].set(currentLines[i].get(), false);
 
-	display.mark_dirty_area({0, 127, 0, 127});
-
-	xSemaphoreGive(updateMutex);
+	currentLines[currentLines.size()-1].newString = "";
 }
 
 void LittleConsole::put_string(const char *input, size_t length) {
@@ -42,28 +46,23 @@ void LittleConsole::put_string(const char *input, size_t length) {
 		return;
 
 	xSemaphoreTake(updateMutex, portMAX_DELAY);
-	uint8_t nLines = currentLines.size();
+	uint8_t nLines = currentLines.size()-1;
 
 	while(length-- != 0) {
 		if(lastCharWasNewline) {
 			lastCharWasNewline = false;
-
-			lineShift++;
-			if(lineShift >= currentLines.size())
-				lineShift = 0;
-
-			currentLines[(nLines-1+lineShift)%nLines].clear();
+			shift_lines();
 		}
 		if(*input == '\n') {
 			lastCharWasNewline = true;
 		}
 		else if(*input == '\r') {
-			currentLines[(nLines-1+lineShift)%nLines].clear();
+			currentLines[nLines].set("", false);
 		}
-		else if(currentLines[(nLines-1+lineShift)%nLines].size() < 18){
-			currentLines[(nLines-1+lineShift)%nLines] += *input;
+		else if(currentLines[nLines].newString.size() < 18){
+			currentLines[nLines].newString += *input;
 
-			if(currentLines[(nLines-1+lineShift)%nLines].size() == 18)
+			if(currentLines[nLines].newString.size() == 18)
 				lastCharWasNewline = true;
 		}
 

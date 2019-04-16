@@ -17,6 +17,7 @@
 #include "freertos/semphr.h"
 
 #include "SSD1306.h"
+#include "StringPrimitive.h"
 
 namespace Peripheral {
 namespace OLED {
@@ -29,15 +30,15 @@ private:
 
 	DrawBox &display;
 
-	std::array<std::string, 16> currentLines;
+	std::array<StringPrimitive, 16> currentLines;
 	uint8_t lineShift;
 	bool lastCharWasNewline;
 
 	SemaphoreHandle_t updateMutex;
 
-public:
-	void raw_update();
+	void shift_lines();
 
+public:
 	LittleConsole(DrawBox &display);
 
 	void update();
