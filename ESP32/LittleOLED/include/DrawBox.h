@@ -79,6 +79,8 @@ public:
 
 	void write_char(int x, int y, char c, int8_t foreground = 3, int8_t background = -1, FontType *font = nullptr);
 	void write_string(int x, int y, const std::string oString, int8_t foreground = 3, int8_t background = -1, FontType *font = nullptr);
+
+	void set_invert(bool inverted);
 };
 
 } /* namespace OLED */

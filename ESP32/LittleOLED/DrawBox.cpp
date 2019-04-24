@@ -195,5 +195,14 @@ void DrawBox::write_string(int x, int y, const std::string oString, int8_t foreg
 	}
 }
 
+void DrawBox::set_invert(bool inverted) {
+	if(inverted == this->inverted)
+		return;
+
+	this->inverted = inverted;
+	mark_dirty_area({0, width-1, 0, height-1});
+	request_redraw();
+}
+
 } /* namespace OLED */
 } /* namespace Peripheral */

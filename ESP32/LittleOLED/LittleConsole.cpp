@@ -16,9 +16,7 @@ LittleConsole::LittleConsole(DrawBox &display)
 
 	for(uint8_t i=0; i<currentLines.size(); i++) {
 		auto &str = currentLines[i];
-
-		str.set("TEST");
-
+		str.set("");
 		str.set_head(&display);
 		str.width = display.width;
 		str.height = 8;

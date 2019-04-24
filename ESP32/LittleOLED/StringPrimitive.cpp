@@ -58,7 +58,7 @@ void StringPrimitive::redraw() {
 	if(vCenter)
 		yPos = height/2 - font->height/2;
 
-	this->write_string(xPos, yPos, newString);
+	this->write_string(xPos, yPos, newString, 3, 0);
 	oldString = newString;
 }
 
