@@ -17,12 +17,14 @@ AS1115::AS1115(uint8_t address, i2c_port_t i2c_port)
 }
 
 void AS1115::send_self_addressing(i2c_port_t i2c_port) {
-	auto i2c_cmd = XaI2C::MasterAction(0);
+	for(int8_t addr=0b11; addr>0; addr--) {
+		auto i2c_cmd = XaI2C::MasterAction(0);
 
-	uint8_t payload = 1;
-	i2c_cmd.write(0b1100, &payload, 1); // Power up devices
-	i2c_cmd.write(0x2D, &payload, 1);
-	i2c_cmd.execute(i2c_port);
+		uint8_t payload = 1;
+		i2c_cmd.write(0b1100, &payload, 1); // Power up and reset devices
+		i2c_cmd.write(0x2D, &payload, 1);
+		i2c_cmd.execute(i2c_port);
+	}
 }
 
 void AS1115::send_cmd(uint8_t cmd, uint8_t val) {
