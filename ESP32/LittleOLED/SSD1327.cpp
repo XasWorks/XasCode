@@ -7,6 +7,8 @@
 
 #include "SSD1327.h"
 
+#include <cmath>
+
 namespace Peripheral {
 namespace OLED {
 
@@ -46,6 +48,8 @@ void SSD1327::initialize() {
 	end_cmd_set();
 
 	clear();
+
+	redraw();
 	push_entire_screen();
 
 	xTaskCreate(SSD1327::call_raw_update, "SSD1327 Updater", 2*2048, this, 3, &updateTask);
@@ -120,7 +124,7 @@ void SSD1327::push_segment(uint8_t lColumn, uint8_t tRow, uint8_t rColumn, uint8
 	set_coordinates(lColumn, tRow, rColumn, bRow);
 
 	uint16_t greyscaleBitpos = 0;
-	const uint8_t brightnessSteps[] = {0, 1, 8, 15}; // FIXME DEBUG
+	const uint8_t brightnessSteps[] = {0, 1, 8, 15};
 
 	for(uint8_t cRow = tRow; cRow <= bRow; cRow++) {
 		for(uint8_t cColumn = lColumn; cColumn <= rColumn; cColumn++) {
@@ -164,6 +168,27 @@ void SSD1327::raw_update() {
 }
 
 void SSD1327::mark_dirty_area(DirtyArea area) {
+	if(area.startX > area.endX) {
+		auto endX = area.endX;
+		area.endX = area.startX;
+		area.startX = endX;
+	}
+	if(area.startY > area.endY) {
+		auto endY = area.endY;
+		area.endY = area.startY;
+		area.startY = endY;
+	}
+
+	area.startX = std::min(area.startX, width-1);
+	area.startX = std::max(area.startX, 0);
+	area.endX 	= std::min(area.endX, width-1);
+	area.endX	= std::max(area.endX, 0);
+
+	area.startY = std::min(area.startY, height-1);
+	area.startY = std::max(area.startY, 0);
+	area.endY 	= std::min(area.endY, height-1);
+	area.endY	= std::max(area.endY, 0);
+
 	redrawAreas.push_back(area);
 }
 

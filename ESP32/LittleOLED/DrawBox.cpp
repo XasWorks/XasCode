@@ -109,9 +109,9 @@ void DrawBox::set_pixel(int x, int y, int8_t brightness) {
 	if(transparent && (brightness == 0))
 		return;
 
-	if(x < 0 || x > width)
+	if((x < 0) || (x >= width))
 		return;
-	if(y < 0 || y > height)
+	if((y < 0) || (y >= height))
 		return;
 
 	Point remapped = remap_point({x, y});

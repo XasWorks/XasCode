@@ -7,6 +7,8 @@
 
 #include "LittleConsole.h"
 
+#include <cmath>
+
 namespace Peripheral {
 namespace OLED {
 
@@ -16,12 +18,13 @@ LittleConsole::LittleConsole(DrawBox &display)
 
 	for(uint8_t i=0; i<currentLines.size(); i++) {
 		auto &str = currentLines[i];
-		str.set("");
+		str.set("--- TEST ---");
 		str.set_head(&display);
+
 		str.width = display.width;
 		str.height = 8;
 
-		str.offsetY = 8*i;
+		str.offsetY = display.height - 8*(i+1);
 	}
 
 	updateMutex = xSemaphoreCreateMutex();
@@ -30,10 +33,10 @@ LittleConsole::LittleConsole(DrawBox &display)
 }
 
 void LittleConsole::shift_lines() {
-	for(uint8_t i=1; i<currentLines.size(); i++)
-		currentLines[i-1].set(currentLines[i].get(), false);
+	for(uint8_t i=currentLines.size()-1; i!=0; i++)
+		currentLines[i].set(currentLines[i-1].get(), false);
 
-	currentLines[currentLines.size()-1].newString = "";
+	currentLines[0].newString = "";
 }
 
 void LittleConsole::put_string(const char *input, size_t length) {
