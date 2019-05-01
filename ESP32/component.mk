@@ -1,2 +1,0 @@
-
-COMPONENT_CONFIG_ONLY := y
