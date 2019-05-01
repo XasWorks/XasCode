@@ -114,11 +114,15 @@ void SSD1327::set_coordinates(uint8_t column, uint8_t page, uint8_t maxColumn, u
 }
 
 void SSD1327::push_dirty_areas() {
-	for(auto d : redrawAreas) {
+
+	DirtyArea d = {};
+	while(!redrawAreas.empty()) {
+		d = redrawAreas.back();
+		redrawAreas.pop_back();
+
 		push_segment(d.startX/2, d.startY, d.endX/2, d.endY);
 	}
 
-	redrawAreas.clear();
 }
 void SSD1327::push_segment(uint8_t lColumn, uint8_t tRow, uint8_t rColumn, uint8_t bRow) {
 	set_coordinates(lColumn, tRow, rColumn, bRow);

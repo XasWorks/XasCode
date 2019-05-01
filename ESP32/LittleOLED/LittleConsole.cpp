@@ -18,7 +18,7 @@ LittleConsole::LittleConsole(DrawBox &display)
 
 	for(uint8_t i=0; i<currentLines.size(); i++) {
 		auto &str = currentLines[i];
-		str.set("--- TEST ---");
+		str.set("");
 		str.set_head(&display);
 
 		str.width = display.width;
@@ -33,7 +33,7 @@ LittleConsole::LittleConsole(DrawBox &display)
 }
 
 void LittleConsole::shift_lines() {
-	for(uint8_t i=currentLines.size()-1; i!=0; i++)
+	for(uint8_t i=currentLines.size()-1; i!=0; i--)
 		currentLines[i].set(currentLines[i-1].get(), false);
 
 	currentLines[0].newString = "";
@@ -47,8 +47,6 @@ void LittleConsole::put_string(const char *input, size_t length) {
 		return;
 
 	xSemaphoreTake(updateMutex, portMAX_DELAY);
-	uint8_t nLines = currentLines.size()-1;
-
 	while(length-- != 0) {
 		if(lastCharWasNewline) {
 			lastCharWasNewline = false;
@@ -58,12 +56,12 @@ void LittleConsole::put_string(const char *input, size_t length) {
 			lastCharWasNewline = true;
 		}
 		else if(*input == '\r') {
-			currentLines[nLines].set("", false);
+			currentLines[0].set("", false);
 		}
-		else if(currentLines[nLines].newString.size() < 18){
-			currentLines[nLines].newString += *input;
+		else if(currentLines[0].newString.size() < currentLines[0].get_line_width()){
+			currentLines[0].newString += *input;
 
-			if(currentLines[nLines].newString.size() == 18)
+			if(currentLines[0].newString.size() == currentLines[0].get_line_width())
 				lastCharWasNewline = true;
 		}
 
