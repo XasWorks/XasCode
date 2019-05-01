@@ -117,13 +117,16 @@ void Handler::start(const std::string uri, const std::string status_topic) {
 	mqtt_cfg config = {};
 	config.uri = uri.data();
 
+	config.buffer_size = 6*1024;
+	config.task_prio = 20;
+
 	if(status_topic != "") {
 		config.lwt_topic = status_topic.data();
 		config.lwt_retain = true;
 		config.lwt_qos = 1;
 		config.lwt_msg_len = 0;
 
-		config.keepalive = 20;
+		config.keepalive = 3;
 
 		this->status_topic = status_topic;
 	}
@@ -166,6 +169,9 @@ void Handler::mqtt_handler(esp_mqtt_event_t *event) {
 	case MQTT_EVENT_DISCONNECTED:
 		ESP_LOGW(mqtt_tag, "Disconnected from broker!");
 		mqtt_connected = false;
+
+//		if(wifi_connected)
+//			esp_mqtt_client_reconnect(mqtt_handle);
 	break;
 
 	case MQTT_EVENT_DATA: {

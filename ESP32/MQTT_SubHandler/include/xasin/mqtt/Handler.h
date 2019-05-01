@@ -61,7 +61,7 @@ public:
 	void set_status(const std::string newStatus);
 
 	void publish_to(const std::string &topic, void const *data, size_t length, bool retain = false, int qos = 0);
-	void subscribe_to(const std::string &topic, mqtt_callback callback, int qos = 0);
+	void subscribe_to(const std::string &topic, mqtt_callback callback, int qos = 1);
 
 	uint8_t is_disconnected();
 };
