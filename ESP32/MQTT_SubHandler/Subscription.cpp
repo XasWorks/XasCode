@@ -23,6 +23,24 @@ Subscription::Subscription(Handler &handler, const std::string topic, int qos)
 		raw_subscribe();
 }
 
+Subscription::~Subscription() {
+	puts("MQTT Unsubscribing!");
+
+	bool conflictFound = false;
+	for(auto s = mqtt_handler.subscriptions.begin(); s < mqtt_handler.subscriptions.end(); s++) {
+		if((*s) == this)
+			mqtt_handler.subscriptions.erase(s);
+		else if((*s)->topic == this->topic)
+			conflictFound = true;
+	}
+
+	if(conflictFound)
+		return;
+
+	if(mqtt_handler.mqtt_connected)
+		esp_mqtt_client_unsubscribe(mqtt_handler.mqtt_handle, topic.data());
+}
+
 void Subscription::raw_subscribe() {
 	ESP_LOGI(mqtt_tag, "Subscribing to %s", topic.data());
 	esp_mqtt_client_subscribe(mqtt_handler.mqtt_handle, topic.data(), qos);

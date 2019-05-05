@@ -41,6 +41,7 @@ protected:
 	esp_mqtt_client_handle_t mqtt_handle;
 
 	bool wifi_connected;
+	bool mqtt_started;
 	bool mqtt_connected;
 
 	std::string status_topic;

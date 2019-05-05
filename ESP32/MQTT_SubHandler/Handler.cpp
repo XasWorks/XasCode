@@ -16,7 +16,8 @@ namespace MQTT {
 
 const char *mqtt_tag = "XAQTT";
 
-volatile int wifi_task_conn_counter = 0;
+bool wifi_was_configured = false;
+volatile int  wifi_task_conn_counter = 0;
 TaskHandle_t wifi_task_handle = nullptr;
 void handler_wifi_checkup_task(void *eh) {
 	while(true) {
@@ -43,11 +44,17 @@ void handler_wifi_checkup_task(void *eh) {
 }
 
 void Handler::start_wifi(const char *SSID, const char *PSWD, uint8_t psMode) {
-	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+	if(!wifi_was_configured) {
+		wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 
-	ESP_ERROR_CHECK( esp_wifi_init(&cfg) );
-	ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_RAM) );
-	ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_STA) );
+		ESP_ERROR_CHECK( esp_wifi_init(&cfg) );
+		ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_RAM) );
+		ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_STA) );
+
+		xTaskCreate(handler_wifi_checkup_task, "XAQTT::Wifi", 2*1024, nullptr, 10, &wifi_task_handle);
+	}
+
+	wifi_was_configured = true;
 
 	wifi_config_t wifi_cfg = {};
 	wifi_sta_config_t* sta_cfg = &(wifi_cfg.sta);
@@ -61,8 +68,6 @@ void Handler::start_wifi(const char *SSID, const char *PSWD, uint8_t psMode) {
 			sta_cfg->listen_interval = 5;
 	}
 	ESP_ERROR_CHECK( esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_cfg) );
-
-	xTaskCreate(handler_wifi_checkup_task, "XAQTT::Wifi", 2*1024, nullptr, 10, &wifi_task_handle);
 	if(psMode >= 1)
 		ESP_ERROR_CHECK( esp_wifi_set_ps(WIFI_PS_MAX_MODEM));
 
@@ -98,10 +103,14 @@ esp_err_t mqtt_handle_caller(esp_mqtt_event_t *event) {
 Handler::Handler()
 	: subscriptions(),
 	  mqtt_handle(nullptr),
-	  wifi_connected(false), mqtt_connected(false) {
+	  wifi_connected(false),
+	  mqtt_started(false), mqtt_connected(false) {
 }
 
 void Handler::start(const mqtt_cfg &config) {
+	assert(!mqtt_started);
+
+	mqtt_started = true;
 	esp_log_level_set("MQTT_CLIENT", ESP_LOG_WARN);
 
 	mqtt_cfg modConfig = config;
@@ -120,13 +129,15 @@ void Handler::start(const std::string uri, const std::string status_topic) {
 	config.buffer_size = 6*1024;
 	config.task_prio = 20;
 
+	config.disable_clean_session = false;
+
 	if(status_topic != "") {
 		config.lwt_topic = status_topic.data();
 		config.lwt_retain = true;
 		config.lwt_qos = 1;
 		config.lwt_msg_len = 0;
 
-		config.keepalive = 3;
+		config.keepalive = 10;
 
 		this->status_topic = status_topic;
 	}
@@ -217,6 +228,9 @@ void Handler::subscribe_to(const std::string &topic, mqtt_callback cb, int qos) 
 }
 
 uint8_t Handler::is_disconnected() {
+	if(!mqtt_started)
+		return 255;
+
 	if(mqtt_connected)
 		return 0;
 	if(wifi_connected)

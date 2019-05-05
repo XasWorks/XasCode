@@ -32,6 +32,7 @@ public:
 	std::function<void(MQTT_Packet data)> on_received;
 
 	Subscription(Handler &handler, const std::string topic, int qos = 0);
+	~Subscription();
 };
 
 } /* namespace MQTT */
