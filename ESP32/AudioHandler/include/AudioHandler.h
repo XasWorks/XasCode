@@ -51,6 +51,7 @@ private:
 	int samplerate;
 public:
 	const i2s_port_t i2s_port;
+	uint16_t volumeMod;
 
 	void _audio_task();
 

@@ -47,7 +47,8 @@ bool AudioCassette::is_done() {
 AudioHandler::AudioHandler(int samplerate, i2s_port_t i2s_port)
 	: audioTask(nullptr),
 	  currentCassettes(),
-	  samplerate(samplerate), i2s_port(i2s_port) {
+	  samplerate(samplerate), i2s_port(i2s_port),
+	  volumeMod(255) {
 
 }
 
@@ -61,7 +62,7 @@ void AudioHandler::_audio_task() {
 		audioBuffer.fill(0);
 		for(uint16_t i=0; i<audioBuffer.size(); i++) {
 			for(auto &c : currentCassettes)
-				audioBuffer[i] += c.get_chunk();
+				audioBuffer[i] += (int32_t(c.get_chunk())*volumeMod)/255;
 		}
 
 		size_t written_samples = 0;
