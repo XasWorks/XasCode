@@ -31,6 +31,7 @@ DrawBox::DrawBox(int width, int height, DrawBox *headBox)
 }
 
 DrawBox::~DrawBox() {
+	set_visible(false);
 	set_head(nullptr);
 }
 
@@ -69,8 +70,8 @@ Point DrawBox::remap_point(Point in) {
 	return {rX + offsetX, rY + offsetY};
 }
 
-void DrawBox::mark_dirty_area(DirtyArea area) {
-	if(topBox != nullptr) {
+void DrawBox::mark_dirty_area(DirtyArea area, bool force) {
+	if((visible || force) && (topBox != nullptr)) {
 		Point remapped = remap_point({area.startX, area.startY});
 		DirtyArea outArea = {remapped.x, 0, remapped.y, 0};
 
@@ -82,14 +83,17 @@ void DrawBox::mark_dirty_area(DirtyArea area) {
 	}
 }
 void DrawBox::redraw() {
+	if(!visible)
+		return;
+
 	for(auto subBox = bottomBoxes.rbegin(); subBox != bottomBoxes.rend(); subBox++)
 		(*subBox)->redraw();
 
 	if(onRedraw != nullptr)
 		onRedraw();
 }
-void DrawBox::request_redraw() {
-	if(topBox != nullptr)
+void DrawBox::request_redraw(bool force) {
+	if((topBox != nullptr) && (visible || force))
 		topBox->request_redraw();
 }
 
@@ -201,7 +205,18 @@ void DrawBox::set_invert(bool inverted) {
 
 	this->inverted = inverted;
 	mark_dirty_area({0, width-1, 0, height-1});
+
 	request_redraw();
+}
+
+void DrawBox::set_visible(bool visible) {
+	if(visible == this->visible)
+		return;
+
+	mark_dirty_area({0, width-1, 0, height-1}, true);
+	this->visible = visible;
+
+	request_redraw(true);
 }
 
 } /* namespace OLED */

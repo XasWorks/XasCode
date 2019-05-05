@@ -66,8 +66,8 @@ public:
 
 	Point remap_point(Point in);
 
-	virtual void mark_dirty_area(DirtyArea area);
-	virtual void request_redraw();
+	virtual void mark_dirty_area(DirtyArea area, bool force = false);
+	virtual void request_redraw(bool force = false);
 
 	virtual void set_pixel(int x, int y, int8_t brightness = 3);
 
@@ -81,6 +81,7 @@ public:
 	void write_string(int x, int y, const std::string oString, int8_t foreground = 3, int8_t background = -1, FontType *font = nullptr);
 
 	void set_invert(bool inverted);
+	void set_visible(bool visible);
 };
 
 } /* namespace OLED */

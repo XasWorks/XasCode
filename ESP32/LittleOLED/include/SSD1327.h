@@ -89,10 +89,10 @@ public:
 	void push_segment(uint8_t lColumn = 0, uint8_t tRow = 0, uint8_t rColumn = 64, uint8_t bRow = 128);
 	void push_entire_screen();
 
-	void request_redraw();
+	void request_redraw(bool force = false);
 	void raw_update();
 
-	void mark_dirty_area(DirtyArea area);
+	void mark_dirty_area(DirtyArea area, bool force = false);
 	void set_pixel(int x, int y, int8_t brightness = 3);
 };
 

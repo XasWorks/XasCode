@@ -46,6 +46,8 @@ public:
 	void put_string(const char *input, size_t length = 0);
 	int  vprintf(const char *format, va_list args);
 	void printf(const char *input, ...);
+
+	void printf_style(const char *input, ...);
 };
 
 } /* namespace OLED */

@@ -117,6 +117,7 @@ void SSD1327::push_dirty_areas() {
 
 	DirtyArea d = {};
 	while(!redrawAreas.empty()) {
+
 		d = redrawAreas.back();
 		redrawAreas.pop_back();
 
@@ -160,7 +161,7 @@ void SSD1327::push_entire_screen() {
 	//push_segment(15, 69, 50, 83);
 }
 
-void SSD1327::request_redraw() {
+void SSD1327::request_redraw(bool force) {
 	xTaskNotifyFromISR(updateTask, 0, eNoAction, nullptr);
 }
 
@@ -171,7 +172,7 @@ void SSD1327::raw_update() {
 	this->push_dirty_areas();
 }
 
-void SSD1327::mark_dirty_area(DirtyArea area) {
+void SSD1327::mark_dirty_area(DirtyArea area, bool force) {
 	if(area.startX > area.endX) {
 		auto endX = area.endX;
 		area.endX = area.startX;

@@ -22,6 +22,7 @@ StringPrimitive::StringPrimitive(int width, int height, DrawBox *headBox)
 	  wasChanged(false),
 	  oldString(""), hCenter(false), vCenter(false),
 	  font(&DEFAULT_FONT),
+	  foreground(3), background(-1),
 	  newString("") {
 
 }
@@ -58,7 +59,7 @@ void StringPrimitive::redraw() {
 	if(vCenter)
 		yPos = height/2 - font->height/2;
 
-	this->write_string(xPos, yPos, newString, 3, 0);
+	this->write_string(xPos, yPos, newString, foreground, background);
 	oldString = newString;
 }
 

@@ -20,7 +20,6 @@ namespace OLED {
 
 class StringPrimitive: public DrawBox {
 private:
-
 	bool wasChanged;
 
 	std::string oldString;
@@ -34,6 +33,9 @@ protected:
 	void redraw();
 
 public:
+	uint8_t foreground;
+	uint8_t background;
+
 	std::string newString;
 
 	StringPrimitive();

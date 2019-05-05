@@ -19,12 +19,10 @@ private:
 	StringPrimitive value;
 	StringPrimitive unit;
 
-	uint8_t oldValuePercent;
-	uint8_t valuePercent;
+	std::string postfix;
 
-	bool autoMode;
-
-	std::string unit_str;
+	int fillNum;
+	int oldFillNum;
 
 	float currentValue;
 	float valueMin;
@@ -36,10 +34,10 @@ protected:
 public:
 	ValueBox(int width, int height, DrawBox *topBox);
 
-	void enable_auto(float minValue, float maxValue, const std::string unit);
+	void setup(float minValue, float maxValue, const std::string unit, const std::string postfix = "");
 
-	void set_valString(const char *inString, ...);
-	void set_valPercent(float value);
+	void set_postfix(const char *inString, ...);
+	void set_unit(float value);
 
 	void set_value(float value);
 

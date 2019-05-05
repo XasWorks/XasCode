@@ -86,5 +86,18 @@ void LittleConsole::printf(const char *input, ...) {
 	va_end(valist);
 }
 
+void LittleConsole::printf_style(const char *input, ...) {
+	va_list valist;
+	va_start(valist, input);
+
+	vsprintf(printfBuffer, input, valist);
+
+	const char *c = printfBuffer;
+	while(*c != '\0') {
+		put_string(c++, 1);
+		vTaskDelay(100);
+	}
+}
+
 } /* namespace OLED */
 } /* namespace Peripheral */
