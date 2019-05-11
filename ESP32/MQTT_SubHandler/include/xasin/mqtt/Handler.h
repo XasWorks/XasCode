@@ -49,6 +49,7 @@ protected:
 
 public:
 	static void start_wifi(const char *SSID, const char *PSWD, uint8_t psMode = 0);
+	static void start_wifi_enterprise(const char *SSID, const char *domain, const char *identity, const char *anonymousIdentity, const char *password);
 	static void try_wifi_reconnect(system_event_t *event);
 
 	Handler();

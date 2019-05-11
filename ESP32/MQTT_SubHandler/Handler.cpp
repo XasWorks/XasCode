@@ -8,6 +8,8 @@
 #include "xasin/mqtt/Handler.h"
 #include "xasin/mqtt/Subscription.h"
 
+#include "esp_wpa2.h"
+
 #define LOG_LOCAL_LEVEL ESP_LOG_INFO
 #include "esp_log.h"
 
@@ -73,6 +75,37 @@ void Handler::start_wifi(const char *SSID, const char *PSWD, uint8_t psMode) {
 
 	ESP_ERROR_CHECK( esp_wifi_start() );
 }
+
+void Handler::start_wifi_enterprise(const char *SSID, const char *domain, const char *identity, const char *anonymousIdentity, const char *password) {
+	if(!wifi_was_configured) {
+		wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+
+		ESP_ERROR_CHECK( esp_wifi_init(&cfg) );
+		ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_RAM) );
+		ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_STA) );
+
+		xTaskCreate(handler_wifi_checkup_task, "XAQTT::Wifi", 2*1024, nullptr, 10, &wifi_task_handle);
+	}
+
+	wifi_was_configured = true;
+
+	wifi_config_t wifi_cfg = {};
+	memcpy(&wifi_cfg.sta.ssid, SSID, strlen(SSID));
+	esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_cfg);
+
+	esp_wpa2_config_t wpaCFG = WPA2_CONFIG_INIT_DEFAULT();
+	esp_wifi_sta_wpa2_ent_set_identity(reinterpret_cast<const unsigned char *>(anonymousIdentity)
+			, strlen(anonymousIdentity));
+	esp_wifi_sta_wpa2_ent_set_username(reinterpret_cast<const unsigned char *>(identity)
+			, strlen(identity));
+	esp_wifi_sta_wpa2_ent_set_password(reinterpret_cast<const unsigned char *>(password)
+			, strlen(password));
+
+	esp_wifi_sta_wpa2_ent_enable(&wpaCFG);
+
+	esp_wifi_start();
+}
+
 void Handler::try_wifi_reconnect(system_event_t *event) {
 	switch(event->event_id) {
 	case SYSTEM_EVENT_STA_CONNECTED:
