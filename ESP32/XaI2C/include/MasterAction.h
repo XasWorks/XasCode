@@ -24,6 +24,7 @@ private:
 
 public:
 	static void init(gpio_num_t sda, gpio_num_t scl, i2c_port_t port = I2C_NUM_0);
+	static esp_err_t poke(uint8_t addr, i2c_port_t port = I2C_NUM_0);
 
 	MasterAction(uint8_t sla_addr);
 	virtual ~MasterAction();
