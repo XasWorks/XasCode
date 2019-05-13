@@ -30,13 +30,17 @@ private:
 
 	DrawBox &display;
 
+	std::array<std::string, 16>		lineStrings;
 	std::array<StringPrimitive, 16> currentLines;
 	uint8_t lineShift;
+
 	bool lastCharWasNewline;
+	bool lastCharWasR;
 
 	SemaphoreHandle_t updateMutex;
 
-	void shift_lines();
+	void shift_g_lines();
+	void shift_s_lines();
 
 public:
 	LittleConsole(DrawBox &display);

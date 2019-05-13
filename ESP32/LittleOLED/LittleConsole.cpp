@@ -14,7 +14,9 @@ namespace OLED {
 
 LittleConsole::LittleConsole(DrawBox &display)
 	: display(display),
-	  currentLines(), lineShift(0), lastCharWasNewline(false) {
+	  lineStrings(), currentLines(),
+	  lineShift(0),
+	  lastCharWasNewline(false), lastCharWasR(false) {
 
 	for(uint8_t i=0; i<currentLines.size(); i++) {
 		auto &str = currentLines[i];
@@ -32,11 +34,17 @@ LittleConsole::LittleConsole(DrawBox &display)
 	printfBuffer = new char[255];
 }
 
-void LittleConsole::shift_lines() {
+void LittleConsole::shift_g_lines() {
 	for(uint8_t i=currentLines.size()-1; i!=0; i--)
 		currentLines[i].set(currentLines[i-1].get(), false);
 
 	currentLines[0].newString = "";
+}
+void LittleConsole::shift_s_lines() {
+	for(uint8_t i=lineStrings.size()-1; i!=0; i--)
+		lineStrings[i] = lineStrings[i-1];
+
+	lineStrings[0] = "";
 }
 
 void LittleConsole::put_string(const char *input, size_t length) {
@@ -50,14 +58,23 @@ void LittleConsole::put_string(const char *input, size_t length) {
 	while(length-- != 0) {
 		if(lastCharWasNewline) {
 			lastCharWasNewline = false;
-			shift_lines();
+			shift_s_lines();
 		}
+
+		if(lastCharWasR) {
+			lastCharWasR = false;
+			lineStrings[0] = "";
+		}
+
 		if(*input == '\n') {
 			lastCharWasNewline = true;
 		}
 		else if(*input == '\r') {
-			currentLines[0].set("", false);
+			lastCharWasR = true;
 		}
+		else
+			lineStrings[0] += *input;
+
 		else if(currentLines[0].newString.size() < currentLines[0].get_line_width()){
 			currentLines[0].newString += *input;
 
@@ -67,6 +84,11 @@ void LittleConsole::put_string(const char *input, size_t length) {
 
 		input++;
 	}
+
+	for(int i=lineStrings.size()-1; i >= 0; i++) {
+		auto str = lineStrings[i];
+	}
+
 	xSemaphoreGive(updateMutex);
 
 	display.request_redraw();
