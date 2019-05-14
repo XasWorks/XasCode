@@ -75,18 +75,25 @@ void LittleConsole::put_string(const char *input, size_t length) {
 		else
 			lineStrings[0] += *input;
 
-		else if(currentLines[0].newString.size() < currentLines[0].get_line_width()){
-			currentLines[0].newString += *input;
-
-			if(currentLines[0].newString.size() == currentLines[0].get_line_width())
-				lastCharWasNewline = true;
-		}
-
 		input++;
 	}
 
-	for(int i=lineStrings.size()-1; i >= 0; i++) {
+	int lineWidth = currentLines[0].get_line_width();
+	int lastLinePosition = 0;
+
+	for(int i=0; i < lineStrings.size(); i++) {
 		auto str = lineStrings[i];
+
+		int lineCount = (str.size()/lineWidth);
+		for(int lNum = lineCount; lNum >= 0; lNum--) {
+			currentLines[lastLinePosition++].set(str.substr(lNum*lineWidth, lineWidth), false);
+
+			if(lastLinePosition >= currentLines.size())
+				break;
+		}
+
+		if(lastLinePosition >= currentLines.size())
+			break;
 	}
 
 	xSemaphoreGive(updateMutex);
