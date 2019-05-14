@@ -28,21 +28,63 @@ enum BME680_Reg : uint8_t {
 	HUM_DATA	= 0x25,
 	TEMP_DATA	= 0x22,
 	PRESS_DATA	= 0x1F,
+
+	COEFF1		= 0x89,
+	COEFF2		= 0xE1,
 };
 
 #pragma pack(1)
 struct bme680_data_t {
-	uint16_t raw_temp;
-	uint16_t raw_humidity;
-	uint16_t raw_pressure;
-	uint8_t raw_voc;
+	uint32_t raw_temp;
+	uint32_t raw_humidity;
+	uint32_t raw_pressure;
+	uint32_t raw_voc;
 };
+
+union bme680_calibration_t {
+	struct {
+		uint8_t coeff1[25];
+		uint8_t coeff2[16];
+	};
+	struct {
+		uint8_t:8;
+		int16_t T2;
+		int8_t  T3;
+		uint16_t P1;
+		int16_t P2;
+		int8_t	 P3;
+		int16_t P4;
+		int16_t P5;
+		int8_t	 P7;
+		int8_t  P6;
+		int16_t P8;
+		int16_t P9;
+		uint8_t  P10;
+		uint16_t H2_SWAP;
+		uint16_t H1;
+		int8_t  H3;
+		int8_t  H4;
+		int8_t	 H5;
+		uint8_t	 H6;
+		int8_t  H7;
+		uint16_t T1;
+		int16_t G2;
+		int8_t	 G1;
+		int8_t	 G3;
+	} bits;
+};
+
 #pragma pack(0)
 
 class BME680 {
 private:
-	void send_cmd(uint8_t reg, uint8_t val);
-	void force_measurement();
+	bme680_calibration_t calibData;
+	bme680_data_t lastReading;
+
+	esp_err_t send_cmd(uint8_t reg, uint8_t val);
+
+	void load_calibration();
+
 public:
 	const uint8_t addr;
 
@@ -51,6 +93,8 @@ public:
 	void init_quickstart();
 
 	bme680_data_t fetch_data();
+
+	float get_temp();
 };
 
 } /* namespace I2C */
