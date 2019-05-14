@@ -22,11 +22,11 @@ BME680::BME680(uint8_t addr) :
 		addr(addr) {
 }
 
-void BME680::send_cmd(uint8_t reg, uint8_t value) {
+esp_err_t BME680::send_cmd(uint8_t reg, uint8_t value) {
 	auto i2c = XaI2C::MasterAction(addr);
 
 	i2c.write(reg, &value, 1);
-	i2c.execute();
+	return i2c.execute();
 }
 
 void BME680::load_calibration() {
@@ -46,13 +46,14 @@ void BME680::force_measurement() {
 	send_cmd(CTRL_MEAS, 0b10010001);
 }
 
-void BME680::init_quickstart() {
-	send_cmd(CTRL_MEAS, 0b10010000);
-	send_cmd(CTRL_HUM, 0b00000100);
+#define ERR_CK(expr) do { auto ret = expr; if(ret != ESP_OK) { return ret; } } while(false);
+esp_err_t BME680::init_quickstart() {
+	ERR_CK(send_cmd(CTRL_MEAS, 0b10010000));
+	ERR_CK(send_cmd(CTRL_HUM, 0b00000100));
 
-	send_cmd(GAS_WAIT, 0x59);
-	send_cmd(RES_HEAT, 0x50);
-	send_cmd(CTRL_GAS1, 0b00010000);
+	ERR_CK(send_cmd(GAS_WAIT, 0x59));
+	ERR_CK(send_cmd(RES_HEAT, 0x50));
+	ERR_CK(send_cmd(CTRL_GAS1, 0b00010000));
 
 	load_calibration();
 

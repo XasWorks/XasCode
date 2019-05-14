@@ -84,14 +84,14 @@ private:
 	esp_err_t send_cmd(uint8_t reg, uint8_t val);
 
 	void load_calibration();
-
 public:
 	const uint8_t addr;
 
 	BME680(uint8_t address = 0b1110110);
 
-	void init_quickstart();
+	esp_err_t init_quickstart();
 
+	void force_measurement();
 	bme680_data_t fetch_data();
 
 	float get_temp();

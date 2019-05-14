@@ -76,4 +76,12 @@ esp_err_t MasterAction::execute(i2c_port_t port) {
 	return ret;
 }
 
+esp_err_t MasterAction::poke(uint8_t addr, i2c_port_t port) {
+	auto i2c = MasterAction(addr);
+
+	i2c.send_start(false);
+
+	return i2c.execute(port);
+}
+
 } /* namespace XaI2C */
