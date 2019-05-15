@@ -1,2 +1,3 @@
 
 CFLAGS += -std=c++14
+COMPONENT_EMBED_TXTFILES := TeleSec.pem ESP_WIFI.key ESP_WIFI.pem

@@ -16,6 +16,15 @@
 namespace Xasin {
 namespace MQTT {
 
+extern const uint8_t TeleSec_crt[] asm("_binary_TeleSec_pem_start");
+extern const uint8_t TeleSec_crt_end[] asm("_binary_TeleSec_pem_end");
+
+extern const uint8_t wifi_cert_key[] asm("_binary_ESP_WIFI_key_start");
+extern const uint8_t wifi_cert_key_end[] asm("_binary_ESP_WIFI_key_end");
+
+extern const uint8_t wifi_cert[] asm("_binary_ESP_WIFI_pem_start");
+extern const uint8_t wifi_cert_end[] asm("_binary_ESP_WIFI_pem_end");
+
 const char *mqtt_tag = "XAQTT";
 
 bool wifi_was_configured = false;
@@ -94,12 +103,23 @@ void Handler::start_wifi_enterprise(const char *SSID, const char *domain, const 
 	esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_cfg);
 
 	esp_wpa2_config_t wpaCFG = WPA2_CONFIG_INIT_DEFAULT();
+
 	esp_wifi_sta_wpa2_ent_set_identity(reinterpret_cast<const unsigned char *>(anonymousIdentity)
 			, strlen(anonymousIdentity));
 	esp_wifi_sta_wpa2_ent_set_username(reinterpret_cast<const unsigned char *>(identity)
 			, strlen(identity));
 	esp_wifi_sta_wpa2_ent_set_password(reinterpret_cast<const unsigned char *>(password)
 			, strlen(password));
+
+	esp_log_level_set("wpa", ESP_LOG_DEBUG);
+
+	ESP_ERROR_CHECK(esp_wifi_sta_wpa2_ent_set_ca_cert(TeleSec_crt, TeleSec_crt_end - TeleSec_crt));
+
+	const char *keyPassword = "\0";
+
+	//ESP_ERROR_CHECK(esp_wifi_sta_wpa2_ent_set_cert_key(wifi_cert, wifi_cert_end - wifi_cert,
+	//			wifi_cert_key, wifi_cert_key_end - wifi_cert_key,
+	//			reinterpret_cast<const unsigned char*>(keyPassword), 0));
 
 	esp_wifi_sta_wpa2_ent_enable(&wpaCFG);
 
