@@ -29,6 +29,8 @@ esp_err_t BME680::send_cmd(uint8_t reg, uint8_t value) {
 	return i2c.execute();
 }
 
+
+#define PTR_SIZE(ptr1, ptr2) (reinterpret_cast<size_t>(ptr1) - reinterpret_cast<size_t>(ptr2))
 void BME680::load_calibration() {
 	auto i2c_1 = XaI2C::MasterAction(addr);
 	i2c_1.read(COEFF1, calibData.coeff1, 25);
@@ -40,6 +42,13 @@ void BME680::load_calibration() {
 
 	ESP_LOGI("BME680", "Calibration loaded!");
 	ESP_LOG_BUFFER_HEX_LEVEL("BME680", &calibData, sizeof(calibData), ESP_LOG_VERBOSE);
+
+	void *beginPtr = &calibData;
+	ESP_LOGD("BME680", "Calibration size is: %d", sizeof(calibData.bits));
+	ESP_LOGD("BME680", "Positions: T1 %d T2 %d T3 %d",
+			PTR_SIZE(beginPtr, &calibData.bits.T1),
+			PTR_SIZE(beginPtr, &calibData.bits.T2),
+			PTR_SIZE(beginPtr, &calibData.bits.T3));
 }
 
 void BME680::force_measurement() {

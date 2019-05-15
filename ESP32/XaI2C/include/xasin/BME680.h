@@ -47,30 +47,34 @@ union bme680_calibration_t {
 		uint8_t coeff2[16];
 	};
 	struct {
-		uint8_t:8;
-		int16_t T2;
-		int8_t  T3;
-		uint16_t P1;
-		int16_t P2;
-		int8_t	 P3;
-		int16_t P4;
-		int16_t P5;
-		int8_t	 P7;
-		int8_t  P6;
-		int16_t P8;
-		int16_t P9;
-		uint8_t  P10;
-		uint16_t H2_SWAP;
-		uint16_t H1;
-		int8_t  H3;
-		int8_t  H4;
-		int8_t	 H5;
-		uint8_t	 H6;
-		int8_t  H7;
-		uint16_t T1;
-		int16_t G2;
-		int8_t	 G1;
-		int8_t	 G3;
+		uint8_t	DUMMY1;	// 0
+		int16_t T2;	// 1 + 2
+		int8_t  T3;	// 3
+		uint8_t DUMMY2;	// 4
+		uint16_t P1;	// 5 + 6
+		int16_t P2;	// 7 + 8
+		int8_t	 P3;	// 9
+		uint8_t DUMMY3;	// 10
+		int16_t P4;	// 11 + 12
+		int16_t P5;	// 13 + 14
+		int8_t	 P7;	// 15
+		int8_t  P6;	// 16
+		uint16_t DUMMY4;// 17 + 18
+		int16_t P8;	// 19 + 20
+		int16_t P9;	// 21 + 22
+		uint8_t  P10;	// 23
+		uint8_t DUMMY5;	// 24
+		uint16_t H2_SWAP;	// 25 + 26
+		uint8_t H1_MSB;	// 27	
+		int8_t  H3;	// 28
+		int8_t  H4;	// 29
+		int8_t	 H5;	// 30
+		uint8_t	 H6;	// 31
+		int8_t  H7;	// 32
+		uint16_t T1;	// 33 + 34
+		int16_t G2;	// 35 + 36
+		int8_t	 G1;	// 37
+		int8_t	 G3;	// 38
 	} bits;
 };
 
