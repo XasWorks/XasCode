@@ -64,7 +64,8 @@ union bme680_calibration_t {
 		int16_t P9;	// 21 + 22
 		uint8_t  P10;	// 23
 		uint8_t DUMMY5;	// 24
-		uint16_t H2_SWAP;	// 25 + 26
+		uint8_t H2_MSB;
+		uint8_t H1_H2_LSB;	// 26
 		uint8_t H1_MSB;	// 27	
 		int8_t  H3;	// 28
 		int8_t  H4;	// 29
@@ -85,6 +86,8 @@ private:
 	bme680_calibration_t calibData;
 	bme680_data_t lastReading;
 
+	float t_fine;
+
 	esp_err_t send_cmd(uint8_t reg, uint8_t val);
 
 	void load_calibration();
@@ -99,6 +102,7 @@ public:
 	bme680_data_t fetch_data();
 
 	float get_temp();
+	float get_humidity();
 };
 
 } /* namespace I2C */

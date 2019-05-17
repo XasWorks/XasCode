@@ -18,7 +18,8 @@ namespace I2C {
 #define SWAP_BYTES(inData) (((inData & 0xFF00) >> 8) | ((inData & 0xFF) << 8))
 
 BME680::BME680(uint8_t addr) :
-		calibData(),
+		calibData(), lastReading(),
+		t_fine(0),
 		addr(addr) {
 }
 
@@ -44,11 +45,6 @@ void BME680::load_calibration() {
 	ESP_LOG_BUFFER_HEX_LEVEL("BME680", &calibData, sizeof(calibData), ESP_LOG_VERBOSE);
 
 	void *beginPtr = &calibData;
-	ESP_LOGD("BME680", "Calibration size is: %d", sizeof(calibData.bits));
-	ESP_LOGD("BME680", "Positions: T1 %d T2 %d T3 %d",
-			PTR_SIZE(beginPtr, &calibData.bits.T1),
-			PTR_SIZE(beginPtr, &calibData.bits.T2),
-			PTR_SIZE(beginPtr, &calibData.bits.T3));
 }
 
 void BME680::force_measurement() {
@@ -96,10 +92,8 @@ bme680_data_t BME680::fetch_data() {
 	dataBuffer[0] <<= 4;
 	dataBuffer[2] <<= 4;
 
-	ESP_LOGV("BME680", "Fetched:");
-	ESP_LOG_BUFFER_HEXDUMP("BME680", dataBuffer, sizeof(dataBuffer), ESP_LOG_VERBOSE);
-
 	lastReading = *reinterpret_cast<bme680_data_t *>(dataBuffer);
+	t_fine = -300;
 
 	return lastReading;
 }
@@ -122,9 +116,36 @@ float BME680::get_temp() {
 	ESP_LOGV("BME680", "Temp factors are T: %d T1: %d T2: %d T3: %d",
 			lastReading.raw_temp, calibData.bits.T1, calibData.bits.T2, calibData.bits.T3);
 
-	return (v1 + v2) / 5120.0;
+	t_fine = v1 + v2;
+
+	return t_fine / 5120.0;
 }
 
+float BME680::get_humidity() {
+	if(t_fine < -280)
+		get_temp();
+
+	float temp_comp = t_fine / 5120.0;
+
+	uint16_t c_h1 = (calibData.bits.H1_MSB << 4) | (calibData.bits.H1_H2_LSB & 0xF);
+	uint16_t c_h2 = (calibData.bits.H2_MSB << 4)  | (calibData.bits.H1_H2_LSB >> 4);
+
+	float v1  = lastReading.raw_humidity - c_h1 * 16.0;
+		  v1 -= calibData.bits.H3 / 2.0 * temp_comp;
+
+	float v2 = v1 * (c_h2 / 262144.0 * (1.0 + calibData.bits.H4 / 16384.0
+		  		* temp_comp + calibData.bits.H5 / 1048576.0 * pow(temp_comp,2)));
+
+	float hum = v2;
+		 hum += pow(v2,2) * (calibData.bits.H6/16384.0 + calibData.bits.H7 * temp_comp / 2097152.0);
+//
+//	if(hum < 0)
+//		return 0;
+//	if(hum > 100)
+//		return 100;
+
+	return hum;
+}
 
 } /* namespace I2C */
 } /* namespace Xasin */
