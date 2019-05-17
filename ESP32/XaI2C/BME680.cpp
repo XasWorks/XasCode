@@ -125,6 +125,34 @@ float BME680::get_temp() {
 	return (v1 + v2) / 5120.0;
 }
 
+float BME680::get_pressure() {
+
+	float v_lin  = lastReading.raw_temp / 2.0 - 64000.0;
+	float v_quad = pow(v_lin, 2) * calibData.bits.P6 / 131072.0;
+	v_quad		+= v_lin * calibData.bits.P5 * 2.0;
+	v_quad		/= 4.0;
+	v_quad		+= calibData.bits.P4 * 65536.0;
+
+	v_lin  = pow(v_lin, 2) * calibData.bits.P3 / 16384.0 + calibData.bits.P2 * v_lin / 524288.0;
+	v_lin /= 32768.0;
+	v_lin += 1;
+	v_lin *= calibData.bits.P1;
+
+	float pressure_val = 1048576.0 - lastReading.raw_pressure;
+
+	if(v_lin == 0)
+		return 0;
+
+	pressure_val -= v_quad / 4096.0;
+	pressure_val *= 6250.0;
+	pressure_val /= v_lin;
+
+	v_lin  = calibData.bits.P9 * pow(pressure_val,2) / 2147483648.0;
+	v_quad = pressure_val * calibData.bits.P8 / 32768.0;
+	float v3 = pow(pressure_val / 256.0, 3) * calibData.bits.P10 / 131072.0;
+
+	return (pressure_val + v_lin + v_quad + v3 + calibData.bits.P7 * 128.0) / 16.0;
+}
 
 } /* namespace I2C */
 } /* namespace Xasin */

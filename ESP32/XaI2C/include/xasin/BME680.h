@@ -99,6 +99,7 @@ public:
 	bme680_data_t fetch_data();
 
 	float get_temp();
+	float get_pressure();
 };
 
 } /* namespace I2C */
