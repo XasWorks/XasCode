@@ -124,7 +124,7 @@ void LittleConsole::printf_style(const char *input, ...) {
 	const char *c = printfBuffer;
 	while(*c != '\0') {
 		put_string(c++, 1);
-		vTaskDelay(100);
+		vTaskDelay(30);
 	}
 }
 
