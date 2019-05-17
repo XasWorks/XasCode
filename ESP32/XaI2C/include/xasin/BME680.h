@@ -31,6 +31,7 @@ enum BME680_Reg : uint8_t {
 
 	COEFF1		= 0x89,
 	COEFF2		= 0xE1,
+	SW_ERR		= 0x04,
 };
 
 #pragma pack(1)
@@ -39,6 +40,7 @@ struct bme680_data_t {
 	uint32_t raw_humidity;
 	uint32_t raw_pressure;
 	uint32_t raw_voc;
+	uint32_t gas_range;
 };
 
 union bme680_calibration_t {
@@ -76,6 +78,7 @@ union bme680_calibration_t {
 		int16_t G2;	// 35 + 36
 		int8_t	 G1;	// 37
 		int8_t	 G3;	// 38
+		int8_t	 SW_ERR;
 	} bits;
 };
 
@@ -103,6 +106,8 @@ public:
 
 	float get_temp();
 	float get_humidity();
+	float get_pressure();
+	float get_gas_res();
 };
 
 } /* namespace I2C */

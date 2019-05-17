@@ -41,10 +41,13 @@ void BME680::load_calibration() {
 	i2c_2.read(COEFF2, calibData.coeff2, 16);
 	i2c_2.execute();
 
+	auto i2c_3 = XaI2C::MasterAction(addr);
+	i2c_3.read(SW_ERR, &calibData.bits.SW_ERR, 1);
+
+	calibData.bits.SW_ERR >>= 4;
+
 	ESP_LOGI("BME680", "Calibration loaded!");
 	ESP_LOG_BUFFER_HEX_LEVEL("BME680", &calibData, sizeof(calibData), ESP_LOG_VERBOSE);
-
-	void *beginPtr = &calibData;
 }
 
 void BME680::force_measurement() {
@@ -72,27 +75,27 @@ bme680_data_t BME680::fetch_data() {
 		TEMP_DATA,
 		HUM_DATA,
 		PRESS_DATA,
+		GAS_DATA,
 	};
 
-	for(uint8_t i=0; i<4; i++) {
+	for(uint8_t i=0; i<5; i++) {
 		auto i2c = XaI2C::MasterAction(addr);
 
-		if(i == 3) {
-			i2c.read(GAS_DATA, &dataBuffer[3], 1);
-			i2c.execute();
-		}
-		else {
-			i2c.read(registers[i], &dataBuffer[i], 2);
-			i2c.execute();
+		i2c.read(registers[i], &dataBuffer[i], 2);
+		i2c.execute();
 
-			dataBuffer[i] = SWAP_BYTES(dataBuffer[i]);
-		}
+		dataBuffer[i] = SWAP_BYTES(dataBuffer[i]);
 	}
 
 	dataBuffer[0] <<= 4;
 	dataBuffer[2] <<= 4;
 
+	uint8_t gRange = dataBuffer[3] & 0x0F;
+	dataBuffer[3] >>= 6;
+
+
 	lastReading = *reinterpret_cast<bme680_data_t *>(dataBuffer);
+	lastReading.gas_range = gRange;
 	t_fine = -300;
 
 	return lastReading;
@@ -138,13 +141,62 @@ float BME680::get_humidity() {
 
 	float hum = v2;
 		 hum += pow(v2,2) * (calibData.bits.H6/16384.0 + calibData.bits.H7 * temp_comp / 2097152.0);
-//
-//	if(hum < 0)
-//		return 0;
-//	if(hum > 100)
-//		return 100;
+
+	if(hum < 0)
+		return 0;
+	if(hum > 100)
+		return 100;
 
 	return hum;
+}
+
+float BME680::get_pressure() {
+	if(t_fine < -280)
+		get_temp();
+
+
+	float v_lin  = t_fine / 2.0 - 64000.0;
+	float v_quad = pow(v_lin, 2) * calibData.bits.P6 / 131072.0;
+	v_quad		+= v_lin * calibData.bits.P5 * 2.0;
+	v_quad		/= 4.0;
+	v_quad		+= calibData.bits.P4 * 65536.0;
+
+	v_lin  = (pow(v_lin, 2) * calibData.bits.P3 / 16384.0 + calibData.bits.P2 * v_lin) / 524288.0;
+	v_lin /= 32768.0;
+	v_lin += 1;
+	v_lin *= calibData.bits.P1;
+
+	float pressure_val = 1048576.0 - lastReading.raw_pressure;
+
+	if(v_lin == 0)
+		return 0;
+
+	pressure_val -= v_quad / 4096.0;
+	pressure_val *= 6250.0;
+	pressure_val /= v_lin;
+
+	v_lin  = calibData.bits.P9 * pow(pressure_val,2) / 2147483648.0;
+	v_quad = pressure_val * calibData.bits.P8 / 32768.0;
+	float v3 = pow(pressure_val / 256.0, 3) * calibData.bits.P10 / 131072.0;
+
+	return pressure_val + (v_lin + v_quad + v3 + calibData.bits.P7 * 128.0) / 16.0;
+}
+
+float BME680::get_gas_res() {
+	const float lookup_k1_range[16] = {
+	0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, -0.8,
+	0.0, 0.0, -0.2, -0.5, 0.0, -1.0, 0.0, 0.0};
+	const float lookup_k2_range[16] = {
+	0.0, 0.0, 0.0, 0.0, 0.1, 0.7, 0.0, -0.8,
+	-0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+
+
+	float v1 = 1340.0 + 5.0 * calibData.bits.SW_ERR;
+	float v2 = v1 * (1.0 + lookup_k1_range[lastReading.gas_range]/100.0);
+	float v3 = 1.0 + lookup_k2_range[lastReading.gas_range]/100.0;
+
+	return 1 / (v3 * 0.000000125 * (1<<lastReading.gas_range) *
+			((lastReading.raw_voc - 512.0)/v2 + 1));
 }
 
 } /* namespace I2C */
