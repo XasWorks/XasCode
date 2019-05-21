@@ -108,6 +108,8 @@ public:
 	float get_humidity();
 	float get_pressure();
 	float get_gas_res();
+
+	float get_air_quality();
 };
 
 } /* namespace I2C */

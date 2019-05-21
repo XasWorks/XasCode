@@ -199,5 +199,18 @@ float BME680::get_gas_res() {
 			((lastReading.raw_voc - 512.0)/v2 + 1));
 }
 
+float BME680::get_air_quality() {
+	// Quality value in % - higher means better!
+	float quality_val = 1;
+
+	// With 45 being optimal, and 30 and 70 being the max.
+	quality_val *= 1 - 0.4*pow((get_humidity() - 45)/25.0, 2);
+
+	// Gas resistance quality calculation. 200k is great, 130k kinda normal, <90k a little eh :P
+	quality_val *= 1 + 0.6*(get_gas_res() - 140000)/50000;
+
+	return quality_val;
+}
+
 } /* namespace I2C */
 } /* namespace Xasin */
