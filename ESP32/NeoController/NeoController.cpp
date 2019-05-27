@@ -9,6 +9,17 @@
 
 namespace Peripheral {
 
+
+rmt_item32_t bits[2] = {};
+
+void init_onoff_bits() {
+	bits[0].duration0 = 0.35 * 80 + 2; bits[0].level0 = 1;
+	bits[0].duration1 = 0.9  * 80 - 2; bits[0].level1 = 0;
+
+	bits[1].duration0 = 0.9  * 80 + 2; bits[1].level0 = 1;
+	bits[1].duration1 = 0.35 * 80 - 2; bits[1].level1 = 0;
+}
+
 static void IRAM_ATTR u8_to_WS2812(const void* source, rmt_item32_t* destination,
 	size_t source_size, size_t wanted_elements,
 	size_t* translated_size, size_t* translated_items) {
@@ -17,13 +28,6 @@ static void IRAM_ATTR u8_to_WS2812(const void* source, rmt_item32_t* destination
 
 	*translated_size  = 0;
 	*translated_items = 0;
-
-	rmt_item32_t bits[2] = {};
-	bits[0].duration0 = 0.35 * 20; bits[0].level0 = 1;
-	bits[0].duration1 = 0.9  * 20; bits[0].level1 = 0;
-
-	bits[1].duration0 = 0.9  * 20; bits[1].level0 = 1;
-	bits[1].duration1 = 0.35 * 20; bits[1].level1 = 0;
 
 	while(*translated_size < source_size && *translated_items < wanted_elements) {
 		for(uint8_t i=0; i<8; i++) {
@@ -45,8 +49,12 @@ NeoController::NeoController(gpio_num_t pin, rmt_channel_t channel, uint8_t leng
 
 	rawColors = new Color::ColorData[length];
 
+	init_onoff_bits();
+
 	clear();
 	apply();
+
+	gpio_reset_pin(pin);
 
 	rmt_config_t cfg = {};
 	rmt_tx_config_t tx_cfg = {};
@@ -57,13 +65,15 @@ NeoController::NeoController(gpio_num_t pin, rmt_channel_t channel, uint8_t leng
 
 	cfg.channel  = channel;
 	cfg.rmt_mode = RMT_MODE_TX;
-	cfg.clk_div  = 4;
+	cfg.clk_div  = 1;
 	cfg.gpio_num = pinNo;
 	cfg.mem_block_num = 1;
 
 	rmt_config(&cfg);
 	rmt_driver_install(channel, 0, 0);
 	rmt_translator_init(channel, u8_to_WS2812);
+
+	gpio_set_drive_capability(pin, GPIO_DRIVE_CAP_3);
 
 	esp_pm_lock_create(ESP_PM_APB_FREQ_MAX, 0, NULL, &powerLock);
 }
