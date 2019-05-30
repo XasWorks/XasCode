@@ -45,15 +45,20 @@ namespace Timer2 {
 
 	const uint16_t prescs[7] = {1, 8, 32, 64, 128, 256, 1024};
 
-	void set_OC2A_frequency(uint16_t freq) {
-		if(freq == 0) {
-			set_OC2A_mode(TIMER2_OC2A_OFF);
-			return;
+	void set_OC2A_frequency(uint16_t freq, bool change_oc2a) {
+		if(change_oc2a) {
+			if(freq == 0) {
+				set_OC2A_mode(TIMER2_OC2A_OFF);
+				return;
+			}
+			else
+				set_OC2A_mode(TIMER2_OC2A_TOGGLE);
 		}
-		else
-			set_OC2A_mode(TIMER2_OC2A_TOGGLE);
 
-		uint16_t CPU_Ticks = F_CPU/2/freq;
+		if(freq == 0)
+			freq = 1;
+
+		uint32_t CPU_Ticks = F_CPU/2/freq;
 
 		for(uint8_t i=0; i<7; i++) {
 			if(CPU_Ticks < (255*(uint32_t)prescs[i])) {
