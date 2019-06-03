@@ -24,6 +24,14 @@ namespace Timer0 {
 			TIMSK0 |= (1<< OCIE0A);
 		case TIMER0_MODE_FREQ:
 			TCCR0A |= (1<< WGM01);
+		break;
+
+		case TIMER0_MODE_40KHZ:
+			TCCR0A |= (1<<WGM01);
+
+			TCCR0B = TIMER0_PRESC_1;
+			OCR0A  = F_CPU/80000 - 1;
+		break;
 		}
 	}
 
