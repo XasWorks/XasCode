@@ -78,7 +78,7 @@ bme680_data_t BME680::fetch_data() {
 		GAS_DATA,
 	};
 
-	for(uint8_t i=0; i<5; i++) {
+	for(uint8_t i=0; i<4; i++) {
 		auto i2c = XaI2C::MasterAction(addr);
 
 		i2c.read(registers[i], &dataBuffer[i], 2);
@@ -204,10 +204,10 @@ float BME680::get_air_quality() {
 	float quality_val = 1;
 
 	// With 45 being optimal, and 30 and 70 being the max.
-	quality_val *= 1 - 0.4*pow((get_humidity() - 45)/25.0, 2);
+	quality_val *= 1 - 0.25*pow((get_humidity() - 40)/25.0, 2);
 
-	// Gas resistance quality calculation. 200k is great, 130k kinda normal, <90k a little eh :P
-	quality_val *= 1 + 0.6*(get_gas_res() - 140000)/50000;
+	// Gas resistance quality calculation. 200k is great, 110k kinda normal, <70k a little eh :P
+	quality_val *= 1 + 0.6*(get_gas_res() - 110000)/40000;
 
 	return quality_val;
 }
