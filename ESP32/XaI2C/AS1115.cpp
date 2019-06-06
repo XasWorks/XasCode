@@ -21,8 +21,10 @@ void AS1115::send_self_addressing(i2c_port_t i2c_port) {
 		auto i2c_cmd = XaI2C::MasterAction(addr);
 
 		uint8_t payload = 1;
-		i2c_cmd.write(0b1100, &payload, 1); // Power up and reset devices
+		i2c_cmd.write(0x0C, &payload, 1); // Power up and reset devices
 		i2c_cmd.write(0x2D, &payload, 1);
+
+		vTaskDelay(20);
 		i2c_cmd.execute(i2c_port);
 	}
 }
