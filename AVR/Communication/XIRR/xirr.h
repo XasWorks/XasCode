@@ -12,6 +12,11 @@
 
 namespace Communication {
 namespace XIRR {
+
+enum Channels : uint8_t {
+	IR_BACON = 128,
+};
+
 namespace RX {
 
 extern uint8_t buffer[32];
@@ -27,7 +32,7 @@ void update();
 
 void send_raw(const uint8_t *data, uint8_t length);
 
-void send(const uint8_t *data, uint8_t length, uint8_t key);
+void send(const void *data, uint8_t length, uint8_t key);
 }
 
 void init();
