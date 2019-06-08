@@ -172,7 +172,7 @@ void send_raw(const uint8_t *data, uint8_t length) {
 	state = START;
 }
 
-void send(const uint8_t *data, uint8_t length, uint8_t key) {
+void send(const void *data, uint8_t length, uint8_t key) {
 	if((length+2) > sizeof(buffer))
 		return;
 
