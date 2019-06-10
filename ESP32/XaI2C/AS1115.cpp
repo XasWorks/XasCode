@@ -55,7 +55,10 @@ uint16_t AS1115::get_buttons() {
 
 	auto i2c_cmd = XaI2C::MasterAction(address);
 	i2c_cmd.read(0x1C, &outVal, 2);
-	i2c_cmd.execute();
+	auto ret = i2c_cmd.execute();
+
+	if(ret != ESP_OK)
+		return 0;
 
 	return 0xFFFF ^ outVal;
 }
