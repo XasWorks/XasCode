@@ -7,6 +7,9 @@
 
 #include "xasin/xirr/Receiver.h"
 
+#define LOG_LOCAL_LEVEL ESP_LOG_INFO
+#include "esp_log.h"
+
 #define TPB ((80000000/200)/2000)
 
 namespace Xasin {
@@ -79,7 +82,7 @@ bool Receiver::get_next_bit() {
 	else
 		itemOffset += TPB;
 
-
+	ESP_LOGV("XIRR", "Bit: %s", out ? "1" : "0");
 	return out;
 }
 
@@ -94,9 +97,11 @@ void Receiver::parse_item(rmt_item32_t *head, size_t len) {
 	numItems   = len;
 
 	for(uint8_t i=0; i<8; i++) {
-		if(get_next_bit() == (i != 7))
+		if(get_next_bit() != (i != 7))
 			return;
 	}
+
+	ESP_LOGV("XIRR", "Start OK");
 
 	uint8_t chksum = 0;
 	std::vector<uint8_t> dataBuffer;
@@ -115,6 +120,8 @@ void Receiver::parse_item(rmt_item32_t *head, size_t len) {
 		chksum += byteBuf;
 	}
 
+	ESP_LOG_BUFFER_HEX_LEVEL("XIRR", dataBuffer.data(), dataBuffer.size(), ESP_LOG_VERBOSE);
+
 	if(dataBuffer[dataBuffer.size()-1] == chksum && on_rx != nullptr)
 		on_rx(dataBuffer.data()+1, dataBuffer.size()-2, dataBuffer[0]);
 }
@@ -123,10 +130,15 @@ void Receiver::_rx_task() {
 	RingbufHandle_t rx_buffer = nullptr;
 
 	rmt_get_ringbuf_handle(rmtChannel, &rx_buffer);
+	rmt_rx_start(rmtChannel, 1);
+
+	ESP_LOGI("XIRR", "RX Task started!");
 
 	while(true) {
 		size_t dNum = 0;
 		rmt_item32_t *headItem = reinterpret_cast<rmt_item32_t*>(xRingbufferReceive(rx_buffer, &dNum, portMAX_DELAY));
+
+		ESP_LOGV("XIRR", "Data received, %d items", dNum);
 
 		if(headItem == nullptr)
 			continue;
