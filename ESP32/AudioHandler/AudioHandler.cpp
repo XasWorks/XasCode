@@ -12,23 +12,68 @@
 
 #include "driver/gpio.h"
 
+#define LOG_LOCAL_LEVEL ESP_LOG_INFO
+#include "esp_log.h"
+
 namespace Xasin {
 namespace Peripheral {
+
+///////////////////////
 
 void start_audio_task(void *data) {
 	reinterpret_cast<AudioHandler *>(data)->_audio_task();
 }
 
+//////////////////////
+
+AudioSample::AudioSample() : volume(255) {
+}
+AudioSample::~AudioSample() {}
+int16_t AudioSample::get_chunk() {
+	return 0;
+}
+bool AudioSample::is_done() {
+	return true;
+}
+
+/////////////////////
+
+SquareWave::SquareWave(uint16_t frequency, uint8_t volume, uint32_t duration) : maxDiv(44100/frequency) {
+	currentDiv = 0;
+
+	this->volume = volume;
+
+	this->ticks_left = (duration*44100) / 1000;
+}
+
+int16_t SquareWave::get_chunk() {
+	currentDiv++;
+	if(currentDiv > maxDiv)
+		currentDiv = 0;
+
+	if(ticks_left > 0)
+		ticks_left--;
+
+	return (currentDiv > (maxDiv/2) ? 1 : -1) * volume * 255;
+}
+
+bool SquareWave::is_done() {
+	return ticks_left == 0;
+}
+
+////////////////////
+
 AudioCassette::AudioCassette(const uint8_t *start, size_t length, uint8_t volume)
-	: readStart(start), readHead(readStart), readEnd(readStart + length), volume(volume) {
+	: AudioSample(),
+	readStart(start), readHead(readStart), readEnd(readStart + length) {
 }
 
 AudioCassette::AudioCassette(const AudioCassette &top) :
 	AudioCassette(top.readStart, top.readEnd - top.readStart, top.volume) {
 }
 
-AudioCassette::AudioCassette() :
-		readStart(nullptr), readHead(nullptr), readEnd(nullptr), volume(0) {
+AudioCassette::AudioCassette() : AudioSample(),
+		readStart(nullptr), readHead(nullptr), readEnd(nullptr) {
 }
 
 int16_t AudioCassette::get_chunk() {
@@ -46,35 +91,43 @@ bool AudioCassette::is_done() {
 
 AudioHandler::AudioHandler(int samplerate, i2s_port_t i2s_port)
 	: audioTask(nullptr),
-	  currentCassettes(),
+	  currentSamples(),
 	  samplerate(samplerate), i2s_port(i2s_port),
 	  volumeMod(255) {
 
+	sampleMutex = xSemaphoreCreateMutex();
 }
 
 void AudioHandler::_audio_task() {
 	std::array<int16_t, 512> audioBuffer;
 
+	ESP_LOGI("XAudio", "Audio task started!");
+
 	while(true) {
-		while(currentCassettes.empty())
+		while(currentSamples.empty())
 			xTaskNotifyWait(0, 0, nullptr, portMAX_DELAY);
 
 		audioBuffer.fill(0);
+		xSemaphoreTake(sampleMutex, portMAX_DELAY);
 		for(uint16_t i=0; i<audioBuffer.size(); i++) {
-			for(auto &c : currentCassettes)
-				audioBuffer[i] += (int32_t(c.get_chunk())*volumeMod)/255;
+			for(auto c : currentSamples)
+				audioBuffer[i] += (int32_t(c->get_chunk())*volumeMod)/255;
 		}
+		for(auto i=currentSamples.begin(); i<currentSamples.end(); i++) {
+			AudioSample *samp = *i;
+
+			if(samp->is_done()) {
+				ESP_LOGD("XAudio", "Deleting sample %lu\n", long(samp));
+				delete samp;
+				currentSamples.erase(i);
+			}
+		}
+		xSemaphoreGive(sampleMutex);
 
 		size_t written_samples = 0;
 		i2s_write(i2s_port, audioBuffer.data(), 1024, &written_samples, portMAX_DELAY);
 
-
-		for(auto i=currentCassettes.begin(); i<currentCassettes.end(); i++) {
-			if(i->is_done())
-				currentCassettes.erase(i);
-		}
-
-		if(currentCassettes.empty())
+		if(currentSamples.empty())
 			i2s_zero_dma_buffer(i2s_port);
 	}
 }
@@ -98,20 +151,27 @@ void AudioHandler::start_thread(const i2s_pin_config_t &pinCFG) {
 	xTaskCreatePinnedToCore(start_audio_task, "Audio", 5*1024, this, configMAX_PRIORITIES - 1, &audioTask, 1);
 }
 
-void AudioHandler::insert_cassette(const AudioCassette &cassette) {
+void AudioHandler::insert_sample(AudioSample *sample) {
 	if(audioTask == nullptr)
 		return;
 
-	currentCassettes.push_back(cassette);
+	ESP_LOGD("XAudio", "Adding sample %lu\n", long(sample));
+
+	xSemaphoreTake(sampleMutex, portMAX_DELAY);
+	currentSamples.push_back(sample);
+	xSemaphoreGive(sampleMutex);
 
 	xTaskNotify(audioTask, 0, eNoAction);
 }
 
+void AudioHandler::insert_cassette(const AudioCassette &top) {
+	insert_sample(new AudioCassette(top));
+}
 void AudioHandler::insert_cassette(const CassetteCollection &cassettes) {
 	if(cassettes.size() == 0)
 		return;
+
 	insert_cassette(cassettes.at(esp_random()%cassettes.size()));
 }
-
 } /* namespace Peripheral */
 } /* namespace Xasin */

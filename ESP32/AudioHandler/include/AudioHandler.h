@@ -20,7 +20,36 @@ namespace Peripheral {
 
 class AudioHandler;
 
-class AudioCassette {
+class AudioSample {
+protected:
+	friend AudioHandler;
+
+	virtual int16_t get_chunk();
+	virtual bool	is_done();
+
+public:
+	uint8_t volume;
+
+	AudioSample();
+	virtual ~AudioSample();
+};
+
+class SquareWave : public AudioSample {
+private:
+	uint16_t maxDiv;
+	uint16_t currentDiv;
+
+	uint32_t ticks_left;
+
+protected:
+	int16_t get_chunk();
+	bool is_done();
+
+public:
+	SquareWave(uint16_t frequency, uint8_t volume, uint32_t duration);
+};
+
+class AudioCassette : public AudioSample {
 protected:
 	friend AudioHandler;
 
@@ -32,8 +61,6 @@ protected:
 	bool is_done();
 
 public:
-	uint8_t volume;
-
 	AudioCassette(const uint8_t *start, size_t length, uint8_t volume = 50);
 	AudioCassette(const AudioCassette &top);
 
@@ -46,7 +73,8 @@ class AudioHandler {
 private:
 	TaskHandle_t audioTask;
 
-	std::vector<AudioCassette> currentCassettes;
+	std::vector<AudioSample*> currentSamples;
+	SemaphoreHandle_t sampleMutex;
 
 	int samplerate;
 public:
@@ -59,7 +87,9 @@ public:
 
 	void start_thread(const i2s_pin_config_t &pinCFG);
 
-	void insert_cassette(const AudioCassette &cas);
+	void insert_sample(AudioSample *sound);
+
+	void insert_cassette(const AudioCassette &top);
 	void insert_cassette(const CassetteCollection &cassettes);
 };
 
