@@ -36,6 +36,8 @@ public:
 
 class SquareWave : public AudioSample {
 private:
+	uint32_t cVolume;
+
 	uint16_t maxDiv;
 	uint16_t currentDiv;
 

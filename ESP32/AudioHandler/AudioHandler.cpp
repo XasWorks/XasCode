@@ -12,7 +12,7 @@
 
 #include "driver/gpio.h"
 
-#define LOG_LOCAL_LEVEL ESP_LOG_INFO
+#define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE
 #include "esp_log.h"
 
 namespace Xasin {
@@ -41,6 +41,7 @@ bool AudioSample::is_done() {
 SquareWave::SquareWave(uint16_t frequency, uint8_t volume, uint32_t duration) : maxDiv(44100/frequency) {
 	currentDiv = 0;
 
+	cVolume = 0;
 	this->volume = volume;
 
 	this->ticks_left = (duration*44100) / 1000;
@@ -53,12 +54,16 @@ int16_t SquareWave::get_chunk() {
 
 	if(ticks_left > 0)
 		ticks_left--;
+	else
+		volume = 0;
 
-	return (currentDiv > (maxDiv/2) ? 1 : -1) * volume * 255;
+	cVolume += ((uint32_t(volume) << 24) - cVolume) >> 8;
+
+	return (currentDiv > (maxDiv/2) ? 1 : -1) * (cVolume >> 16);
 }
 
 bool SquareWave::is_done() {
-	return ticks_left == 0;
+	return ((ticks_left == 0) && (cVolume < 5033164800));
 }
 
 ////////////////////
@@ -113,16 +118,22 @@ void AudioHandler::_audio_task() {
 			for(auto c : currentSamples)
 				audioBuffer[i] += (int32_t(c->get_chunk())*volumeMod)/255;
 		}
-		for(auto i=currentSamples.begin(); i<currentSamples.end(); i++) {
-			AudioSample *samp = *i;
+		xSemaphoreGive(sampleMutex);
+
+		uint8_t sampI = 0;
+		while(sampI < currentSamples.size()) {
+			AudioSample *samp = currentSamples.at(sampI);
 
 			if(samp->is_done()) {
 				ESP_LOGD("XAudio", "Deleting sample %lu\n", long(samp));
 				delete samp;
-				currentSamples.erase(i);
+				currentSamples.erase(currentSamples.begin()+sampI);
+
+				continue;
 			}
+
+			sampI++;
 		}
-		xSemaphoreGive(sampleMutex);
 
 		size_t written_samples = 0;
 		i2s_write(i2s_port, audioBuffer.data(), 1024, &written_samples, portMAX_DELAY);
