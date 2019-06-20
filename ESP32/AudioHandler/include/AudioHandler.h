@@ -38,8 +38,8 @@ class SquareWave : public AudioSample {
 private:
 	uint32_t cVolume;
 
-	uint16_t maxDiv;
-	uint16_t currentDiv;
+	uint32_t maxDiv;
+	uint32_t currentDiv;
 
 	uint32_t ticks_left;
 
@@ -49,6 +49,40 @@ protected:
 
 public:
 	SquareWave(uint16_t frequency, uint8_t volume, uint32_t duration);
+};
+
+class SawtoothWave : public AudioSample {
+private:
+	uint32_t cVolume;
+
+	uint32_t maxDiv;
+	uint32_t currentDiv;
+
+	uint32_t ticks_left;
+
+protected:
+	int16_t get_chunk();
+	bool is_done();
+
+public:
+	SawtoothWave(uint16_t frequency, uint8_t volume, uint32_t duration);
+};
+
+class TriangleWave : public AudioSample {
+private:
+	uint32_t cVolume;
+
+	uint32_t maxDiv;
+	uint32_t currentDiv;
+
+	uint32_t ticks_left;
+
+protected:
+	int16_t get_chunk();
+	bool is_done();
+
+public:
+	TriangleWave(uint16_t frequency, uint8_t volume, uint32_t duration);
 };
 
 class AudioCassette : public AudioSample {

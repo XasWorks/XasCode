@@ -38,7 +38,8 @@ bool AudioSample::is_done() {
 
 /////////////////////
 
-SquareWave::SquareWave(uint16_t frequency, uint8_t volume, uint32_t duration) : maxDiv(44100/frequency) {
+SquareWave::SquareWave(uint16_t frequency, uint8_t volume, uint32_t duration) {
+	maxDiv = ((44100<<8)/frequency);
 	currentDiv = 0;
 
 	cVolume = 0;
@@ -48,22 +49,94 @@ SquareWave::SquareWave(uint16_t frequency, uint8_t volume, uint32_t duration) : 
 }
 
 int16_t SquareWave::get_chunk() {
-	currentDiv++;
+	currentDiv += 1<<8;
 	if(currentDiv > maxDiv)
-		currentDiv = 0;
+		currentDiv -= maxDiv;
 
 	if(ticks_left > 0)
 		ticks_left--;
 	else
 		volume = 0;
 
-	cVolume += ((uint32_t(volume) << 24) - cVolume) >> 8;
+	if(volume > (cVolume<<24))
+		cVolume += ((uint32_t(volume) << 24) - cVolume) >> 10;
+	else
+		cVolume -= (cVolume - (uint32_t(volume)<<24)) >> 13;
 
-	return (currentDiv > (maxDiv/2) ? 1 : -1) * (cVolume >> 16);
+	return (currentDiv > (maxDiv/2) ? 1 : -1) * (cVolume >> 17);
 }
 
 bool SquareWave::is_done() {
-	return ((ticks_left == 0) && (cVolume < 5033164800));
+	return ((ticks_left == 0) && (cVolume < (2<<24)));
+}
+
+SawtoothWave::SawtoothWave(uint16_t frequency, uint8_t volume, uint32_t duration) {
+	maxDiv = ((44100<<8)/frequency);
+	currentDiv = 0;
+
+	cVolume = 0;
+	this->volume = volume;
+
+	this->ticks_left = (duration*44100) / 1000;
+}
+
+int16_t SawtoothWave::get_chunk() {
+	currentDiv += 256;
+	if(currentDiv > maxDiv)
+		currentDiv -= maxDiv;
+
+	if(ticks_left > 0)
+		ticks_left--;
+	else
+		volume = 0;
+
+	if(volume > (cVolume<<24))
+		cVolume += ((uint32_t(volume) << 24) - cVolume) >> 10;
+	else
+		cVolume -= (cVolume - (uint32_t(volume)<<24)) >> 13;
+
+	return ((currentDiv<<7) / maxDiv) * (cVolume >> 24);
+}
+
+bool SawtoothWave::is_done() {
+	return ((ticks_left == 0) && (cVolume < (5<<24)));
+}
+
+TriangleWave::TriangleWave(uint16_t frequency, uint8_t volume, uint32_t duration) {
+	maxDiv = ((44100<<8)/frequency);
+	currentDiv = 0;
+
+	cVolume = 0;
+	this->volume = volume;
+
+	this->ticks_left = (duration*44100) / 1000;
+}
+
+int16_t TriangleWave::get_chunk() {
+	currentDiv += 256;
+	if(currentDiv > maxDiv)
+		currentDiv -= maxDiv;
+
+	if(ticks_left > 0)
+		ticks_left--;
+	else
+		volume = 0;
+
+	if(volume > (cVolume<<24))
+		cVolume += ((uint32_t(volume) << 24) - cVolume) >> 10;
+	else
+		cVolume -= (cVolume - (uint32_t(volume)<<24)) >> 15;
+
+	uint16_t bufSlope = ((currentDiv<<16) / maxDiv);
+
+	if(bufSlope>>15)
+		return (bufSlope>>8) * (cVolume>>24) - ((1<<15) - 1);
+	else
+		return ((1<<16)-2) - (bufSlope>>8) * (cVolume>>24);
+}
+
+bool TriangleWave::is_done() {
+	return ((ticks_left == 0) && (cVolume < (5<<24)));
 }
 
 ////////////////////
@@ -115,8 +188,17 @@ void AudioHandler::_audio_task() {
 		audioBuffer.fill(0);
 		xSemaphoreTake(sampleMutex, portMAX_DELAY);
 		for(uint16_t i=0; i<audioBuffer.size(); i++) {
+			int32_t sampBuff = 0;
 			for(auto c : currentSamples)
-				audioBuffer[i] += (int32_t(c->get_chunk())*volumeMod)/255;
+				sampBuff += c->get_chunk();
+
+			sampBuff = (sampBuff*volumeMod)/255;
+			if(sampBuff > ((1<<15)-1))
+				audioBuffer[i] = (1<<15)-1;
+			else if(sampBuff < -((1<<15)-1))
+				audioBuffer[i] = -((1<<15)-1);
+			else
+				audioBuffer[i] = sampBuff;
 		}
 		xSemaphoreGive(sampleMutex);
 
