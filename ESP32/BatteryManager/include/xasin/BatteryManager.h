@@ -19,21 +19,24 @@ private:
 	uint16_t current_mv_var;
 
 public:
-	const uint16_t cutoff_voltage;
+	const uint8_t cell_count;
+	const uint32_t cutoff_voltage;
 
 	bool is_charging;
 
-	uint8_t		raw_capacity_for_voltage(uint16_t millivolts);
-	uint8_t 	capacity_for_voltage(uint16_t millivolts);
-	uint16_t	voltage_for_raw_capacity(uint8_t percentage);
-	uint16_t 	voltage_for_capacity(uint8_t percentage);
+	uint8_t		raw_capacity_for_voltage(uint32_t millivolts);
+	uint8_t 	capacity_for_voltage(uint32_t millivolts);
+	uint32_t	voltage_for_raw_capacity(uint8_t percentage);
+	uint32_t 	voltage_for_capacity(uint8_t percentage);
 
-	BatteryManager();
+	BatteryManager(uint8_t cellCount = 0);
 
-	void set_voltage(uint16_t millivolts);
+	void set_voltage(uint32_t millivolts);
 
-	uint16_t current_mv();
+	uint32_t current_mv();
 	uint8_t  current_capacity();
+
+	bool battery_ok();
 };
 
 } /* namespace Housekeeping */
