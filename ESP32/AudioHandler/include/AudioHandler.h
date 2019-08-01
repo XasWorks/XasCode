@@ -93,11 +93,14 @@ protected:
 	uint8_t const *readHead;
 	uint8_t const *readEnd;
 
+	uint8_t const samp_presc;
+	uint8_t presc_counter;
+
 	int16_t get_chunk();
 	bool is_done();
 
 public:
-	AudioCassette(const uint8_t *start, size_t length, uint8_t volume = 50);
+	AudioCassette(const uint8_t *start, size_t length, uint8_t volume = 130, uint8_t sample_prescaling = 1);
 	AudioCassette(const AudioCassette &top);
 
 	AudioCassette();

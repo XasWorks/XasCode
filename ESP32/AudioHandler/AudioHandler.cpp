@@ -12,7 +12,7 @@
 
 #include "driver/gpio.h"
 
-#define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE
+#define LOG_LOCAL_LEVEL ESP_LOG_INFO
 #include "esp_log.h"
 
 namespace Xasin {
@@ -141,30 +141,38 @@ bool TriangleWave::is_done() {
 
 ////////////////////
 
-AudioCassette::AudioCassette(const uint8_t *start, size_t length, uint8_t volume)
+AudioCassette::AudioCassette(const uint8_t *start, size_t length, uint8_t volume, uint8_t sample_prescaling)
 	: AudioSample(),
-	readStart(start), readHead(readStart), readEnd(readStart + length) {
+	readStart(start), readHead(readStart), readEnd(readStart + length),
+	samp_presc(sample_prescaling), presc_counter(0) {
 }
 
 AudioCassette::AudioCassette(const AudioCassette &top) :
-	AudioCassette(top.readStart, top.readEnd - top.readStart, top.volume) {
+	AudioCassette(top.readStart, top.readEnd - top.readStart, top.volume, top.samp_presc) {
 }
 
 AudioCassette::AudioCassette() : AudioSample(),
-		readStart(nullptr), readHead(nullptr), readEnd(nullptr) {
+		readStart(nullptr), readHead(nullptr), readEnd(nullptr), samp_presc(1), presc_counter(0) {
 }
 
 int16_t AudioCassette::get_chunk() {
-	if(readHead >= readEnd)
+	if((readHead+1) >= readEnd)
 		return 0;
 
-	int16_t rData = *readHead;
-	readHead++;
+	int16_t rData = *readHead     - 127;
+	int16_t nData = *(readHead+1) - 127;
 
-	return (rData - 127)*volume;
+	presc_counter++;
+	if(presc_counter >= samp_presc) {
+		readHead++;
+		presc_counter = 0;
+	}
+
+
+	return (rData*(samp_presc-presc_counter) + nData*(presc_counter))*volume/samp_presc;
 }
 bool AudioCassette::is_done() {
-	return readHead >= readEnd;
+	return (readHead+1) >= readEnd;
 }
 
 AudioHandler::AudioHandler(int samplerate, i2s_port_t i2s_port)
