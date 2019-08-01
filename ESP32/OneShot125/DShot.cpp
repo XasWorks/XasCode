@@ -41,7 +41,7 @@ void DShot::init() {
 
 	tx_cfg.idle_level = RMT_IDLE_LEVEL_LOW;
 	tx_cfg.idle_output_en = true;
-	tx_cfg.loop_en = true;
+	tx_cfg.loop_en = false;
 
 	tx_cfg.carrier_en = false;
 	tx_cfg.carrier_level = RMT_CARRIER_LEVEL_HIGH;
@@ -79,11 +79,11 @@ void DShot::raw_send(uint16_t throttle, bool telemetry, bool wait) {
 	low.duration1 = (DSHOT_TOTAL_NS-DSHOT_ZERO_HIGH_NS)*DSHOT_CLOCK_PER_NS;
 	low.level1	  = 0;
 
-	rmt_item32_t high = low;
-	low.duration0 = (DSHOT_ONE_HIGH_NS)*DSHOT_CLOCK_PER_NS;
-	low.level0    = 1;
-	low.duration1 = (DSHOT_TOTAL_NS-DSHOT_ONE_HIGH_NS)*DSHOT_CLOCK_PER_NS;
-	low.level1	  = 0;
+	rmt_item32_t high = {};
+	high.duration0 = (DSHOT_ONE_HIGH_NS)*DSHOT_CLOCK_PER_NS;
+	high.level0    = 1;
+	high.duration1 = (DSHOT_TOTAL_NS-DSHOT_ONE_HIGH_NS)*DSHOT_CLOCK_PER_NS;
+	high.level1	  = 0;
 
 	rmt_item32_t pause = {};
 	pause.duration0 = DSHOT_CLOCK_PER_NS * 1000000;
@@ -102,16 +102,22 @@ void DShot::raw_send(uint16_t throttle, bool telemetry, bool wait) {
 	} data = {};
 #pragma pack(0)
 
-	data.checksum  = 0xF;
+	data.checksum  = 0;
 	data.telemetry = telemetry;
 	data.throttle  = throttle;
 
+	uint8_t ch_data = 0xF;
 	for(uint8_t i=0; i<4; i++) {
-		data.checksum ^= 0xF & (data.reg >> (i*4));
+		ch_data ^= 0xF & (data.reg >> (i*4));
 	}
 
-	for(int8_t i=15; i>=0; i--) {
-		rmt_buffer[i] = (((data.reg>>i) & 1) ? high : low);
+	data.checksum = ch_data;
+
+	uint16_t dRaw = data.reg;
+	for(uint8_t i=0; i<16; i++) {
+		(rmt_buffer[i]).val = ((dRaw & (1<<15)) == 0) ? low.val : high.val;
+
+		dRaw <<= 1;
 	}
 
 	rmt_buffer[16] = (pause);
