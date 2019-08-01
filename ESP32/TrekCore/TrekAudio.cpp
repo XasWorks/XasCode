@@ -26,6 +26,7 @@ typedef const AudioCassette snippet;
 #define SNIP_DEF(name) snippet s_ ## name = snippet(name, sizeof(name), 150)
 #define SNIP_DEF_VOL(name, volume) snippet s_ ## name = snippet(name, sizeof(name), volume)
 
+#ifdef TREKCORE_AUDIO_ENABLED
 snippet s_keypress = snippet(keypress, sizeof(keypress), 13);
 
 SNIP_DEF(input_ok);
@@ -37,16 +38,20 @@ SNIP_DEF(program_failed);
 SNIP_DEF_VOL(program_finished, 170);
 
 SNIP_DEF(major_error);
+#endif
 
 AudioHandler *audioHandler = nullptr;
 
 void init(AudioHandler &audio) {
+#ifdef TREKCORE_AUDIO_ENABLED
 	audioHandler = &audio;
+#endif
 }
 
 
 #define SNIP_PLAY(key, name) case key : audioHandler->insert_cassette(s_ ## name); break
 void play(signal_type_t signal) {
+#ifdef TREKCORE_AUDIO_ENABLED
 	if(audioHandler == nullptr)
 		return;
 
@@ -65,6 +70,7 @@ void play(signal_type_t signal) {
 	SNIP_PLAY(ERROR_MAJOR, major_error);
 
 	};
+#endif
 }
 
 }
