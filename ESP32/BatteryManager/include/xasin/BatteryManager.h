@@ -29,7 +29,7 @@ public:
 	uint32_t	voltage_for_raw_capacity(uint8_t percentage);
 	uint32_t 	voltage_for_capacity(uint8_t percentage);
 
-	BatteryManager(uint8_t cellCount = 0);
+	BatteryManager(uint8_t cellCount = 1);
 
 	void set_voltage(uint32_t millivolts);
 
