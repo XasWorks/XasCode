@@ -6,9 +6,10 @@
  */
 
 #include "xasin/DShot.h"
+#include <cmath>
 
 namespace Xasin {
-namespace OneShot125 {
+namespace Drone {
 
 #define DSHOT_PRESCALER 5
 
@@ -18,10 +19,11 @@ namespace OneShot125 {
 #define DSHOT_ONE_HIGH_NS 	(5000)
 #define DSHOT_TOTAL_NS		(6680)
 
-DShot::DShot(gpio_num_t pin, rmt_channel_t channel) :
-		currentTXPin(pin),
+DShot::DShot(rmt_channel_t channel, uint8_t channel_count, uint8_t gpio_start) :
+		BLDCHandler(channel_count, gpio_start),
+		currentTXPin(static_cast<gpio_num_t>(gpio_start)),
 		rmtChannel(channel), rmt_buffer(),
-		current_throttle_value(0) {
+		throttle_values(channel_count) {
 
 	esp_pm_lock_create(ESP_PM_APB_FREQ_MAX, 0, NULL, &powerLock);
 }
@@ -31,6 +33,18 @@ DShot::~DShot() {
 
 	rmt_driver_uninstall(rmtChannel);
 	gpio_reset_pin(currentTXPin);
+}
+
+void DShot::set_channel(uint8_t chNum) {
+	if(chNum >= num_channels)
+		return;
+
+	chNum += gpio_start;
+	if(chNum == currentTXPin)
+		return;
+
+	currentTXPin = static_cast<gpio_num_t>(chNum);
+	rmt_set_pin(rmtChannel, RMT_MODE_TX, currentTXPin);
 }
 
 void DShot::init() {
@@ -59,7 +73,9 @@ void DShot::init() {
 	rmt_driver_install(rmtChannel, 0, 0);
 }
 
-void DShot::send_cmd(dshot_cmd_t cmd) {
+void DShot::send_cmd(uint8_t id, dshot_cmd_t cmd) {
+	set_channel(id);
+
 	uint8_t cmd_val = static_cast<uint8_t>(cmd);
 
 	if(cmd > 47)
@@ -68,8 +84,6 @@ void DShot::send_cmd(dshot_cmd_t cmd) {
 	for(uint8_t i=0; i<10; i++) {
 		raw_send(cmd_val, true, true);
 	}
-
-	raw_send(current_throttle_value);
 }
 
 void DShot::raw_send(uint16_t throttle, bool telemetry, bool wait) {
@@ -106,7 +120,7 @@ void DShot::raw_send(uint16_t throttle, bool telemetry, bool wait) {
 	data.telemetry = telemetry;
 	data.throttle  = throttle;
 
-	uint8_t ch_data = 0xF;
+	uint8_t ch_data = 0;
 	for(uint8_t i=0; i<4; i++) {
 		ch_data ^= 0xF & (data.reg >> (i*4));
 	}
@@ -127,9 +141,31 @@ void DShot::raw_send(uint16_t throttle, bool telemetry, bool wait) {
 	esp_pm_lock_release(powerLock);
 }
 
-void DShot::send(uint16_t throttle) {
+void DShot::set_motor_power(uint8_t id, float value) {
+	if(id > num_channels)
+		return;
+
+	if(value >= 0.99)
+		value = 0.99;
+	if(value <= -0.99)
+		value = -0.99;
+	if(fabs(value) < 0.01)
+		value = 0;
+
+	if(value == throttle_values[id])
+		return;
+	throttle_values[id] = value;
+
+	int16_t throttle = 1048 + 1000*value;
+
 	raw_send(throttle, false, false);
-	current_throttle_value = throttle;
+}
+
+float DShot::get_motor_power(uint8_t id) {
+	if(id > num_channels)
+		return 0;
+
+	return throttle_values[id];
 }
 
 } /* namespace XIRR */
