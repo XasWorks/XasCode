@@ -58,7 +58,7 @@ int16_t SquareWave::get_chunk() {
 	else
 		volume = 0;
 
-	if(volume > (cVolume<<24))
+	if(volume > (cVolume>>24))
 		cVolume += ((uint32_t(volume) << 24) - cVolume) >> 10;
 	else
 		cVolume -= (cVolume - (uint32_t(volume)<<24)) >> 13;
@@ -90,7 +90,7 @@ int16_t SawtoothWave::get_chunk() {
 	else
 		volume = 0;
 
-	if(volume > (cVolume<<24))
+	if(volume > (cVolume>>24))
 		cVolume += ((uint32_t(volume) << 24) - cVolume) >> 10;
 	else
 		cVolume -= (cVolume - (uint32_t(volume)<<24)) >> 13;
@@ -122,7 +122,7 @@ int16_t TriangleWave::get_chunk() {
 	else
 		volume = 0;
 
-	if(volume > (cVolume<<24))
+	if(volume > (cVolume>>24))
 		cVolume += ((uint32_t(volume) << 24) - cVolume) >> 10;
 	else
 		cVolume -= (cVolume - (uint32_t(volume)<<24)) >> 15;
@@ -130,9 +130,9 @@ int16_t TriangleWave::get_chunk() {
 	uint16_t bufSlope = ((currentDiv<<16) / maxDiv);
 
 	if(bufSlope>>15)
-		return (bufSlope>>8) * (cVolume>>24) - ((1<<15) - 1);
+		return ((bufSlope>>8) - (1<<8) + 1) * (cVolume>>24);
 	else
-		return ((1<<16)-2) - (bufSlope>>8) * (cVolume>>24);
+		return (((1<<8)-2) - (bufSlope>>8)) * (cVolume>>24);
 }
 
 bool TriangleWave::is_done() {
