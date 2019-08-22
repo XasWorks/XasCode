@@ -28,7 +28,7 @@ protected:
 	virtual bool	is_done();
 
 public:
-	uint8_t volume;
+	uint16_t volume;
 
 	AudioSample();
 	virtual ~AudioSample();
@@ -48,7 +48,7 @@ protected:
 	bool is_done();
 
 public:
-	SquareWave(uint16_t frequency, uint8_t volume, uint32_t duration);
+	SquareWave(uint16_t frequency, uint16_t volume, uint32_t duration);
 };
 
 class SawtoothWave : public AudioSample {
@@ -65,7 +65,7 @@ protected:
 	bool is_done();
 
 public:
-	SawtoothWave(uint16_t frequency, uint8_t volume, uint32_t duration);
+	SawtoothWave(uint16_t frequency, uint16_t volume, uint32_t duration);
 };
 
 class TriangleWave : public AudioSample {
@@ -82,7 +82,7 @@ protected:
 	bool is_done();
 
 public:
-	TriangleWave(uint16_t frequency, uint8_t volume, uint32_t duration);
+	TriangleWave(uint16_t frequency, uint16_t volume, uint32_t duration);
 };
 
 class AudioCassette : public AudioSample {
@@ -100,7 +100,7 @@ protected:
 	bool is_done();
 
 public:
-	AudioCassette(const uint8_t *start, size_t length, uint8_t volume = 130, uint8_t sample_prescaling = 1);
+	AudioCassette(const uint8_t *start, size_t length, uint16_t volume = 20000, uint8_t sample_prescaling = 1);
 	AudioCassette(const AudioCassette &top);
 
 	AudioCassette();

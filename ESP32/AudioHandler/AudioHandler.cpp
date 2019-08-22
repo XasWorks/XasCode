@@ -38,7 +38,7 @@ bool AudioSample::is_done() {
 
 /////////////////////
 
-SquareWave::SquareWave(uint16_t frequency, uint8_t volume, uint32_t duration) {
+SquareWave::SquareWave(uint16_t frequency, uint16_t volume, uint32_t duration) {
 	maxDiv = ((44100<<8)/frequency);
 	currentDiv = 0;
 
@@ -58,7 +58,7 @@ int16_t SquareWave::get_chunk() {
 	else
 		volume = 0;
 
-	if(volume > (cVolume>>24))
+	if(volume > (cVolume>>16))
 		cVolume += ((uint32_t(volume) << 24) - cVolume) >> 10;
 	else
 		cVolume -= (cVolume - (uint32_t(volume)<<24)) >> 13;
@@ -70,7 +70,7 @@ bool SquareWave::is_done() {
 	return ((ticks_left == 0) && (cVolume < (2<<24)));
 }
 
-SawtoothWave::SawtoothWave(uint16_t frequency, uint8_t volume, uint32_t duration) {
+SawtoothWave::SawtoothWave(uint16_t frequency, uint16_t volume, uint32_t duration) {
 	maxDiv = ((44100<<8)/frequency);
 	currentDiv = 0;
 
@@ -90,7 +90,7 @@ int16_t SawtoothWave::get_chunk() {
 	else
 		volume = 0;
 
-	if(volume > (cVolume>>24))
+	if(volume > (cVolume>>16))
 		cVolume += ((uint32_t(volume) << 24) - cVolume) >> 10;
 	else
 		cVolume -= (cVolume - (uint32_t(volume)<<24)) >> 13;
@@ -102,7 +102,7 @@ bool SawtoothWave::is_done() {
 	return ((ticks_left == 0) && (cVolume < (5<<24)));
 }
 
-TriangleWave::TriangleWave(uint16_t frequency, uint8_t volume, uint32_t duration) {
+TriangleWave::TriangleWave(uint16_t frequency, uint16_t volume, uint32_t duration) {
 	maxDiv = ((44100<<8)/frequency);
 	currentDiv = 0;
 
@@ -122,7 +122,7 @@ int16_t TriangleWave::get_chunk() {
 	else
 		volume = 0;
 
-	if(volume > (cVolume>>24))
+	if(volume > (cVolume>>16))
 		cVolume += ((uint32_t(volume) << 24) - cVolume) >> 10;
 	else
 		cVolume -= (cVolume - (uint32_t(volume)<<24)) >> 15;
@@ -141,7 +141,7 @@ bool TriangleWave::is_done() {
 
 ////////////////////
 
-AudioCassette::AudioCassette(const uint8_t *start, size_t length, uint8_t volume, uint8_t sample_prescaling)
+AudioCassette::AudioCassette(const uint8_t *start, size_t length, uint16_t volume, uint8_t sample_prescaling)
 	: AudioSample(),
 	readStart(start), readHead(readStart), readEnd(readStart + length),
 	samp_presc(sample_prescaling), presc_counter(0) {
@@ -169,7 +169,7 @@ int16_t AudioCassette::get_chunk() {
 	}
 
 
-	return (rData*(samp_presc-presc_counter) + nData*(presc_counter))*volume/samp_presc;
+	return ((rData*(samp_presc-presc_counter) + nData*(presc_counter))*volume/samp_presc)>>8;
 }
 bool AudioCassette::is_done() {
 	return (readHead+1) >= readEnd;
