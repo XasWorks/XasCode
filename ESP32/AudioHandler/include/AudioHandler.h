@@ -100,7 +100,7 @@ protected:
 	bool is_done();
 
 public:
-	AudioCassette(const uint8_t *start, size_t length, uint16_t volume = 20000, uint8_t sample_prescaling = 1);
+	AudioCassette(const uint8_t *start, size_t length, uint16_t volume = 10000, uint8_t sample_prescaling = 1);
 	AudioCassette(const AudioCassette &top);
 
 	AudioCassette();

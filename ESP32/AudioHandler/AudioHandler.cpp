@@ -9,8 +9,9 @@
 #include <array>
 
 #include "AudioHandler.h"
-
 #include "driver/gpio.h"
+
+#include <cmath>
 
 #define LOG_LOCAL_LEVEL ESP_LOG_INFO
 #include "esp_log.h"
@@ -26,7 +27,7 @@ void start_audio_task(void *data) {
 
 //////////////////////
 
-AudioSample::AudioSample() : volume(255) {
+AudioSample::AudioSample() : volume(50000) {
 }
 AudioSample::~AudioSample() {}
 int16_t AudioSample::get_chunk() {
@@ -43,7 +44,7 @@ SquareWave::SquareWave(uint16_t frequency, uint16_t volume, uint32_t duration) {
 	currentDiv = 0;
 
 	cVolume = 0;
-	this->volume = volume;
+	this->volume = fmin(volume, 1);
 
 	this->ticks_left = (duration*44100) / 1000;
 }
@@ -59,9 +60,9 @@ int16_t SquareWave::get_chunk() {
 		volume = 0;
 
 	if(volume > (cVolume>>16))
-		cVolume += ((uint32_t(volume) << 24) - cVolume) >> 10;
+		cVolume += ((uint32_t(volume) << 16) - cVolume) >> 10;
 	else
-		cVolume -= (cVolume - (uint32_t(volume)<<24)) >> 13;
+		cVolume -= (cVolume - (uint32_t(volume)<< 16)) >> 13;
 
 	return (currentDiv > (maxDiv/2) ? 1 : -1) * (cVolume >> 17);
 }
@@ -75,7 +76,7 @@ SawtoothWave::SawtoothWave(uint16_t frequency, uint16_t volume, uint32_t duratio
 	currentDiv = 0;
 
 	cVolume = 0;
-	this->volume = volume;
+	this->volume = fmin(volume, 1);
 
 	this->ticks_left = (duration*44100) / 1000;
 }
@@ -91,9 +92,9 @@ int16_t SawtoothWave::get_chunk() {
 		volume = 0;
 
 	if(volume > (cVolume>>16))
-		cVolume += ((uint32_t(volume) << 24) - cVolume) >> 10;
+		cVolume += ((uint32_t(volume) << 16) - cVolume) >> 10;
 	else
-		cVolume -= (cVolume - (uint32_t(volume)<<24)) >> 13;
+		cVolume -= (cVolume - (uint32_t(volume)<<16)) >> 13;
 
 	return ((currentDiv<<7) / maxDiv) * (cVolume >> 24);
 }
@@ -107,7 +108,7 @@ TriangleWave::TriangleWave(uint16_t frequency, uint16_t volume, uint32_t duratio
 	currentDiv = 0;
 
 	cVolume = 0;
-	this->volume = volume;
+	this->volume = fmin(volume, 1);
 
 	this->ticks_left = (duration*44100) / 1000;
 }
@@ -123,9 +124,9 @@ int16_t TriangleWave::get_chunk() {
 		volume = 0;
 
 	if(volume > (cVolume>>16))
-		cVolume += ((uint32_t(volume) << 24) - cVolume) >> 10;
+		cVolume += ((uint32_t(volume) << 16) - cVolume) >> 10;
 	else
-		cVolume -= (cVolume - (uint32_t(volume)<<24)) >> 15;
+		cVolume -= (cVolume - (uint32_t(volume)<<16)) >> 15;
 
 	uint16_t bufSlope = ((currentDiv<<16) / maxDiv);
 
@@ -145,6 +146,8 @@ AudioCassette::AudioCassette(const uint8_t *start, size_t length, uint16_t volum
 	: AudioSample(),
 	readStart(start), readHead(readStart), readEnd(readStart + length),
 	samp_presc(sample_prescaling), presc_counter(0) {
+
+	this->volume = volume;
 }
 
 AudioCassette::AudioCassette(const AudioCassette &top) :
@@ -159,8 +162,8 @@ int16_t AudioCassette::get_chunk() {
 	if((readHead+1) >= readEnd)
 		return 0;
 
-	int16_t rData = *readHead     - 127;
-	int16_t nData = *(readHead+1) - 127;
+	int32_t rData = int32_t(*readHead)     - 127;
+	int32_t nData = int32_t(*(readHead+1)) - 127;
 
 	presc_counter++;
 	if(presc_counter >= samp_presc) {
@@ -169,7 +172,7 @@ int16_t AudioCassette::get_chunk() {
 	}
 
 
-	return ((rData*(samp_presc-presc_counter) + nData*(presc_counter))*volume/samp_presc)>>8;
+	return (((rData*(samp_presc-presc_counter) + nData*(presc_counter))/samp_presc) * int32_t(volume)) / 255;
 }
 bool AudioCassette::is_done() {
 	return (readHead+1) >= readEnd;
