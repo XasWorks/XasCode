@@ -17,13 +17,13 @@ namespace Drone {
 
 #define DSHOT_ZERO_HIGH_NS	(2500)
 #define DSHOT_ONE_HIGH_NS 	(5000)
-#define DSHOT_TOTAL_NS		(6680)
+#define DSHOT_TOTAL_NS		(6666)
 
 DShot::DShot(rmt_channel_t channel, uint8_t channel_count, uint8_t gpio_start) :
 		BLDCHandler(channel_count, gpio_start),
-		currentTXPin(static_cast<gpio_num_t>(gpio_start)),
-		rmtChannel(channel), rmt_buffer(),
-		throttle_values(channel_count) {
+		rmtChannel_start(channel), rmt_buffer(),
+		throttle_values(channel_count),
+		direction_switch_counter(channel_count) {
 
 	esp_pm_lock_create(ESP_PM_APB_FREQ_MAX, 0, NULL, &powerLock);
 }
@@ -31,24 +31,14 @@ DShot::DShot(rmt_channel_t channel, uint8_t channel_count, uint8_t gpio_start) :
 DShot::~DShot() {
 	esp_pm_lock_delete(powerLock);
 
-	rmt_driver_uninstall(rmtChannel);
-	gpio_reset_pin(currentTXPin);
+	for(int i=0; i<num_channels; i++) {
+		rmt_driver_uninstall(static_cast<rmt_channel_t>(rmtChannel_start + i));
+		gpio_reset_pin(static_cast<gpio_num_t>(gpio_start + i));
+	}
 }
 
-void DShot::set_channel(uint8_t chNum) {
-	if(chNum >= num_channels)
-		return;
-
-	chNum += gpio_start;
-	if(chNum == currentTXPin)
-		return;
-
-	currentTXPin = static_cast<gpio_num_t>(chNum);
-	rmt_set_pin(rmtChannel, RMT_MODE_TX, currentTXPin);
-}
-
-void DShot::init() {
-	gpio_reset_pin(currentTXPin);
+void DShot::init_channel(int chNum) {
+	gpio_reset_pin(static_cast<gpio_num_t>(gpio_start + chNum));
 
 	rmt_config_t cfg = {};
 	rmt_tx_config_t tx_cfg = {};
@@ -65,28 +55,29 @@ void DShot::init() {
 	cfg.rmt_mode = RMT_MODE_TX;
 	cfg.clk_div  = DSHOT_PRESCALER;
 
-	cfg.gpio_num = currentTXPin;
+	cfg.gpio_num = static_cast<gpio_num_t>(gpio_start + chNum);
 	cfg.mem_block_num = 1;
-	cfg.channel = rmtChannel;
+	cfg.channel = static_cast<rmt_channel_t>(rmtChannel_start + chNum);
 
 	rmt_config(&cfg);
-	rmt_driver_install(rmtChannel, 0, 0);
+	rmt_driver_install(static_cast<rmt_channel_t>(rmtChannel_start + chNum), 0, 0);
+}
+
+void DShot::init() {
+	for(int i=0; i<num_channels; i++)
+		init_channel(i);
 }
 
 void DShot::send_cmd(uint8_t id, dshot_cmd_t cmd) {
-	set_channel(id);
-
 	uint8_t cmd_val = static_cast<uint8_t>(cmd);
 
 	if(cmd > 47)
 		return;
 
-	for(uint8_t i=0; i<10; i++) {
-		raw_send(cmd_val, true, true);
-	}
+	raw_send(id, cmd_val, cmd_val != 0, true);
 }
 
-void DShot::raw_send(uint16_t throttle, bool telemetry, bool wait) {
+void DShot::raw_send(int chNum, uint16_t throttle, bool telemetry, bool wait) {
 	rmt_item32_t low = {};
 	low.duration0 = (DSHOT_ZERO_HIGH_NS)*DSHOT_CLOCK_PER_NS;
 	low.level0    = 1;
@@ -98,12 +89,6 @@ void DShot::raw_send(uint16_t throttle, bool telemetry, bool wait) {
 	high.level0    = 1;
 	high.duration1 = (DSHOT_TOTAL_NS-DSHOT_ONE_HIGH_NS)*DSHOT_CLOCK_PER_NS;
 	high.level1	  = 0;
-
-	rmt_item32_t pause = {};
-	pause.duration0 = DSHOT_CLOCK_PER_NS * 1000000;
-	pause.duration1 = 1;
-	pause.level0 = 0;
-	pause.level1 = 0;
 
 #pragma pack(1)
 	union {
@@ -121,11 +106,12 @@ void DShot::raw_send(uint16_t throttle, bool telemetry, bool wait) {
 	data.throttle  = throttle;
 
 	uint8_t ch_data = 0;
+
 	for(uint8_t i=0; i<4; i++) {
 		ch_data ^= 0xF & (data.reg >> (i*4));
 	}
 
-	data.checksum = ch_data;
+	data.checksum = ch_data & 0xF;
 
 	uint16_t dRaw = data.reg;
 	for(uint8_t i=0; i<16; i++) {
@@ -134,10 +120,10 @@ void DShot::raw_send(uint16_t throttle, bool telemetry, bool wait) {
 		dRaw <<= 1;
 	}
 
-	rmt_buffer[16] = (pause);
+	rmt_buffer[16] = {};
 
 	esp_pm_lock_acquire(powerLock);
-	rmt_write_items(rmtChannel, rmt_buffer.data(), 17, true);
+	rmt_write_items(static_cast<rmt_channel_t>(rmtChannel_start + chNum), rmt_buffer.data(), 16, true);
 	esp_pm_lock_release(powerLock);
 }
 
@@ -149,20 +135,32 @@ void DShot::set_motor_power(uint8_t id, float value) {
 		value = 0.99;
 	if(value <= -0.99)
 		value = -0.99;
-	if(fabs(value) < 0.01)
-		value = 0;
 
-	if(value == throttle_values[id])
-		return;
+	if(fabs(value) < DSHOT_MIN_THROTTLE) {
+		value = DSHOT_MIN_THROTTLE * ((throttle_values[id] < 0) ? -1 : 1);
+	}
+
 	throttle_values[id] = value;
 
-	int16_t throttle = 1048 + 1000*value;
+	uint16_t throttle = 0;
 
-	raw_send(throttle, false, false);
+	if(value > 0)
+		throttle = 48 + 1000*value;
+	else
+		throttle = 1048 - 1000*value;
+
+	if(throttle < (48 + 2000*DSHOT_MIN_THROTTLE))
+		throttle = (48 + 2000*DSHOT_MIN_THROTTLE);
+	if(throttle > 2048)
+		throttle = 2048;
+
+	raw_send(id, throttle, false, false);
 }
 
 float DShot::get_motor_power(uint8_t id) {
 	if(id > num_channels)
+		return 0;
+	if(fabs(throttle_values[id]) <= (1.01 * DSHOT_MIN_THROTTLE))
 		return 0;
 
 	return throttle_values[id];

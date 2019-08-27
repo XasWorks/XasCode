@@ -19,22 +19,25 @@
 #include <array>
 #include <vector>
 
+#define DSHOT_MIN_THROTTLE 0.023
+
 namespace Xasin {
 namespace Drone {
 
 class DShot : public BLDCHandler {
 private:
-	gpio_num_t currentTXPin;
-	const rmt_channel_t rmtChannel;
+	const rmt_channel_t rmtChannel_start;
 
 	esp_pm_lock_handle_t powerLock;
 
 	std::array<rmt_item32_t, 20> rmt_buffer;
 
 	std::vector<float> throttle_values;
+	std::vector<int>   direction_switch_counter;
 
-	void raw_send(uint16_t throttle, bool telemetry = false, bool wait = false);
-	void set_channel(uint8_t chNum);
+	void raw_send(int id, uint16_t throttle, bool telemetry = false, bool wait = false);
+
+	void init_channel(int id);
 
 public:
 	enum dshot_cmd_t {
@@ -44,12 +47,13 @@ public:
 		BEACON2,
 		BEACON3,
 		BEACON4,
+		SPIN_3D		= 10,
+		SAVE_SETTING = 12,
 		SPIN_NORMAL = 20,
 		SPIN_REVERSE = 21,
-		SPIN_3D		= 100, // FIXME
 	};
 
-	DShot(rmt_channel_t channel, uint8_t channel_count, uint8_t gpio_start);
+	DShot(rmt_channel_t channel_start, uint8_t channel_count, uint8_t gpio_start);
 	~DShot();
 
 	void init();
