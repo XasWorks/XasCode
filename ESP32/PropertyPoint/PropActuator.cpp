@@ -64,7 +64,7 @@ void PropActuator::from_cJSON(const cJSON *obj) {
 
 	for(int i=0; i<4; i++) {
 		cJSON *propObj = cJSON_GetObjectItem(obj, valueNames[i].data());
-		if(cJSON_IsNumber(propObj));
+		if(cJSON_IsNumber(propObj))
 			on_prop_write(static_cast<actuator_prop_t>(i), propObj->valuedouble);
 	}
 }
