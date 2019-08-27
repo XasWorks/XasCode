@@ -54,7 +54,7 @@ void handler_wifi_checkup_task(void *eh) {
 	}
 }
 
-void Handler::start_wifi(const char *SSID, const char *PSWD, uint8_t psMode) {
+void Handler::start_wifi(const char *SSID, const char *PSWD, int psMode) {
 	if(!wifi_was_configured) {
 		wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 
@@ -73,14 +73,19 @@ void Handler::start_wifi(const char *SSID, const char *PSWD, uint8_t psMode) {
 	memcpy(sta_cfg->password, PSWD, strlen(PSWD));
 	memcpy(sta_cfg->ssid, SSID, strlen(SSID));
 
-	sta_cfg->scan_method = WIFI_FAST_SCAN;
+	//sta_cfg->scan_method = WIFI_FAST_SCAN;
+
 	if(psMode >= 2) {
 			esp_wifi_set_max_tx_power(50);
 			sta_cfg->listen_interval = 5;
 	}
 	ESP_ERROR_CHECK( esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_cfg) );
-	if(psMode >= 1)
+	if(psMode >= 1) {
 		ESP_ERROR_CHECK( esp_wifi_set_ps(WIFI_PS_MAX_MODEM));
+	}
+	else if(psMode == -1) {
+		ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE));
+	}
 
 	ESP_ERROR_CHECK( esp_wifi_start() );
 }
