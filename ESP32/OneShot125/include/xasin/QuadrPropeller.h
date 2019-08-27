@@ -37,7 +37,6 @@ public:
 	float get_newtons();
 	void  set_newtons(float num);
 
-	float get_max_newtons();
 	float get_scaling_factor(float pwr);
 };
 
