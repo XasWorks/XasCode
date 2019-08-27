@@ -10,6 +10,8 @@
 
 #include <vector>
 
+#include "cJSON.h"
+
 namespace Xasin {
 namespace PropP {
 
@@ -38,6 +40,9 @@ public:
 	uint32_t get_mod_revision();
 
 	const std::vector<BaseProperty *> get_modified_since(uint32_t mod_id);
+
+	cJSON *get_cJSON_since(uint32_t mod_id);
+	void   feed_cJSON(const cJSON *json);
 };
 
 } /* namespace PropP */

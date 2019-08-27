@@ -48,5 +48,37 @@ const std::vector<BaseProperty *> PropertyHandler::get_modified_since(uint32_t m
 	return outVec;
 }
 
+cJSON *PropertyHandler::get_cJSON_since(uint32_t mod_id) {
+	cJSON *data_obj = cJSON_CreateObject();
+
+	auto to_send_buffer = get_modified_since(mod_id);
+	if(to_send_buffer.size() > 0) {
+		cJSON *mod_obj = cJSON_CreateObject();
+
+		for(auto prop : to_send_buffer) {
+			cJSON_AddItemToObject(mod_obj, prop->name.data(), prop->get_cJSON(mod_id));
+		}
+
+		cJSON_AddItemToObject(data_obj, "modified", mod_obj);
+
+		this->advance_revision();
+	}
+	cJSON_AddNumberToObject(data_obj, "rev", mod_revision);
+
+	return data_obj;
+}
+
+void PropertyHandler::feed_cJSON(const cJSON *json) {
+	if(!cJSON_IsObject(json))
+		return;
+
+	for(auto prop : properties) {
+		cJSON *fetchedObj = cJSON_GetObjectItem(json, prop->name.data());
+		if(!cJSON_IsInvalid(fetchedObj)) {
+			prop->from_cJSON(fetchedObj);
+		}
+	}
+}
+
 } /* namespace PropP */
 } /* namespace Xasin */
