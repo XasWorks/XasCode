@@ -10,6 +10,8 @@
 
 #include "AudioHandler.h"
 
+#define TREKCORE_AUDIO_ENABLED
+
 namespace Xasin {
 namespace Trek {
 

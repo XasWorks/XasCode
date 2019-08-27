@@ -23,11 +23,11 @@ namespace Trek {
 using namespace Peripheral;
 
 typedef const AudioCassette snippet;
-#define SNIP_DEF(name) snippet s_ ## name = snippet(name, sizeof(name), 150)
+#define SNIP_DEF(name) snippet s_ ## name = snippet(name, sizeof(name), 10000)
 #define SNIP_DEF_VOL(name, volume) snippet s_ ## name = snippet(name, sizeof(name), volume)
 
 #ifdef TREKCORE_AUDIO_ENABLED
-snippet s_keypress = snippet(keypress, sizeof(keypress), 13);
+snippet s_keypress = snippet(keypress, sizeof(keypress), 2000);
 
 SNIP_DEF(input_ok);
 SNIP_DEF(input_error);
@@ -35,7 +35,7 @@ SNIP_DEF(input_requested);
 
 SNIP_DEF(program_busy);
 SNIP_DEF(program_failed);
-SNIP_DEF_VOL(program_finished, 170);
+SNIP_DEF_VOL(program_finished, 45000);
 
 SNIP_DEF(major_error);
 #endif
