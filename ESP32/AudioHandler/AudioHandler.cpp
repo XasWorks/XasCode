@@ -16,6 +16,11 @@
 #define LOG_LOCAL_LEVEL ESP_LOG_INFO
 #include "esp_log.h"
 
+#define U16_TOP int32_t(65536)
+#define U16_MAX	(U16_TOP -1)
+#define S16_TOP	int32_t(32768)
+#define S16_MAX (S16_TOP -1)
+
 namespace Xasin {
 namespace Peripheral {
 
@@ -44,7 +49,7 @@ SquareWave::SquareWave(uint16_t frequency, uint16_t volume, uint32_t duration) {
 	currentDiv = 0;
 
 	cVolume = 0;
-	this->volume = fmin(volume, 1);
+	this->volume = fmax(volume, 1);
 
 	this->ticks_left = (duration*44100) / 1000;
 }
@@ -59,12 +64,12 @@ int16_t SquareWave::get_chunk() {
 	else
 		volume = 0;
 
-	if(volume > (cVolume>>16))
-		cVolume += ((uint32_t(volume) << 16) - cVolume) >> 10;
+	if(volume > (cVolume / U16_TOP))
+		cVolume += ((int32_t(volume) * U16_TOP) - cVolume) / int32_t(1<<10);
 	else
-		cVolume -= (cVolume - (uint32_t(volume)<< 16)) >> 13;
+		cVolume -= (cVolume - (int32_t(volume) * U16_TOP)) / int32_t(1<<13);
 
-	return (currentDiv > (maxDiv/2) ? 1 : -1) * (cVolume >> 17);
+	return (currentDiv > (maxDiv/2) ? 1 : -1) * int32_t(cVolume / 131072);
 }
 
 bool SquareWave::is_done() {
@@ -76,7 +81,7 @@ SawtoothWave::SawtoothWave(uint16_t frequency, uint16_t volume, uint32_t duratio
 	currentDiv = 0;
 
 	cVolume = 0;
-	this->volume = fmin(volume, 1);
+	this->volume = fmax(volume, 1);
 
 	this->ticks_left = (duration*44100) / 1000;
 }
@@ -92,9 +97,9 @@ int16_t SawtoothWave::get_chunk() {
 		volume = 0;
 
 	if(volume > (cVolume>>16))
-		cVolume += ((uint32_t(volume) << 16) - cVolume) >> 10;
+		cVolume += ((int32_t(volume) * (1<<16)) - cVolume) / int32_t(1<<10);
 	else
-		cVolume -= (cVolume - (uint32_t(volume)<<16)) >> 13;
+		cVolume -= (cVolume - (int32_t(volume)<<16)) / int32_t(1<<13);
 
 	return ((currentDiv<<7) / maxDiv) * (cVolume >> 24);
 }
@@ -108,7 +113,7 @@ TriangleWave::TriangleWave(uint16_t frequency, uint16_t volume, uint32_t duratio
 	currentDiv = 0;
 
 	cVolume = 0;
-	this->volume = fmin(volume, 1);
+	this->volume = fmax(volume, 1);
 
 	this->ticks_left = (duration*44100) / 1000;
 }
