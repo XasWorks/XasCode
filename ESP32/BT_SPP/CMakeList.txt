@@ -1,0 +1,2 @@
+idf_component_register(SRCS "SPPData.cpp" "SPPServer.cpp" "SPPStream.cpp" "SPPValue.cpp"
+                       INCLUDE_DIRS "include")

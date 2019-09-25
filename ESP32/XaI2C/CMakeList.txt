@@ -1,0 +1,3 @@
+idf_component_register(SRCS 	"MasterAction.cpp" "MAX11613.cpp" "AS1115.cpp" "BME680.cpp"
+										"LSM6DS3.cpp"
+                       INCLUDE_DIRS "include")

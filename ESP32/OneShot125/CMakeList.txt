@@ -1,0 +1,2 @@
+idf_component_register(SRCS "BLDCHandler.cpp" "DShot.cpp" "OneShot125.cpp" "QuadrPropeller.cpp"
+                       INCLUDE_DIRS "include")
