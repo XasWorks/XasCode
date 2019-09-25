@@ -132,7 +132,7 @@ Color& Color::merge_overlay(const Color &top, uint8_t alpha) {
 	uint16_t total_alpha = (top.alpha * uint16_t(alpha));
 
 	for(uint8_t i=0; i<3; i++)
-		(&this->r)[i] = ((&top.r)[i]*total_alpha + (&this->r)[i]*(65025-total_alpha))/(65025);
+		(&this->r)[i] = (uint32_t((&top.r)[i])*total_alpha + uint32_t((&this->r)[i])*(65025-total_alpha))/(65025);
 
 	return *this;
 }
