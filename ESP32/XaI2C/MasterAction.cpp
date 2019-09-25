@@ -9,7 +9,7 @@
 
 namespace XaI2C {
 
-void MasterAction::init(gpio_num_t sda, gpio_num_t scl, i2c_port_t port) {
+void MasterAction::init(gpio_num_t sda, gpio_num_t scl, i2c_port_t port, uint32_t speed) {
 	i2c_config_t i2c_cfg = {};
 
 	i2c_cfg.mode = I2C_MODE_MASTER;
@@ -19,7 +19,7 @@ void MasterAction::init(gpio_num_t sda, gpio_num_t scl, i2c_port_t port) {
 	i2c_cfg.scl_pullup_en = GPIO_PULLUP_ENABLE;
 	i2c_cfg.sda_pullup_en = GPIO_PULLUP_ENABLE;
 
-	i2c_cfg.master.clk_speed = 400000;
+	i2c_cfg.master.clk_speed = speed;
 
 	i2c_param_config(port, &i2c_cfg);
 

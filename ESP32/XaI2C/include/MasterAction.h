@@ -23,7 +23,7 @@ private:
 	void send_start(bool rw);
 
 public:
-	static void init(gpio_num_t sda, gpio_num_t scl, i2c_port_t port = I2C_NUM_0);
+	static void init(gpio_num_t sda, gpio_num_t scl, i2c_port_t port = I2C_NUM_0, uint32_t speed = 400000);
 	static esp_err_t poke(uint8_t addr, i2c_port_t port = I2C_NUM_0);
 
 	MasterAction(uint8_t sla_addr);
