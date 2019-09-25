@@ -14,10 +14,10 @@ rmt_item32_t bits[2] = {};
 
 void init_onoff_bits() {
 	bits[0].duration0 = 0.35 * 80 + 2; bits[0].level0 = 1;
-	bits[0].duration1 = 100; bits[0].level1 = 0;
+	bits[0].duration1 = 1.05 * 80; bits[0].level1 = 0;
 
 	bits[1].duration0 = 0.9  * 80 + 2; bits[1].level0 = 1;
-	bits[1].duration1 = 100; bits[1].level1 = 0;
+	bits[1].duration1 = 0.5 * 80; bits[1].level1 = 0;
 }
 
 static void IRAM_ATTR u8_to_WS2812(const void* source, rmt_item32_t* destination,
