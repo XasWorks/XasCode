@@ -44,7 +44,7 @@ private:
 
 	bool isInitialized;
 
-	void send_cmd(uint8_t cmd, uint8_t val);
+	esp_err_t send_cmd(uint8_t cmd, uint8_t val);
 public:
 	const uint8_t addr;
 
