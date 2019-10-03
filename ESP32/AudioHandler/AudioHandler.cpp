@@ -65,9 +65,9 @@ int16_t SquareWave::get_chunk() {
 		volume = 0;
 
 	if(volume > (cVolume / U16_TOP))
-		cVolume += ((int32_t(volume) * U16_TOP) - cVolume) / int32_t(1<<10);
+		cVolume += ((int32_t(volume) * S16_TOP) - cVolume/2) / int32_t(1<<9);
 	else
-		cVolume -= (cVolume - (int32_t(volume) * U16_TOP)) / int32_t(1<<13);
+		cVolume -= (cVolume/2 - (int32_t(volume) * S16_TOP)) / int32_t(1<<12);
 
 	return (currentDiv > (maxDiv/2) ? 1 : -1) * int32_t(cVolume / 131072);
 }
@@ -96,10 +96,10 @@ int16_t SawtoothWave::get_chunk() {
 	else
 		volume = 0;
 
-	if(volume > (cVolume>>16))
-		cVolume += ((int32_t(volume) * (1<<16)) - cVolume) / int32_t(1<<10);
+	if(volume > (cVolume / U16_TOP))
+		cVolume += ((int32_t(volume) * S16_TOP) - cVolume/2) / int32_t(1<<9);
 	else
-		cVolume -= (cVolume - (int32_t(volume)<<16)) / int32_t(1<<13);
+		cVolume -= (cVolume/2 - (int32_t(volume) * S16_TOP)) / int32_t(1<<12);
 
 	return ((currentDiv<<7) / maxDiv) * (cVolume >> 24);
 }
@@ -128,10 +128,10 @@ int16_t TriangleWave::get_chunk() {
 	else
 		volume = 0;
 
-	if(volume > (cVolume>>16))
-		cVolume += ((uint32_t(volume) << 16) - cVolume) >> 10;
+	if(volume > (cVolume / U16_TOP))
+		cVolume += ((int32_t(volume) * S16_TOP) - cVolume/2) / int32_t(1<<9);
 	else
-		cVolume -= (cVolume - (uint32_t(volume)<<16)) >> 15;
+		cVolume -= (cVolume/2 - (int32_t(volume) * S16_TOP)) / int32_t(1<<12);
 
 	uint16_t bufSlope = ((currentDiv<<16) / maxDiv);
 
