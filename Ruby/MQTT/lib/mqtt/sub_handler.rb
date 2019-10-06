@@ -68,7 +68,7 @@ class SubHandler
 			tMatch = SubHandler.getTopicMatch(topic, h.topic_split);
 			if tMatch
 				begin
-					Timeout.timeout(10) {
+					Timeout.timeout(5) {
 						h.offer(tMatch, data)
 					}
 				rescue Timeout::Error
@@ -265,13 +265,13 @@ class SubHandler
 		if(@mqttWasStartedClean)
 			print "Logging out of mqtt server... "
 			begin
-			Timeout.timeout(10) {
+			Timeout.timeout(3) {
 				begin
 					@mqtt.clean_session = true;
 					@mqtt.disconnect();
 					@mqtt.connect();
 				rescue MQTT::Exception, SocketError, SystemCallError
-					sleep 1
+					sleep 0.3
 					retry;
 				end
 			}
@@ -287,7 +287,7 @@ class SubHandler
 	def mqtt_resub_thread
 		while(true)
 			begin
-				Timeout.timeout(10) {
+				Timeout.timeout(4) {
 					@mqtt.connect()
 				}
 				@conChangeMutex.synchronize {
@@ -337,8 +337,8 @@ class SubHandler
 		else
 			print "Finishing sending of MQTT messages ... "
 			begin
-				Timeout.timeout(10) {
 					until @publishQueue.empty? do
+				Timeout.timeout(4) {
 						sleep 0.05;
 					end
 				}
@@ -393,13 +393,6 @@ class SubHandler
 			@listenerThread.kill();
 			ensure_clean_exit();
 		}
-
-		begin
-		Timeout.timeout(10) {
-			until(@connected) do sleep 0.1; end
-		}
-		rescue Timeout::Error
-		end
 	end
 end
 end
