@@ -3,6 +3,8 @@ require 'timeout'
 require 'mqtt'
 require 'json'
 
+require 'colorize'
+
 require_relative 'subscription_classes.rb'
 
 # @author Xasin
@@ -72,7 +74,7 @@ class SubHandler
 						h.offer(tMatch, data)
 					}
 				rescue Timeout::Error
-					STDERR.puts "MQTT Callback Timeout #{h}"
+					STDERR.puts "MQTT: Callback Timeout #{h}".red
 				end
 				topicHasReceivers = true;
 			end
@@ -236,9 +238,11 @@ class SubHandler
 				STDERR.puts "Publish to #{topic} dropped!"
 				return;
 			end
+		if(qos > 1)
+			qos = 1
+			STDERR.puts("MQTT push with QOS > 1 was attempted, this is not supported yet!".yellow) unless $MQTTPubQOSWarned
 
-			sleep 0.05;
-			retry
+			$MQTTPubQOSWarned = true;
 		end
 	end
 	alias publishTo publish_to
@@ -285,11 +289,13 @@ class SubHandler
 	private :ensure_clean_exit
 
 	def mqtt_resub_thread
-		while(true)
+		loop do
 			begin
+				STDERR.puts("MQTT: #{@mqtt.host} trying reconnect...".yellow)
 				Timeout.timeout(4) {
 					@mqtt.connect()
 				}
+				STDERR.puts("MQTT: #{@mqtt.host} connected!".green)
 				@conChangeMutex.synchronize {
 					@connected = true;
 				}
@@ -309,10 +315,11 @@ class SubHandler
 					call_interested(topic, message);
 				end
 			rescue MQTT::Exception, Timeout::Error, SocketError, SystemCallError
+				STDERR.puts("MQTT: #{@mqtt.host} disconnected!".red) if @connected
 				@connected = false;
 
 				@conChangeMutex.unlock if @conChangeMutex.owned?
-				@mqtt.clean_session=false;
+				@mqtt.clean_session = false;
 				sleep 2
 			end
 		end
