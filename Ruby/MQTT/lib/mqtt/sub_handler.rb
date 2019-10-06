@@ -409,6 +409,15 @@ class SubHandler
 		end
 		@listenerThread.abort_on_exception = true;
 
+		begin
+			Timeout.timeout(5) {
+				until(@connected)
+					sleep 0.1;
+				end
+			}
+		rescue Timeout::Error
+			STDERR.puts "MQTT: #{@mqtt.host} did not connect!".red
+		end
 
 		@publisherThread = Thread.new do
 			mqtt_push_thread();
