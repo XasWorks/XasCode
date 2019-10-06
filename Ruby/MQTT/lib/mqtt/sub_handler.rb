@@ -271,6 +271,45 @@ class SubHandler
 	end
 	private :ensure_clean_exit
 
+	def mqtt_push_thread
+		loop do
+			@packetQueueMutex.synchronize {
+				@publisherThreadWaiting = true;
+			}
+			Thread.stop();
+			@packetQueueMutex.synchronize {
+				@publisherThreadWaiting = false;
+			}
+
+			next unless @connected
+
+			begin
+				until @packetQueue.empty? do
+					h = nil;
+					@packetQueueMutex.synchronize {
+						h = @packetQueue[0];
+					}
+					Timeout.timeout(3) {
+						if(h[:type] == :sub)
+							@mqtt.subscribe(h[:topic] => h[:qos]);
+						elsif(h[:type] == :pub)
+							@mqtt.publish(h[:topic], h[:data], h[:retain], h[:qos]);
+						end
+					}
+					@packetQueueMutex.synchronize {
+						@packetQueue.shift();
+					}
+				end
+			rescue MQTT::Exception, SocketError, SystemCallError, Timeout::Error => e
+					STDERR.puts("MQTT: #{@mqtt.host} push error, disconnecting!".red) if @connected
+					STDERR.puts(e.inspect);
+
+					sleep 1
+			end
+		end
+	end
+	private :mqtt_push_thread
+
 	def mqtt_resub_thread
 		loop do
 			begin
@@ -369,6 +408,12 @@ class SubHandler
 			mqtt_resub_thread();
 		end
 		@listenerThread.abort_on_exception = true;
+
+
+		@publisherThread = Thread.new do
+			mqtt_push_thread();
+		end
+		@publisherThread.abort_on_exception = true;
 
 		at_exit {
 			flush_pubqueue();
