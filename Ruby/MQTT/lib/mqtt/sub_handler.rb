@@ -84,21 +84,18 @@ class SubHandler
 	end
 	private :call_interested
 
+	def queue_packet(data)
+		@packetQueueMutex.synchronize {
+			@packetQueue << data;
+			@packetQueue.shift if @packetQueue.size > 100
+
+			@publisherThread.run() if @publisherThreadWaiting;
+		}
+	end
+
 	# Handle sending a subscription-message to the server
 	def raw_subscribe_to(topic, qos: 1)
-		begin
-			@conChangeMutex.lock
-			if not @connected
-				@subscribeQueue << [topic, qos];
-				@conChangeMutex.unlock
-			else
-				@conChangeMutex.unlock
-				@mqtt.subscribe(topic => qos);
-			end
-		rescue MQTT::Exception, SocketError, SystemCallError
-			sleep 0.05;
-			retry
-		end
+		queue_packet({topic: topic, qos: qos, type: :sub});
 	end
 	private :raw_subscribe_to
 
@@ -222,28 +219,14 @@ class SubHandler
 			data = data.to_json
 		end
 
-		retryCount = 0;
-		begin
-			@conChangeMutex.lock
-			if not @connected
-				@publishQueue << {topic: topic, data: data, qos: qos, retain: retain} unless qos == 0
-				@conChangeMutex.unlock
-			else
-				@conChangeMutex.unlock
-				@mqtt.publish(topic, data, retain);
-			end
-		rescue MQTT::Exception, SocketError, SystemCallError
-			retryCount += 1;
-			if(qos == 0 && retryCount == 3)
-				STDERR.puts "Publish to #{topic} dropped!"
-				return;
-			end
 		if(qos > 1)
 			qos = 1
 			STDERR.puts("MQTT push with QOS > 1 was attempted, this is not supported yet!".yellow) unless $MQTTPubQOSWarned
 
 			$MQTTPubQOSWarned = true;
 		end
+
+		queue_packet({type: :pub, topic: topic, data: data, qos: qos, retain: retain});
 	end
 	alias publishTo publish_to
 
@@ -299,18 +282,11 @@ class SubHandler
 				@conChangeMutex.synchronize {
 					@connected = true;
 				}
-				until @subscribeQueue.empty? do
-					h = @subscribeQueue[-1];
-					@mqtt.subscribe(h[0] => h[1]);
-					@subscribeQueue.pop;
-					sleep 0.01
-				end
-				until @publishQueue.empty? do
-					h = @publishQueue[-1];
-					@mqtt.publish(h[:topic], h[:data], h[:retain]);
-					@publishQueue.pop;
-					sleep 0.01
-				end
+
+				@packetQueueMutex.synchronize {
+					@publisherThread.run() if (@publisherThread && @publisherThreadWaiting)
+				}
+
 				@mqtt.get do |topic, message|
 					call_interested(topic, message);
 				end
@@ -338,14 +314,11 @@ class SubHandler
 		Thread.stop();
 	end
 	def flush_pubqueue()
-		puts "\n";
-		if @publishQueue.empty?
-			puts "MQTT buffer empty, continuing."
-		else
+		unless @packetQueue.empty?
 			print "Finishing sending of MQTT messages ... "
 			begin
-					until @publishQueue.empty? do
 				Timeout.timeout(4) {
+					until @packetQueue.empty? do
 						sleep 0.05;
 					end
 				}
@@ -383,8 +356,10 @@ class SubHandler
 
 		@mqtt.client_id ||= MQTT::Client.generate_client_id("MQTT_Sub_", 8);
 
-		@publishQueue 		= Array.new();
-		@subscribeQueue 	= Array.new();
+		@packetQueue = Array.new();
+		@packetQueueMutex = Mutex.new();
+		@publisherThreadWaiting = false;
+
 		@subscribedTopics 	= Hash.new();
 
 		@trackerHash = Hash.new();
@@ -397,6 +372,7 @@ class SubHandler
 
 		at_exit {
 			flush_pubqueue();
+			@connected = false;
 			@listenerThread.kill();
 			ensure_clean_exit();
 		}
