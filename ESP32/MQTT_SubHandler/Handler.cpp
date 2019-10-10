@@ -195,7 +195,7 @@ void Handler::start(const std::string uri, const std::string status_topic) {
 		config.lwt_qos = 1;
 		config.lwt_msg_len = 0;
 
-		config.keepalive = 10;
+		config.keepalive = 5;
 
 		this->status_topic = status_topic;
 	}
