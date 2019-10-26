@@ -2,13 +2,14 @@
 require_relative '../lib/mqtt/sub_testing.rb'
 require 'minitest/autorun'
 
+=begin
+
 class Test_SubHandlerTest < Minitest::Test
 	def setup()
-		@mqtt = MQTT::Testing::SubHandler.new();
+		@mqtt = MQTT::SubHandler.new('localhost');
 	end
-
 	def teardown()
-		@mqtt.full_reset();
+		@mqtt.destroy!();
 	end
 
 	def test_subscribe_unsubscribe()
@@ -81,3 +82,5 @@ class Test_SubHandlerTest < Minitest::Test
 		assert_equal({"One" => "Test1!", "Two" => "Test2!"}, caughtData)
 	end
 end
+
+=end
