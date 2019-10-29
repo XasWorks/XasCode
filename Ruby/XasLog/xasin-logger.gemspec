@@ -11,5 +11,5 @@ Gem::Specification.new do |s|
 	'https://github.com/XasWorks/XasCode/tree/master/Ruby/XasLog'
 	s.license     = 'GPL-3.0'
 
-	s.add_runtime_dependency "colorize"
+	s.add_runtime_dependency "colorize", "~> 0.8"
 end
