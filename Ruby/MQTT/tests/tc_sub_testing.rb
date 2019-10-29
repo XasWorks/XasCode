@@ -2,6 +2,8 @@
 require_relative '../lib/mqtt/sub_testing.rb'
 require 'minitest/autorun'
 
+Xasin::XLogger.loggers = [];
+
 =begin
 
 class Test_SubHandlerTest < Minitest::Test

@@ -16,14 +16,14 @@ class Test_SubHandler < Minitest::Test
 		end
 		@mqtt.publish_to "Test/Wild/Card", "Data!"
 
-		sleep 0.5
+		sleep 2
 
 		assert_equal ["Wild"], @tList
 		@tList = nil
 
 		@mqtt.publish_to "Test/Wild/Card/Game", "Data!"
 
-		sleep 0.5
+		sleep 2
 
 		assert_nil @tList
 
@@ -33,7 +33,7 @@ class Test_SubHandler < Minitest::Test
 
 		@mqtt.publish_to "Test2/Wild/Card", "More data!"
 
-		sleep 0.5
+		sleep 2
 
 		assert_equal ["Wild", "Card"], @tList
 	end
@@ -48,19 +48,19 @@ class Test_SubHandler < Minitest::Test
 		assert_nil @oldData
 
 		@mqtt.publish_to "TestChannel", "TestData"
-		sleep 0.5
+		sleep 2
 
 		assert_nil @oldData
 		assert_equal "TestData", @newData
 
 		@newData = nil;
 		@mqtt.publish_to "TestChannel", "TestData"
-		sleep 0.5
+		sleep 2
 
 		assert_nil @newData
 
 		@mqtt.publish_to "TestChannel", "NewData"
-		sleep 0.5
+		sleep 2
 
 		assert_equal @newData, "NewData"
 		assert_equal @oldData, "TestData"
@@ -76,7 +76,7 @@ class Test_SubHandler < Minitest::Test
 			@oldData = oldData;
 		end
 
-		sleep 0.5
+		sleep 2
 
 		assert_equal "MoreNewData!", @newData;
 		assert_nil @oldData;
@@ -96,7 +96,7 @@ class Test_SubHandler < Minitest::Test
 		sleep 0.1
 
 		@mqtt.publish_to "SomeDataHere", "FreshData";
-		sleep 0.5
+		sleep 2
 
 		waitThread.join
 		assert_equal "FreshData", @data
