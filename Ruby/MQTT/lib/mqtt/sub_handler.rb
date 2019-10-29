@@ -116,7 +116,7 @@ class SubHandler < BaseHandler
 
 		if(qos > 1)
 			qos = 1
-			@logger.logw("push with QOS > 1 was attempted, this is not supported yet!") unless $MQTTPubQOSWarned
+			x_logw("push with QOS > 1 was attempted, this is not supported yet!") unless $MQTTPubQOSWarned
 			$MQTTPubQOSWarned = true;
 		end
 

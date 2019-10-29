@@ -3,11 +3,11 @@ require 'timeout'
 require 'mqtt'
 require 'colorize'
 
-require_relative 'logger.rb'
+require 'xasin_logger'
 
 module MQTT
 	class BaseHandler
-		attr_reader :logger
+		include XasLogger::Mix
 
 		# Split a Topic into a Topic-Array
 		# @param topicName [String] The string topic which to split
@@ -62,10 +62,10 @@ module MQTT
 							h.offer(tMatch, data)
 						}
 					rescue Timeout::Error
-						@logger.logf("Timeout on callback #{h}");
+						x_logf("Timeout on callback #{h}");
 					rescue => e
-						@logger.logf("Uncaught error on #{h}");
-						@logger.logf(e);
+						x_logf("Uncaught error on #{h}");
+						x_logf(e);
 					end
 					topicHasReceivers = true;
 				end
@@ -78,11 +78,11 @@ module MQTT
 		def queue_packet(data)
 			return if @destroying
 
-			@logger.logd("Queueing packet #{data.to_json}");
+			x_logd("Queueing packet #{data.to_json}");
 			@packetQueueMutex.synchronize {
 				@packetQueue << data;
 				if(@packetQueue.size == 999)
-					@logger.loge("Packet queue congested, dropping packets!");
+					x_loge("Packet queue congested, dropping packets!");
 				end
 				if(@packetQueue.size > 1000)
 					@packetQueue.shift
@@ -141,7 +141,7 @@ module MQTT
 
 		def ensure_clean_exit()
 			if(@mqttWasStartedClean)
-				@logger.logi("Logging out.")
+				x_logi("Logging out.")
 				begin
 				Timeout.timeout(3) {
 					begin
@@ -154,9 +154,9 @@ module MQTT
 					end
 				}
 				rescue  Timeout::Error
-					@logger.loge("Timed out, aborting!");
+					x_loge("Timed out, aborting!");
 				else
-					@logger.logi("Done");
+					x_logi("Done");
 				end
 			end
 		end
@@ -167,9 +167,9 @@ module MQTT
 				@packetQueueMutex.synchronize {
 					@publisherThreadWaiting = true;
 				}
-				@logger.logd("Push thread stopping")
+				x_logd("Push thread stopping")
 				sleep 1
-				@logger.logd("Push thread active")
+				x_logd("Push thread active")
 				@packetQueueMutex.synchronize {
 					@publisherThreadWaiting = false;
 				}
@@ -195,14 +195,14 @@ module MQTT
 						}
 					end
 				rescue MQTT::Exception, SocketError, SystemCallError, Timeout::Error => e
-						@logger.loge("Push error!");
-						@logger.loge(e.inspet);
+						x_loge("Push error!");
+						x_loge(e.inspet);
 
 						sleep 0.5
 				end
 			end
 
-			@logger.logd("Push thread exited!");
+			x_logd("Push thread exited!");
 		end
 		private :mqtt_push_thread
 
@@ -211,11 +211,11 @@ module MQTT
 				begin
 					return if @destroying
 
-					@logger.logw("Trying to reconnect...");
+					x_logw("Trying to reconnect...");
 					Timeout.timeout(4) {
 						@mqtt.connect()
 					}
-					@logger.logi("Connected!");
+					x_logi("Connected!");
 					@conChangeMutex.synchronize {
 						@connected = true;
 					}
@@ -224,12 +224,12 @@ module MQTT
 						@publisherThread.run() if (@publisherThread && @publisherThreadWaiting)
 					}
 
-					@logger.logd("Sub thread reading...");
+					x_logd("Sub thread reading...");
 					@mqtt.get do |topic, message|
 						call_interested(topic, message);
 					end
 				rescue MQTT::Exception, Timeout::Error, SocketError, SystemCallError
-					@logger.loge("Disconnected!") if @connected
+					x_loge("Disconnected!") if @connected
 					@connected = false;
 
 					@conChangeMutex.unlock if @conChangeMutex.owned?
@@ -238,7 +238,7 @@ module MQTT
 				end
 			end
 
-			@logger.logd("Sub thread exited");
+			x_logd("Sub thread exited");
 		end
 		private :mqtt_resub_thread
 
@@ -259,7 +259,7 @@ module MQTT
 			@destroying = true;
 
 			unless @packetQueue.empty?
-				@logger.logd "Finishing sending of MQTT messages ... "
+				x_logd "Finishing sending of MQTT messages ... "
 				@publisherThread.run() if @publisherThreadWaiting
 				begin
 					Timeout.timeout(4) {
@@ -268,9 +268,9 @@ module MQTT
 						end
 					}
 				rescue Timeout::Error
-					@logger.logw "Publishes did not complete";
+					x_logw "Publishes did not complete";
 				else
-					@logger.logd "Publish clean finished"
+					x_logd "Publish clean finished"
 				end
 			end
 
@@ -280,9 +280,9 @@ module MQTT
 
 			@mqtt.disconnect() if @connected
 
-			@logger.logi("Fully disconnected!");
-
 			ensure_clean_exit();
+
+			x_logi("Fully disconnected!");
 		end
 
 		# Initialize a new MQTT::SubHandler
@@ -304,10 +304,8 @@ module MQTT
 				@mqtt = mqttClient;
 			end
 
-			@logger = logger;
-			@logger ||= Xasin::XLogger.new("MQTT #{@mqtt.host}", logger);
-
-			@logger.level = 'INFO';
+			init_x_log("MQTT #{@mqtt.host}", logger);
+			self.log_level = Logger::INFO;
 
 			@conChangeMutex = Mutex.new();
 			@connected 		= false;
@@ -336,7 +334,7 @@ module MQTT
 					end
 				}
 			rescue Timeout::Error
-				@logger.loge("Broker did not connect!");
+				x_loge("Broker did not connect!");
 			end
 
 			@publisherThread = Thread.new do

@@ -20,7 +20,7 @@ Gem::Specification.new do |s|
 
 	s.add_runtime_dependency "mqtt", ">= 0.5.0"
 	s.add_runtime_dependency "json"
-	s.add_runtime_dependency "colorize"
+	s.add_runtime_dependency "xasin-logger" "~> 0.1"
 
 	s.add_development_dependency "minitest"
 	s.add_development_dependency "guard"
