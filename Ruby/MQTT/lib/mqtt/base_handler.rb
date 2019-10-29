@@ -62,10 +62,10 @@ module MQTT
 							h.offer(tMatch, data)
 						}
 					rescue Timeout::Error
-						x_logf("Timeout on callback #{h}");
+						x_loge("Timeout on callback #{h}");
 					rescue => e
 						x_logf("Uncaught error on #{h}");
-						x_logf(e);
+						x_logf(e.inspect);
 					end
 					topicHasReceivers = true;
 				end
@@ -218,6 +218,7 @@ module MQTT
 					x_logi("Connected!");
 					@conChangeMutex.synchronize {
 						@connected = true;
+						@reconnectCount = 0;
 					}
 
 					@packetQueueMutex.synchronize {
@@ -231,10 +232,11 @@ module MQTT
 				rescue MQTT::Exception, Timeout::Error, SocketError, SystemCallError
 					x_loge("Disconnected!") if @connected
 					@connected = false;
+					@reconnectCount += 1;
 
 					@conChangeMutex.unlock if @conChangeMutex.owned?
 					@mqtt.clean_session = false;
-					sleep 2
+					sleep [0.1, 0.5, 1, 1, 5, 5, 5, 10, 10, 10, 10][@reconnectCount] || 30;
 				end
 			end
 
@@ -256,7 +258,7 @@ module MQTT
 						end
 					}
 				rescue Timeout::Error
-					x_logw "Publishes did not complete";
+					x_logw "Not all messages were published";
 				else
 					x_logd "Publish clean finished"
 				end
@@ -296,7 +298,8 @@ module MQTT
 			self.log_level = Logger::INFO;
 
 			@conChangeMutex = Mutex.new();
-			@connected 		= false;
+			@connected 		 = false;
+			@reconnectCount = 0;
 
 			@mqtt.client_id ||= MQTT::Client.generate_client_id("MQTT_Sub_", 8);
 
