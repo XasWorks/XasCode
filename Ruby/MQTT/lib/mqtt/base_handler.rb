@@ -82,7 +82,7 @@ module MQTT
 			@packetQueueMutex.synchronize {
 				@packetQueue << data;
 				if(@packetQueue.size == 999)
-					x_loge("Packet queue congested, dropping packets!");
+					x_logf("Packet queue congested, dropping packets!");
 				end
 				if(@packetQueue.size > 1000)
 					@packetQueue.shift
@@ -241,18 +241,6 @@ module MQTT
 			x_logd("Sub thread exited");
 		end
 		private :mqtt_resub_thread
-
-		# Pause the main thread and wait for messages.
-		# This is mainly useful when the code has set everything up, but doesn't just want to end.
-		# "INT" is trapped, ensuring a smooth exit on Ctrl-C
-		def lockAndListen()
-			Signal.trap("INT") {
-				exit 0
-			}
-
-			puts "Main thread paused."
-			Thread.stop();
-		end
 
 		def destroy!()
 			return if @destroying

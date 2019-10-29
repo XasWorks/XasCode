@@ -124,6 +124,19 @@ class SubHandler < BaseHandler
 	end
 	alias publishTo publish_to
 
+	# Pause the main thread and wait for messages.
+	# This is mainly useful when the code has set everything up, but doesn't just want to end.
+	# "INT" is trapped, ensuring a smooth exit on Ctrl-C
+	def lockAndListen()
+		Signal.trap("INT") {
+			exit 0
+		}
+
+		x_logi("Main thread paused.")
+		Thread.stop();
+	end
+	alias lock_and_listen lockAndListen
+
 	def initialize(mqttClient, jsonify: true)
 		super(mqttClient);
 
