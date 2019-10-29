@@ -5,11 +5,10 @@ require 'json'
 require_relative 'subscription_classes.rb'
 require_relative 'base_handler.rb'
 
-
 # @author Xasin
 module MQTT
 # A shortcut-function to quickly connect to the public Eclipse MQTT Broker.
-# @return [MQTT::SubHandler] Sub-Handler connected to `iot.eclipse.org`
+# @return [MQTT::SubHandler] Sub-Handler connected to `mqtt.eclipse.org`
 def self.Eclipse()
 	@EclipseMQTT ||= SubHandler.new('mqtt.eclipse.org');
 	return @EclipseMQTT;
@@ -117,8 +116,7 @@ class SubHandler < BaseHandler
 
 		if(qos > 1)
 			qos = 1
-			STDERR.puts("MQTT push with QOS > 1 was attempted, this is not supported yet!".yellow) unless $MQTTPubQOSWarned
-
+			@logger.logw("push with QOS > 1 was attempted, this is not supported yet!") unless $MQTTPubQOSWarned
 			$MQTTPubQOSWarned = true;
 		end
 
