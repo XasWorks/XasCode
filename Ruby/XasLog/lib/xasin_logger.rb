@@ -53,7 +53,7 @@ module XasLogger
 	end
 
 	module Mix
-		def init_x_log(tag, logger)
+		def init_x_log(tag, logger = nil)
 			@tag = tag;
 			@log_level = ::Logger::INFO;
 
