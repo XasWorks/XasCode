@@ -196,7 +196,7 @@ module MQTT
 					end
 				rescue MQTT::Exception, SocketError, SystemCallError, Timeout::Error => e
 						x_loge("Push error!");
-						x_loge(e.inspet);
+						x_loge(e.inspect);
 
 						sleep 0.5
 				end
