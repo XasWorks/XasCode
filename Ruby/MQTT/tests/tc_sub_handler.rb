@@ -101,4 +101,25 @@ class Test_SubHandler < Minitest::Test
 		waitThread.join
 		assert_equal "FreshData", @data
 	end
+
+	def test_binary_data
+		unpacketData = [1, 2, 3];
+		packedData = unpacketData.pack("L3");
+
+		receivedRaw = nil;
+		receivedUnpacked = nil;
+		@mqtt.subscribe_to "Test/BinaryData" do |data|
+			receivedRaw = data;
+			receivedUnpacked = receivedRaw.unpack("L3");
+		end
+
+		sleep 0.3
+
+		@mqtt.publish_to "Test/BinaryData", packedData;
+
+		sleep 0.8
+
+		assert_equal unpacketData, receivedUnpacked;
+		assert_equal packedData, receivedRaw;
+	end
 end

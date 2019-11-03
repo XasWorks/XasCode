@@ -78,7 +78,6 @@ module MQTT
 		def queue_packet(data)
 			return if @destroying
 
-			x_logd("Queueing packet #{data.to_json}");
 			@packetQueueMutex.synchronize {
 				@packetQueue << data;
 				if(@packetQueue.size == 999)
