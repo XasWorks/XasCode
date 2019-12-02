@@ -70,12 +70,12 @@ Layer& Layer::merge_overlay(const Layer &top, int offset, bool wrap) {
 	int from = offset;
 	int to   = offset + top.length();
 
-//	if(!wrap) {
-//		if(from < 0)
-//			from = 0;
-//		if(to > length())
-//			to = length();
-//	}
+	if(!wrap) {
+		if(from < 0)
+			from = 0;
+		if(to > length())
+			to = length();
+	}
 
 	for(int i=from; i<to; i++) {
 		this->get(i).merge_overlay(top[i-offset], top.alpha);
@@ -131,6 +131,23 @@ Layer& Layer::merge_add(const Layer &top, int offset, bool wrap) {
 
 	for(int i=from; i<to; i++) {
 		this->get(i).merge_add(top[i-offset], top.alpha);
+	}
+
+	return *this;
+}
+Layer& Layer::merge_transition(const Layer &top, int offset, bool wrap) {
+	int from = offset;
+	int to   = offset + top.length();
+
+	if(!wrap) {
+		if(from < 0)
+			from = 0;
+		if(to > length())
+			to = length();
+	}
+
+	for(int i=from; i<to; i++) {
+		this->get(i).merge_transition(top[i-offset], top.alpha * 255);
 	}
 
 	return *this;

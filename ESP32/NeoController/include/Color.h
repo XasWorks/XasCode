@@ -70,6 +70,8 @@ public:
 	Color& merge_multiply(uint8_t scalar);
 	Color& merge_add(const Color &top, uint8_t alpha = 255);
 
+	Color& merge_transition(const Color &top, uint16_t alpha);
+
 	Color calculate_overlay(const Color &top, uint8_t alpha = 255) const;
 	Color calculate_multiply(const Color &top, uint8_t alpha = 255) const;
 	Color calculate_multiply(uint8_t scalar) const;
