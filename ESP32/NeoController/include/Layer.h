@@ -36,6 +36,7 @@ namespace Peripheral {
 		Layer& merge_multiply(const Layer &top, int offset = 0, bool wrap = false);
 		Layer& merge_multiply(const std::vector<uint8_t> &scalars, int offset=0, bool wrap = false);
 		Layer& merge_add(const Layer &top, int offset = 0, bool wrap = false);
+		Layer& merge_transition(const Layer &top, int offset = 0, bool wrap = false);
 
 		Layer& alpha_set(const std::vector<uint8_t> &newAlphas);
 

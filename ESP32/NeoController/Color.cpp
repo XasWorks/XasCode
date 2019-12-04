@@ -128,25 +128,39 @@ Color Color::operator *(uint8_t brightness) {
 	return oColor;
 }
 
+#define MERGE_OVERLAY(code) (this->code) = (uint32_t(this->code)*own_transmission_p + uint32_t(top.code)*(65025-own_transmission_p))/(65025)
 Color& Color::merge_overlay(const Color &top, uint8_t alpha) {
-	uint16_t total_alpha = (top.alpha * uint16_t(alpha));
+	uint16_t total_alpha_top = (top.alpha * uint16_t(alpha)) / 255;
 
-	for(uint8_t i=0; i<3; i++)
-		(&this->r)[i] = (uint32_t((&top.r)[i])*total_alpha + uint32_t((&this->r)[i])*(65025-total_alpha))/(65025);
+	uint32_t own_transmission = this->alpha * (255 - total_alpha_top);
+	uint32_t own_transmission_p = 0;
+	if(own_transmission != 0)
+		own_transmission_p = (65025 * own_transmission) / (own_transmission + 255*total_alpha_top);
+
+	MERGE_OVERLAY(r);
+	MERGE_OVERLAY(g);
+	MERGE_OVERLAY(b);
+
+	this->alpha = (65025 - (255 - this->alpha)*(255 - total_alpha_top)) / 255;
 
 	return *this;
 }
+#define MERGE_MULT_COLOR(code) this->code = (this->code * (65025-total_alpha + (total_alpha*((top.code))/65025)))/65025;
+
 Color& Color::merge_multiply(const Color &top, uint8_t alpha) {
 	uint32_t total_alpha = (top.alpha * uint16_t(alpha));
 
-	for(uint8_t i=0; i<3; i++)
-		(&r)[i] = ((&r)[i] * (65025-total_alpha + (total_alpha*((&top.r)[i])/65025)))/65025;
+	MERGE_MULT_COLOR(r);
+	MERGE_MULT_COLOR(g);
+	MERGE_MULT_COLOR(b);
 
 	return *this;
 }
+#define MERGE_MULT_SCALAR(code) (code) = ((code)*uint32_t(scalar)) / 255;
 Color& Color::merge_multiply(uint8_t scalar) {
-	for(uint8_t i=0; i<3; i++)
-		(&r)[i] = ((&r)[i]*uint32_t(scalar)) / 255;
+	MERGE_MULT_SCALAR(r);
+	MERGE_MULT_SCALAR(g);
+	MERGE_MULT_SCALAR(b);
 
 	return *this;
 }
@@ -165,6 +179,16 @@ Color& Color::merge_add(const Color &top, uint8_t alpha) {
 	if(alphaB > 255)
 		alphaB = 255;
 	this->alpha = alphaB;
+
+	return *this;
+}
+
+#define T_MERGE(code) (this->code) = (uint32_t(top.code)*alpha + uint32_t(this->code)*(65025-alpha))/(65025);
+Color& Color::merge_transition(const Color &top, uint16_t alpha) {
+	T_MERGE(r);
+	T_MERGE(g);
+	T_MERGE(b);
+	T_MERGE(alpha);
 
 	return *this;
 }

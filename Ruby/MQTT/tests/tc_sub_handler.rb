@@ -3,34 +3,37 @@ require_relative 'tc_sub_testing.rb'
 
 class Test_SubHandler < Minitest::Test
 	def setup()
-		@mqtt = MQTT::Testing::SubHandler.new(test_handler: self);
+		@mqtt = MQTT::SubHandler.new('localhost');
 	end
 	def teardown()
-		@mqtt.full_reset();
+		@mqtt.destroy!();
 	end
+
 
 	def test_wildcard
 		@mqtt.subscribe_to "Test/+/Card" do |data, tList|
 			@tList = tList;
 		end
 		@mqtt.publish_to "Test/Wild/Card", "Data!"
-		@mqtt.process_all
+
+		sleep 2
 
 		assert_equal ["Wild"], @tList
 		@tList = nil
 
 		@mqtt.publish_to "Test/Wild/Card/Game", "Data!"
-		@mqtt.process_all
+
+		sleep 2
 
 		assert_nil @tList
 
-		@mqtt.full_reset();
-		@mqtt.subscribe_to "Test/#" do |data, tList|
+		@mqtt.subscribe_to "Test2/#" do |data, tList|
 			@tList = tList;
 		end
 
-		@mqtt.publish_to "Test/Wild/Card", "More data!"
-		@mqtt.process_message
+		@mqtt.publish_to "Test2/Wild/Card", "More data!"
+
+		sleep 2
 
 		assert_equal ["Wild", "Card"], @tList
 	end
@@ -45,17 +48,20 @@ class Test_SubHandler < Minitest::Test
 		assert_nil @oldData
 
 		@mqtt.publish_to "TestChannel", "TestData"
-		@mqtt.process_message
+		sleep 2
+
 		assert_nil @oldData
 		assert_equal "TestData", @newData
 
 		@newData = nil;
 		@mqtt.publish_to "TestChannel", "TestData"
-		@mqtt.process_message
+		sleep 2
+
 		assert_nil @newData
 
 		@mqtt.publish_to "TestChannel", "NewData"
-		@mqtt.process_message
+		sleep 2
+
 		assert_equal @newData, "NewData"
 		assert_equal @oldData, "TestData"
 
@@ -63,26 +69,26 @@ class Test_SubHandler < Minitest::Test
 			@mqtt.track "TestChannel/+" do end
 		}
 
-		@mqtt.full_reset();
-		@mqtt.publish_to "TestChannel", "NewData", retain: true;
-		@mqtt.process_message
+		@mqtt.publish_to "TestChannel2", "MoreNewData!", retain: true;
 
-		@mqtt.track "TestChannel" do |newData, oldData|
+		@mqtt.track "TestChannel2" do |newData, oldData|
 			@newData = newData;
 			@oldData = oldData;
 		end
 
-		assert_equal "NewData", @newData;
+		sleep 2
+
+		assert_equal "MoreNewData!", @newData;
 		assert_nil @oldData;
 	end
 
 	def test_wait_for
 		refute (
-			@mqtt.wait_for "NoDataHere", timeout: 0.1 do |data| end
+			@mqtt.wait_for "NoDataHere", timeout: 0.5 do |data| end
 		)
 
 		waitThread = Thread.new do
-			@mqtt.wait_for "SomeDataHere", timeout: 0.5 do |data|
+			@mqtt.wait_for "SomeDataHere", timeout: 2 do |data|
 				@data = data;
 				true
 			end
@@ -90,9 +96,30 @@ class Test_SubHandler < Minitest::Test
 		sleep 0.1
 
 		@mqtt.publish_to "SomeDataHere", "FreshData";
-		@mqtt.process_all
+		sleep 2
 
 		waitThread.join
 		assert_equal "FreshData", @data
+	end
+
+	def test_binary_data
+		unpacketData = [1, 2, 3];
+		packedData = unpacketData.pack("L3");
+
+		receivedRaw = nil;
+		receivedUnpacked = nil;
+		@mqtt.subscribe_to "Test/BinaryData" do |data|
+			receivedRaw = data;
+			receivedUnpacked = receivedRaw.unpack("L3");
+		end
+
+		sleep 0.3
+
+		@mqtt.publish_to "Test/BinaryData", packedData;
+
+		sleep 0.8
+
+		assert_equal unpacketData, receivedUnpacked;
+		assert_equal packedData, receivedRaw;
 	end
 end
