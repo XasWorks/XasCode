@@ -161,7 +161,28 @@ module MQTT
 		end
 		private :ensure_clean_exit
 
+		def attempt_packet_publish()
+			until @packetQueue.empty? do
+				h = nil;
+				@packetQueueMutex.synchronize {
+					h = @packetQueue[0];
+				}
+				Timeout.timeout(3) {
+					if(h[:type] == :sub)
+						@mqtt.subscribe(h[:topic] => h[:qos]);
+					elsif(h[:type] == :pub)
+						@mqtt.publish(h[:topic], h[:data], h[:retain], h[:qos]);
+					end
+				}
+				@packetQueueMutex.synchronize {
+					@packetQueue.shift();
+				}
+			end
+		end
+
 		def mqtt_push_thread
+			@push_error_count = 0;
+
 			loop do
 				@packetQueueMutex.synchronize {
 					@publisherThreadWaiting = true;
@@ -177,27 +198,19 @@ module MQTT
 				next unless @connected
 
 				begin
-					until @packetQueue.empty? do
-						h = nil;
-						@packetQueueMutex.synchronize {
-							h = @packetQueue[0];
-						}
-						Timeout.timeout(3) {
-							if(h[:type] == :sub)
-								@mqtt.subscribe(h[:topic] => h[:qos]);
-							elsif(h[:type] == :pub)
-								@mqtt.publish(h[:topic], h[:data], h[:retain], h[:qos]);
-							end
-						}
-						@packetQueueMutex.synchronize {
-							@packetQueue.shift();
-						}
-					end
+					attempt_packet_publish();
 				rescue MQTT::Exception, SocketError, SystemCallError, Timeout::Error => e
-						x_loge("Push error!");
-						x_loge(e.inspect);
+					x_loge("Push error!");
+					x_loge(e.inspect);
 
-						sleep 0.5
+					@push_error_count += 1;
+					if(@push_error_count >= 10)
+						@mqtt.disconnect();
+					end
+
+					sleep 0.5
+				else
+					@push_error_count = 0;
 				end
 			end
 
