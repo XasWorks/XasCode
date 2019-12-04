@@ -15,6 +15,7 @@ namespace XIRR {
 
 enum Channels : uint8_t {
 	IR_BACON = 128,
+	LZRTAG_BEACON = 129,
 };
 
 namespace RX {
