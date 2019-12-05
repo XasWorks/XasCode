@@ -7,6 +7,11 @@
 
 #include "Color.h"
 
+#define MAX_COLOR_VAL (65535)
+#define MULT_AND_DOWNSCALE(a, b) uint16_t((uint32_t(a) * uint32_t(b)) / MAX_COLOR_VAL)
+#define B16_TO_B8(a) uint8_t(a / 257)
+#define B8_TO_B16(a) (uint16_t(a) * 257)
+
 namespace Peripheral {
 
 Color Color::HSV(int16_t H, uint8_t S, uint8_t V) {
@@ -40,21 +45,21 @@ Color::Color() {
 	g = 0;
 	b = 0;
 
-	alpha = 255;
+	alpha = MAX_COLOR_VAL;
 }
 Color::Color(uint32_t cCode, uint8_t brightness) : Color() {
 	set(cCode);
 	bMod(brightness);
 }
 Color::Color(uint32_t cCode, uint8_t brightness, uint8_t alpha) : Color(cCode, brightness) {
-	this->alpha = alpha;
+	this->alpha = B8_TO_B16(alpha);
 }
 
 Color::ColorData Color::getLEDValue() const {
 	ColorData out = {};
-	out.r = ((uint32_t)r*r)/0xFFFFFF;
-	out.g = ((uint32_t)g*g)/0xFFFFFF;
-	out.b = ((uint32_t)b*b)/0xFFFFFF;
+	out.r = B16_TO_B8(MULT_AND_DOWNSCALE(r, r));
+	out.g = B16_TO_B8(MULT_AND_DOWNSCALE(r, r));
+	out.b = B16_TO_B8(MULT_AND_DOWNSCALE(r, r));
 
 	return out;
 }
@@ -62,19 +67,22 @@ Color::ColorData Color::getLEDValue() const {
 uint32_t Color::getPrintable() const {
 	auto data = this->getLEDValue();
 
-	return data.r << 16 | data.g << 8 | data.b;
+	return (data.r) << 16 | (data.g/255) << 8 | (data.b/255);
 }
 
 void Color::set(Color color) {
-	for(uint8_t i=0; i<4; i++) {
-		*(&this->r + i) = *(&color.r + i);
-	}
+	r = color.r;
+	g = color.g;
+	b = color.g;
+
+	alpha = color.alpha;
 }
 void Color::set(uint32_t cCode) {
 	uint8_t *colorPart = (uint8_t *)&cCode;
-	r = uint16_t(colorPart[2])*257;
-	g = uint16_t(colorPart[1])*257;
-	b = uint16_t(colorPart[0])*257;
+
+	r = B8_TO_B16(colorPart[2]);
+	g = B8_TO_B16(colorPart[1]);
+	b = B8_TO_B16(colorPart[0]);
 }
 void Color::set(uint32_t cCode, uint8_t factor) {
 	set(cCode);
@@ -128,27 +136,29 @@ Color Color::operator *(uint8_t brightness) {
 	return oColor;
 }
 
-#define MERGE_OVERLAY(code) (this->code) = (uint32_t(this->code)*own_transmission_p + uint32_t(top.code)*(65025-own_transmission_p))/(65025)
+#define MERGE_OVERLAY(code) (this->code) = (MULT_AND_DOWNSCALE(this->code, own_transmission_p) + MULT_AND_DOWNSCALE(top.code,(MAX_COLOR_VAL-own_transmission_p)))
 Color& Color::merge_overlay(const Color &top, uint8_t alpha) {
-	uint16_t total_alpha_top = (top.alpha * uint16_t(alpha)) / 255;
+	uint16_t total_alpha_top = (top.alpha * uint32_t(alpha)) / 255;
 
-	uint32_t own_transmission = this->alpha * (255 - total_alpha_top);
+	uint32_t own_transmission = MULT_AND_DOWNSCALE(this->alpha, (MAX_COLOR_VAL - total_alpha_top));
 	uint32_t own_transmission_p = 0;
+
 	if(own_transmission != 0)
-		own_transmission_p = (65025 * own_transmission) / (own_transmission + 255*total_alpha_top);
+		own_transmission_p = (MAX_COLOR_VAL * own_transmission) / (own_transmission + total_alpha_top);
 
 	MERGE_OVERLAY(r);
 	MERGE_OVERLAY(g);
 	MERGE_OVERLAY(b);
 
-	this->alpha = (65025 - (255 - this->alpha)*(255 - total_alpha_top)) / 255;
+	this->alpha = (MAX_COLOR_VAL - MULT_AND_DOWNSCALE((MAX_COLOR_VAL - this->alpha), (MAX_COLOR_VAL - total_alpha_top)));
 
 	return *this;
 }
-#define MERGE_MULT_COLOR(code) this->code = (this->code * (65025-total_alpha + (total_alpha*((top.code))/65025)))/65025;
+
+#define MERGE_MULT_COLOR(code) this->code = MULT_AND_DOWNSCALE(this->code,  (MAX_COLOR_VAL-total_alpha + MULT_AND_DOWNSCALE(total_alpha, top.code)));
 
 Color& Color::merge_multiply(const Color &top, uint8_t alpha) {
-	uint32_t total_alpha = (top.alpha * uint16_t(alpha));
+	uint32_t total_alpha = MULT_AND_DOWNSCALE(top.alpha, B8_TO_B16(alpha));
 
 	MERGE_MULT_COLOR(r);
 	MERGE_MULT_COLOR(g);
@@ -165,25 +175,26 @@ Color& Color::merge_multiply(uint8_t scalar) {
 	return *this;
 }
 Color& Color::merge_add(const Color &top, uint8_t alpha) {
-	uint8_t total_alpha = (top.alpha * uint16_t(alpha))/255;
+	uint16_t total_alpha = MULT_AND_DOWNSCALE(top.alpha, B8_TO_B16(alpha));
 
 	for(uint8_t i=0; i<3; i++) {
 		uint16_t& c = (&r)[i];
-		uint32_t cB = c + ((&top.r)[i]*total_alpha/255);
-		if(cB > 65535)
-			cB = 65535;
+		uint32_t cB = c + MULT_AND_DOWNSCALE((&top.r)[i], total_alpha);
+		if(cB > MAX_COLOR_VAL)
+			cB = MAX_COLOR_VAL;
 
 		c = cB;
 	}
-	uint16_t alphaB = this->alpha + total_alpha;
-	if(alphaB > 255)
-		alphaB = 255;
+	uint32_t alphaB = this->alpha + total_alpha;
+	if(alphaB > MAX_COLOR_VAL)
+		alphaB = MAX_COLOR_VAL;
+
 	this->alpha = alphaB;
 
 	return *this;
 }
 
-#define T_MERGE(code) (this->code) = (uint32_t(top.code)*alpha + uint32_t(this->code)*(65025-alpha))/(65025);
+#define T_MERGE(code) (this->code) = (MULT_AND_DOWNSCALE(top.code, alpha) + MULT_AND_DOWNSCALE(this->code, MAX_COLOR_VAL-alpha))
 Color& Color::merge_transition(const Color &top, uint16_t alpha) {
 	T_MERGE(r);
 	T_MERGE(g);
