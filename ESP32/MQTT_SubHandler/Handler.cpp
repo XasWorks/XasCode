@@ -73,8 +73,6 @@ void Handler::start_wifi(const char *SSID, const char *PSWD, int psMode) {
 	memcpy(sta_cfg->password, PSWD, strlen(PSWD));
 	memcpy(sta_cfg->ssid, SSID, strlen(SSID));
 
-	//sta_cfg->scan_method = WIFI_FAST_SCAN;
-
 	if(psMode >= 2) {
 			esp_wifi_set_max_tx_power(50);
 			sta_cfg->listen_interval = 5;
@@ -279,6 +277,14 @@ void Handler::publish_to(const std::string &topic, const void *data, size_t leng
 	esp_mqtt_client_publish(mqtt_handle, topic.data(), reinterpret_cast<const char*>(data)
 				, length, qos, retain);
 }
+
+void Handler::publish_int(const std::string &topic, int32_t data, bool retain, int qos) {
+	char buffer[10] = {};
+	sprintf(buffer, "%d", data);
+
+	publish_to(topic, buffer, strlen(buffer), retain, qos);
+}
+
 void Handler::subscribe_to(const std::string &topic, mqtt_callback cb, int qos) {
 	// NO subscribing necessary here, the subscription class already handles this
 	auto nSub = new Subscription(*this, topic, qos);
