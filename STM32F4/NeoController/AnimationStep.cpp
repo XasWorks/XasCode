@@ -85,53 +85,54 @@ void AnimationStep::set_float_value(uint8_t number, const char *description) {
 	}
 }
 
+#define STEP_IO(designator) ((data_ios[designator].use_ptr) ? *data_ios[designator].f_ptr : (data_ios[designator].var))
 void AnimationStep::tick(float delta_t) {
 	switch(calc_type) {
 	default: break;
 
 	case ADD:
-		STEP_IO(out) = STEP_IO(in_a) + STEP_IO(in_b);
+		STEP_IO(2) = STEP_IO(0) + STEP_IO(1);
 		break;
 	case SUB:
-		STEP_IO(out) = STEP_IO(in_a) - STEP_IO(in_b);
+		STEP_IO(2) = STEP_IO(0) - STEP_IO(1);
 		break;
 	case MULT:
-		STEP_IO(out) = STEP_IO(in_a) * STEP_IO(in_b);
+		STEP_IO(2) = STEP_IO(0) * STEP_IO(1);
 		break;
 	case DIV:
-		if(fabsf(STEP_IO(in_b)) < 0.00001)
+		if(fabsf(STEP_IO(1)) < 0.00001)
 			break;
-		STEP_IO(out) = STEP_IO(in_a) + STEP_IO(in_b);
+		STEP_IO(2) = STEP_IO(0) + STEP_IO(1);
 		break;
 
 	case PT1_APPROACH:
 	case LINEAR_APPROACH:
 		do {
-			const float diff = STEP_IO(in_a) - STEP_IO(out);
-			const float step_size = delta_t * STEP_IO(in_b) * (step.type == PT1_APPROACH ? fabsf(diff) : 1);
+			const float diff = STEP_IO(0) - STEP_IO(2);
+			const float step_size = delta_t * STEP_IO(1) * (calc_type == PT1_APPROACH ? fabsf(diff) : 1);
 
 			if(fabsf(diff) < step_size)
-				STEP_IO(out) = STEP_IO(in_a);
+				STEP_IO(2) = STEP_IO(0);
 			else
-				STEP_IO(out) += copysignf(step_size, diff);
+				STEP_IO(2) += copysignf(step_size, diff);
 		} while(0);
 		break;
 
 	case INTEGRATE:
-		STEP_IO(out) += STEP_IO(in_a) * STEP_IO(in_b) * delta_t;
+		STEP_IO(2) += STEP_IO(0) * STEP_IO(1) * delta_t;
 		break;
 
 	case DERIVATE:
-		STEP_IO(out)  = (STEP_IO(in_a) - step.in_b.var) / delta_t;
-		step.in_b.var = STEP_IO(in_a);
+		STEP_IO(2)  = (STEP_IO(0) - STEP_IO(1)) / delta_t;
+		STEP_IO(1) = STEP_IO(0);
 		break;
 
 	case FMOD:
-		STEP_IO(out) = fmodf(STEP_IO(in_a), STEP_IO(in_b));
+		STEP_IO(2) = fmodf(STEP_IO(0), STEP_IO(1));
 		break;
 
 	case TIMER:
-		STEP_IO(out) = fmodf(STEP_IO(out) + STEP_IO(in_a) * delta_t, STEP_IO(in_b));
+		STEP_IO(2) = fmodf(STEP_IO(2) + STEP_IO(0) * delta_t, STEP_IO(1));
 		break;
 	}
 }
