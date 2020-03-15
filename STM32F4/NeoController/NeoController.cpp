@@ -11,7 +11,8 @@
 
 namespace Xasin {
 
-NeoController::NeoController(SPI_HandleTypeDef &spi, int num_leds) :
+NeoController::NeoController(SPI_HandleTypeDef &spi, int num_leds, bool invert) :
+	inv_output(invert),
 	spi(&spi), write_buffer(12*num_leds), length(num_leds), colors(num_leds) {
 }
 
@@ -27,7 +28,11 @@ void NeoController::write_u24(uint32_t b) {
 			mark <<= 3;
 		}
 
-		*current_data = out_b;
+		if(inv_output)
+			*current_data = !out_b;
+		else
+			*current_data = out_b;
+
 		current_data++;
 	}
 }
@@ -45,7 +50,7 @@ void NeoController::push() {
 	for(int i=0; i<length; i++)
 		write_u24(colors[i]);
 
-	HAL_SPI_Transmit(spi, write_buffer.data(), length*12, 1000);
+	HAL_SPI_Transmit(spi, write_buffer.data(), length*12, 10000);
 }
 
 } /* namespace Xasin */

@@ -11,7 +11,7 @@
 #include "NeoController/Color.h"
 #include "NeoController/Layer.h"
 
-#include "stm32f3xx_hal.h"
+#include "main.h"
 
 #include <vector>
 
@@ -27,10 +27,11 @@ class NeoController {
 	void write_u24(const Color &c);
 
 public:
+	const bool inv_output;
 	const int length;
 	Layer colors;
 
-	NeoController(SPI_HandleTypeDef &spi, int num_leds);
+	NeoController(SPI_HandleTypeDef &spi, int num_leds, bool invert = false);
 
 	void push();
 };
