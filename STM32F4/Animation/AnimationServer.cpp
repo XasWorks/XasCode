@@ -8,10 +8,14 @@
 #include <Animation/AnimationServer.h>
 #include <Animation/AnimationElement.h>
 
+#include <vector>
+
 namespace Xasin {
 
 AnimationServer::AnimationServer()
-	: animations() {
+	: animations(),
+	  needs_relink(false), needs_deletion(false),
+	  synch_time(0) {
 }
 
 void AnimationServer::force_relink() {
@@ -41,14 +45,40 @@ float * AnimationServer::get_float_ptr(animation_value_id_t id) {
 }
 
 void AnimationServer::tick(float delta_t) {
+	synch_time += delta_t;
+
+	if(needs_deletion) {
+		std::vector<AnimationElement *> to_delete = {};
+
+		for(auto element : animations) {
+			if(element.second->delete_after == 0)
+				continue;
+			if(element.second->delete_after < synch_time)
+				to_delete.push_back(element.second);
+		}
+
+		for(auto ptr : to_delete)
+			delete ptr;
+
+		needs_deletion = false;
+	}
+
 	if(needs_relink) {
 		for(auto element : animations)
 			element.second->relink();
 		needs_relink = false;
 	}
 
-	for(auto element : animations)
+	for(auto element : animations) {
+		if(element.second->delete_after < synch_time)
+			needs_deletion = true;
+
 		element.second->tick(delta_t);
+	}
+}
+
+float AnimationServer::get_synch_time() {
+	return synch_time;
 }
 
 animation_value_id_t AnimationServer::decode_value_tgt(const char *str) {

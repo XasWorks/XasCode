@@ -62,6 +62,13 @@ void NumericElement::tick(float delta_t) {
 		} while(0);
 		break;
 
+	case PT2_APPROACH:
+		do {
+			const float diff = STEP_IO(0) - STEP_IO(2);
+		} while(0);
+
+		break;
+
 	case INTEGRATE:
 		STEP_IO(2) += STEP_IO(0) * STEP_IO(1) * delta_t;
 		break;

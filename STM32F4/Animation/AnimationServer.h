@@ -41,6 +41,9 @@ protected:
 	std::map<uint16_t, AnimationElement *> animations;
 
 	bool needs_relink;
+	bool needs_deletion;
+
+	float synch_time;
 
 public:
 	AnimationServer();
@@ -53,6 +56,7 @@ public:
 	float * get_float_ptr(animation_value_id_t id);
 
 	void  tick(float delta_t);
+	float get_synch_time();
 
 	static animation_value_id_t decode_value_tgt(const char *str);
 };

@@ -21,6 +21,7 @@ enum numeric_operator_t {
 	DIV,
 	LINEAR_APPROACH,
 	PT1_APPROACH,
+	PT2_APPROACH,
 	INTEGRATE,
 	DERIVATE,
 	FMOD,
@@ -31,7 +32,7 @@ enum numeric_operator_t {
 
 class NumericElement: public AnimationElement {
 public:
-	std::array<animation_flt_val_t, 3> data_ios;
+	std::array<animation_flt_val_t, 5> data_ios;
 
 	numeric_operator_t type;
 
