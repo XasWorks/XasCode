@@ -24,6 +24,28 @@ module Telegram
 			@receptors = Array.new();
 		end
 
+		private def _double_json_data(data)
+			return {} unless data
+
+			out_data = {}
+			# JSON-Ify nested Hashes and Arrays to a String before the main
+			# POST request is performed. Needed by Telegram, it seems.
+			data.each do |key, val|
+				if(val.is_a? Hash or val.is_a? Array)
+					out_data[key] = val.to_json
+				else
+					out_data[key] = val;
+				end
+			end
+
+			out_data
+		end
+
+		private def _raw_post(addr, data)
+			response = `curl -s -X POST -H "Content-Type: application/json" -d '#{data.to_json}' "#{addr}"`
+
+			JSON.parse(response, symbolize_names: true)
+		end
 		# Perform a POST request.
 		# @param method [String]  The Telegram bot API method that should be called
 		# @param data [nil, Hash] The data to be sent with the command.
@@ -31,35 +53,17 @@ module Telegram
 		#   BEFORE the Hash itself is also JSON-ified. Telegram apparently
 		#   needs this to work.
 		def perform_post(method, data = nil)
-			callAddress = URI "https://api.telegram.org/bot#{@apikey}/#{method}"
+			call_address = "https://api.telegram.org/bot#{@apikey}/#{method}"
 
 			# Rescue-construct to prevent a HTTP error from
 			# crashing our system.
-			timeoutLen = data[:timeout]*2 if data.is_a? Hash
-			timeoutLen ||= 3;
+			timeoutLen = data[:timeout] if data.is_a? Hash
+			timeoutLen ||= 4;
 			retryCount = 0;
 			begin
 				Timeout.timeout(timeoutLen) do
-					if data
-						outData = Hash.new();
-						# JSON-Ify nested Hashes and Arrays to a String before the main
-						# POST request is performed. Needed by Telegram, it seems.
-						data.each do |key, val|
-							if(val.is_a? Hash or val.is_a? Array)
-								outData[key] = val.to_json
-							else
-								outData[key] = val;
-							end
-						end
-
-						response = Net::HTTP.post_form(callAddress, outData);
-					else
-						response = Net::HTTP.get callAddress
-					end
+					return _raw_post(call_address, _double_json_data(data));
 				end
-
-				# JSON-Ify the HTTP response for prettiness reasons.
-				response = JSON.parse(response.body, symbolize_names: true);
 			rescue
 				retryCount += 1;
 				return {} if retryCount >= 3;
@@ -67,8 +71,18 @@ module Telegram
 				sleep 0.5;
 				retry
 			end
+		end
 
-			return response;
+		def feed_receptors(data)
+			# Hand it out to the receptors
+			@receptors.each do |r|
+				begin
+					r.handle_packet(data);
+				rescue => e
+					warn "Error in repector: #{e}"
+					warn e.backtrace.join("\n");
+				end
+			end
 		end
 
 		# Handle receiving of the data from Telegram API
@@ -93,10 +107,7 @@ module Telegram
 						# Calculate the maximum Update ID (for the offset "getUpdates" parameter)
 						@lastUpdateID = [hUpdateID, @lastUpdateID].max
 
-						# Hand it out to the receptors
-						@receptors.each do |r|
-							r.handle_packet(data);
-						end
+						feed_receptors data
 					end
 				rescue
 					sleep 1
