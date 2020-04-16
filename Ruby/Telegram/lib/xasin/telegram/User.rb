@@ -34,6 +34,7 @@ module Xasin
 			#
 			# Use {#has_permissions?} to check if a user has a certain permission.
 			attr_reader :permissions
+
 			# Permanent user state. Will be saved to disk.
 			# @todo Actually save to disk.
 			attr_reader :perm_state
@@ -58,6 +59,34 @@ module Xasin
 				@permissions = user_info[:permissions] || []
 				@perm_state  = user_info[:perm_state] || {}
 			end
+
+			def add_permissions(list)
+				list = [list].flatten
+
+				list.each do |perm|
+					next if perm.is_a? Symbol
+					next if perm.is_a? String
+
+					raise ArgumentError, "Permission must be String or Symbol!"
+				end
+
+				@permissions = (@permissions + list).uniq
+			end
+			alias add_permission add_permissions
+
+			def take_permissions(list)
+				list = [list].flatten
+
+				list.each do |perm|
+					next if perm.is_a? Symbol
+					next if perm.is_a? String
+
+					raise ArgumentError, "Permission must be String or Symbol!"
+				end
+
+				@permissions -= list;
+			end
+			alias take_permission take_permissions
 
 			# Check if a user has all given permissions.
 			# Will run {#has_permission} against every permission

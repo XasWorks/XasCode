@@ -68,8 +68,7 @@ module Xasin
 						end
 
 						if u_perms = extra_opts['Permissions']
-							raise ArgumentError, 'User permissions must be a list!' unless u_perms.is_a? Array
-							u.permissions = u_perms
+							u.add_permissions u_perms
 						end
 					end
 				end
