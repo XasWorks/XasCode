@@ -9,7 +9,7 @@ module Xasin
 		# Only really matters for priority, so that we can sort
 		# after that.
 		#
-		# TODO Test sorting!
+		# @todo Test if the sorting is the right way around
 		class OnTelegramEvent
 			attr_accessor :priority
 
@@ -47,6 +47,35 @@ module Xasin
 			# @note The :sudo permission will always overwrite everything, use
 			#   only for developer access!
 			attr_accessor :permissions_list
+
+			def self.from_options(options)
+				out_handler = Handler.new(options['Key']);
+
+				if perms = options['Permissions']
+					raise ArgumentError, 'Permission list must be a hash!' unless perms.is_a? Hash
+					out_handler.permissions_list = perms
+				end
+
+				if u_list = options['Users']
+					raise ArgumentError, 'Userlist must be a hash!' unless u_list.is_a? Hash
+
+					u_list.each do |key, extra_opts|
+						u = out_handler[key];
+
+						unless u
+							warn "User #{key} could not be found."
+							next
+						end
+
+						if u_perms = extra_opts['Permissions']
+							raise ArgumentError, 'User permissions must be a list!' unless u_perms.is_a? Array
+							u.permissions = u_perms
+						end
+					end
+				end
+
+				out_handler
+			end
 
 			# initialize a new Handler.
 			#
