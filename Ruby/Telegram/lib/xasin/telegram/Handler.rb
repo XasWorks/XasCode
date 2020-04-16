@@ -84,7 +84,7 @@ module Xasin
 				@core = if(http_core.is_a? Telegram::HTTPCore)
 						http_core;
 					elsif http_core.is_a? String
-						Telegram::HTTPCore.new(htp_core);
+						Telegram::HTTPCore.new(http_core);
 					else
 						raise ArgumentError, "Could not make a valid HTTPCore from string!"
 					end
