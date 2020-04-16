@@ -23,9 +23,6 @@ module Xasin
 				return if message.handled
 				return unless message.command == @command
 
-				puts "Checking for command #{@command}, required perms #{@required_perms}"
-				puts "User has perms #{message.user.permissions}"
-
 				if message.user.has_permissions? @required_perms
 					@block.call message
 				else
