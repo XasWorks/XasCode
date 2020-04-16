@@ -1,6 +1,7 @@
 
 require 'net/http'
 require 'json'
+require 'shellwords'
 
 module Xasin
 module Telegram
@@ -42,7 +43,9 @@ module Telegram
 		end
 
 		private def _raw_post(addr, data)
-			response = `curl -s -X POST -H "Content-Type: application/json" -d '#{data.to_json}' "#{addr}"`
+			d_str = Shellwords.escape(data.to_json)
+
+			response = `curl -s -X POST -H "Content-Type: application/json" -d #{d_str} "#{addr}"`
 
 			JSON.parse(response, symbolize_names: true)
 		end

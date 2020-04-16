@@ -55,9 +55,12 @@ module Xasin
 			def initialize(http_core)
 				@core = if(http_core.is_a? Telegram::HTTPCore)
 						http_core;
+					elsif http_core.is_a? String
+						Telegram::HTTPCore.new(htp_core);
 					else
-						Telegram::HTTPCore.new(http_core);
+						raise ArgumentError, "Could not make a valid HTTPCore from string!"
 					end
+
 				@core.attach_receptor(self);
 
 				@chats = {}
@@ -176,10 +179,14 @@ module Xasin
 					object
 				elsif object.is_a? Hash
 					chat_from_object object;
-				elsif object.is_a? String
-					chat_from_string object
 				elsif object.is_a? Numeric
 					chat_from_id object
+				elsif object.is_a? String
+					if object =~ /^@/
+						chat_from_id object
+					else
+						chat_from_string object
+					end
 				end
 			end
 			alias [] get_chat
@@ -196,6 +203,12 @@ module Xasin
 			#   internally interpreted as messages. This way, they can feed into
 			#   the /command syntax.
 			def send_message(chat, text, **options)
+				raise ArgumentError, "Text needs to be a string" unless text.is_a? String
+
+				if text.length > 900
+					text = text[0..900] + "..."
+				end
+
 				out_data = {
 					chat_id: get_chat(chat).chat_id,
 					parse_mode: 'HTML',
