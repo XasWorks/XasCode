@@ -58,26 +58,132 @@ AnimationElement::~AnimationElement() {
 	VIEWER_animation_count--;
 }
 
-animation_flt_val_t * AnimationElement::get_flt(uint8_t val_num) {
+void AnimationElement::delete_copy_to(animation_value_id_t value) {
+	copy_ops.erase(value);
+}
+
+float * AnimationElement::get_flt(animation_value_id_t val_num) {
 	return nullptr;
 }
-void AnimationElement::set_flt(uint8_t val_num, const char *description) {
-	auto val = get_flt(val_num);
-	if(val == nullptr)
 Color * AnimationElement::get_color(uint8_t val_num) {
 	return nullptr;
 }
+
+#define NEXT_SPACE() do { command = strpbrk(command, " ;"); if((command == nullptr) || (*command == ';')) return; if(*(++command) == '\0') return; } while(0)
+void AnimationElement::set_flt(animation_value_id_t value, const char *command) {
+	auto ptr = get_flt(value);
+
+	if(ptr == nullptr)
 		return;
 
-	if(strspn(description, " 0123456789.-+") == strlen(description)) {
-		val->copy_ptr = nullptr;
-		val->value = atof(description);
+	if(*command == 'J') {
+		command += 1;
+		*ptr = strtof(command, nullptr);
+		NEXT_SPACE();
 	}
-	else {
-		val->copy_ptr = nullptr;
-		val->link = AnimationServer::decode_value_tgt(description);
-		server.force_relink();
+
+	if(copy_ops.count(value) == 0)
+		copy_ops[value] = {};
+	copy_ops[value].to = ptr;
+
+	auto &op = copy_ops[value];
+
+	if(*command == 'V') {
+		command += 1;
+
+		op.pt2_speed = strtof(command, nullptr);
+		NEXT_SPACE();
 	}
+
+	if(*command == 'S') {
+		op.from_id = AnimationServer::decode_value_tgt(command);
+		op.from = server.get_float_ptr(op.from_id);
+		NEXT_SPACE();
+	}
+
+	op.add_offset = strtof(command, nullptr);
+	NEXT_SPACE();
+	op.mult_offset = strtof(command, nullptr);
+	NEXT_SPACE();
+	op.pt2_d = strtof(command, nullptr);
+	NEXT_SPACE();
+	op.pt2_t = strtof(command, nullptr);
+}
+void AnimationElement::set_flt(animation_value_id_t val_num, float new_val) {
+	auto ptr = get_flt(val_num);
+	if(ptr == nullptr)
+		return;
+
+	if(copy_ops.count(val_num) == 0)
+		*ptr = new_val;
+	else
+		copy_ops[val_num].add_offset = new_val;
+}
+void AnimationElement::set_flt(animation_value_id_t val_num, animation_global_id_t source) {
+	auto ptr = get_flt(val_num);
+	if(ptr == nullptr)
+		return;
+
+	copy_ops[val_num].to = ptr;
+	copy_ops[val_num].from_id = source;
+	copy_ops[val_num].from = server.get_float_ptr(source);
+}
+void AnimationElement::set_flt_op(animation_value_id_t val_num, animation_copy_op op) {
+	auto ptr = get_flt(val_num);
+	if(ptr == nullptr)
+		return;
+
+	copy_ops[val_num] = op;
+	copy_ops[val_num].to = ptr;
+}
+
+void AnimationElement::set_color(uint8_t value, const char *command) {
+	auto ptr = get_color(value);
+
+	if(ptr == nullptr)
+		return;
+
+	if(*command == 'J') {
+		command += 1;
+		*ptr = strtoll(command, nullptr, 16);
+		NEXT_SPACE();
+	}
+
+	if(color_ops.count(value) == 0)
+		color_ops[value] = {};
+
+	color_ops[value].to = ptr;
+	auto *op = &color_ops[value];
+
+	if(*command == 'V') {
+		command += 1;
+		op->intermediate_color = strtoll(command, nullptr, 16);
+		NEXT_SPACE();
+	}
+
+	op->target_color = strtoll(command, nullptr, 16);
+	NEXT_SPACE();
+	op->f1 = strtof(command, nullptr);
+	NEXT_SPACE();
+	op->f2 = strtof(command, nullptr);
+}
+void AnimationElement::set_color(uint8_t value, Color n_color) {
+	auto ptr = get_color(value);
+	if(ptr == nullptr)
+		return;
+
+	if(color_ops.count(value) == 0)
+		*ptr = n_color;
+	else
+		color_ops[value].target_color = n_color;
+}
+void AnimationElement::set_color_op(uint8_t val_num, animation_color_op op) {
+	auto ptr = get_color(val_num);
+	if(ptr == nullptr)
+		return;
+
+	color_ops[val_num] = op;
+	color_ops[val_num].to = ptr;
 }
 
 void AnimationElement::tick(float delta_t) {

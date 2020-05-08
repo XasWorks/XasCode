@@ -59,25 +59,55 @@ void AnimationServer::force_relink() {
 }
 
 AnimationElement * AnimationServer::get_animation(animation_id_t id) {
-	if(animations.count(id.uniq_id) == 0)
-		return nullptr;
+	AnimationElement * out = nullptr;
 
-	return animations[id.uniq_id];
+	osMutexAcquire(animations_mutex, 0);
+
+	for(auto anim : animations) {
+		if(anim->ID.uniq_id == id.uniq_id) {
+			if(anim->delete_after != 0 && anim->delete_after < synch_time)
+				continue;
+			out = anim;
+			break;
+		}
+	}
+
+	osMutexRelease(animations_mutex);
+
+	return out;
+}
+void AnimationServer::delete_animation(animation_id_t animation) {
+	osMutexAcquire(animations_mutex, 0);
+
+	for(auto it = animations.begin(); it != animations.end(); it++) {
+		if((*it)->ID.uniq_id == animation.uniq_id)
+			(*it)->delete_after = 1;
+	}
+
+	osMutexRelease(animations_mutex);
+
+	needs_deletion = true;
+}
+void AnimationServer::delete_animation_set(uint8_t set_no) {
+	osMutexAcquire(animations_mutex, 0);
+
+	for(auto it = animations.begin(); it != animations.end(); it++) {
+		if((*it)->ID.set_id == set_no)
+			(*it)->delete_after = 1;
+	}
+
+	osMutexRelease(animations_mutex);
+
+	needs_deletion = true;
 }
 
-animation_flt_val_t * AnimationServer::get_float_value(animation_value_id_t id) {
+float * AnimationServer::get_float_ptr(animation_global_id_t id) {
 	auto anim = get_animation(id.ID);
+
 	if(anim == nullptr)
 		return nullptr;
 
 	return anim->get_flt(id.value);
-}
-float * AnimationServer::get_float_ptr(animation_value_id_t id) {
-	auto val = get_float_value(id);
-	if(val == nullptr)
-		return nullptr;
-
-	return &(val->value);
 }
 
 void AnimationServer::tick(float delta_t) {
@@ -123,14 +153,16 @@ float AnimationServer::get_synch_time() {
 	return synch_time;
 }
 
-animation_value_id_t AnimationServer::decode_value_tgt(const char *str) {
-	animation_value_id_t out = {};
+animation_global_id_t AnimationServer::decode_value_tgt(const char *str) {
+	animation_global_id_t out = {};
 
 	// Forward to the designating S, returning if not found.
-	while (*(str++) != 'S') {
-		if(*str == '\0')
-			return {};
-	};
+	str = strchr(str, 'S');
+	if(str == nullptr)
+		return {};
+	if(*(++str) == '\0')
+		return {};
+
 
 	int decoded_num = atoi(str);
 	if(decoded_num < 0 || decoded_num > 255)
@@ -148,17 +180,103 @@ animation_value_id_t AnimationServer::decode_value_tgt(const char *str) {
 		return {};
 	out.ID.module_id = decoded_num;
 
-	// OPTIONAL Forward to the value designator 'V'
-	while (*(str++) != 'V') {
-		if(*str == '\0')
-			return out;
-	};
-	decoded_num = atoi(str);
-	if(decoded_num < 0 || decoded_num > 255)
+	str = strchr(str, 'V');
+	if(str == nullptr)
 		return out;
-	out.value = decoded_num;
+	if(*(++str) == '\0')
+		return out;
+
+	out.value = strtol(str, nullptr, 16);
 
 	return out;
+}
+
+// Input to this function is assumed to be:
+// SxxMxxVxx .......;SxxMxxVxx 2123;2.1;4124;etc.
+void AnimationServer::handle_set_command(const char *command) {
+	animation_global_id_t target = {};
+
+	while(command != nullptr && *command != '\0') {
+		if(*command == 'S') {
+			target = decode_value_tgt(command);
+			command = strchr(command, ' ');
+			if(command++ == nullptr)
+				break;
+		}
+		else
+			target.value++;
+
+		auto v_ptr = get_animation(target.ID);
+
+		if(v_ptr != nullptr)
+			v_ptr->set_flt(target.value, command);
+
+		command = strchr(command, ';');
+		if(command++ == nullptr)
+			break;
+	}
+}
+
+void AnimationServer::handle_color_set_command(const char *command) {
+	animation_global_id_t target = {};
+
+	while(command != nullptr && *command != '\0') {
+		if(*command == 'N')
+			target.value++;
+		else
+			target = decode_value_tgt(command);
+
+		auto v_ptr = get_animation(target.ID);
+
+		if(v_ptr != nullptr)
+			v_ptr->set_color(target.value, strchr(command, ' ')+1);
+
+		command = strchr(command, ';');
+		if(command == nullptr)
+			break;
+
+		command += 1;
+	}
+}
+
+void AnimationServer::handle_delete_command(const char *command) {
+	while(command != nullptr && *command != '\0') {
+		if(strncmp(command, "SET ", 4) == 0) {
+			if((command = strchr(command, ' ')) == nullptr)
+				return;
+
+			delete_animation_set(atoi(command));
+		}
+		else {
+			delete_animation(decode_value_tgt(command).ID);
+		}
+
+		command = strchr(command, ';');
+		if(command == nullptr)
+			break;
+
+		command += 1;
+	}
+}
+
+void AnimationServer::handle_dtime_command(const char *command) {
+	while(command != nullptr && *command != '\0') {
+		auto v_ptr = get_animation(decode_value_tgt(command).ID);
+
+		if(v_ptr != nullptr) {
+			auto t_ptr = strchr(command, ' ')+1;
+			if(*t_ptr == 'N')
+				v_ptr->delete_after = 0;
+			else
+				v_ptr->delete_after = synch_time + strtof(t_ptr, nullptr);
+		}
+
+		command = strchr(command, ';');
+		if(command == nullptr)
+			break;
+
+		command += 1;
+	}
 }
 
 } /* namespace Xasin */
