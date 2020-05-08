@@ -15,24 +15,28 @@
 namespace Xasin {
 
 enum numeric_operator_t {
-	ADD,
-	SUB,
-	MULT,
-	DIV,
-	LINEAR_APPROACH,
-	PT1_APPROACH,
-	PT2_APPROACH,
-	INTEGRATE,
-	DERIVATE,
-	FMOD,
-	TIMER,
-	COMP,
-	MAX
+	TMR_PWM,
+	TMR_SAWTOOTH,
+	NUM_MAX,
+};
+
+struct pwm_cfg_t {
+	float output;
+	float duration;
+	float phase_offset;
+	float dutycycle;
+	float min_val;
+	float max_val;
+};
+
+union numeric_element_data_t {
+	float start;
+	pwm_cfg_t pwm_cfg;
 };
 
 class NumericElement: public AnimationElement {
 public:
-	std::array<animation_flt_val_t, 5> data_ios;
+	numeric_element_data_t config;
 
 	numeric_operator_t type;
 
@@ -40,10 +44,9 @@ public:
 
 	NumericElement(AnimationServer &server, animation_id_t ID);
 
-	animation_flt_val_t * get_flt(uint8_t val);
+	float * get_flt(animation_value_id_t val);
 
 	void tick(float delta_t);
-	void relink();
 };
 
 } /* namespace Xasin */

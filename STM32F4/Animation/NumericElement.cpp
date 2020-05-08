@@ -13,89 +13,34 @@ namespace Xasin {
 
 NumericElement::NumericElement(AnimationServer &server, animation_id_t ID)
 	: AnimationElement(server, ID),
-	  data_ios(), type(MAX) {
+	  config(), type(NUM_MAX) {
 
 }
 
-animation_flt_val_t * NumericElement::get_flt(uint8_t val) {
-	if(val > 2)
+float * NumericElement::get_flt(animation_value_id_t val) {
+	if(val >= (sizeof(config) / sizeof(float)))
 		return nullptr;
 
-	return &(data_ios[val]);
+	return (&config.start + val);
 }
 
-#define STEP_IO(num) data_ios[num].value
 void NumericElement::tick(float delta_t) {
-	for(int i=0; i<2; i++) {
-		if(data_ios[i].copy_ptr != nullptr)
-			data_ios[i].value = *data_ios[0].copy_ptr;
-	}
-
 	switch(type) {
 	default: break;
 
-	case ADD:
-		STEP_IO(2) = STEP_IO(0) + STEP_IO(1);
-		break;
-	case SUB:
-		STEP_IO(2) = STEP_IO(0) - STEP_IO(1);
-		break;
-	case MULT:
-		STEP_IO(2) = STEP_IO(0) * STEP_IO(1);
-		break;
-	case DIV:
-		if(fabsf(STEP_IO(1)) < 0.00001)
-			break;
-		STEP_IO(2) = STEP_IO(0) + STEP_IO(1);
-		break;
+	case TMR_PWM: do {
+		auto const &pwm_cfg = config.pwm_cfg;
 
-	case PT1_APPROACH:
-	case LINEAR_APPROACH:
-		do {
-			const float diff = STEP_IO(0) - STEP_IO(2);
-			const float step_size = delta_t * STEP_IO(1) * (type == PT1_APPROACH ? fabsf(diff) : 1);
+		float tmr_time = server.get_synch_time() / pwm_cfg.duration;
+		tmr_time += pwm_cfg.phase_offset;
+		tmr_time = fmodf(tmr_time, 1);
 
-			if(fabsf(diff) < step_size)
-				STEP_IO(2) = STEP_IO(0);
-			else
-				STEP_IO(2) += copysignf(step_size, diff);
-		} while(0);
-		break;
-
-	case PT2_APPROACH:
-		do {
-			const float diff = STEP_IO(0) - STEP_IO(2);
-		} while(0);
-
-		break;
-
-	case INTEGRATE:
-		STEP_IO(2) += STEP_IO(0) * STEP_IO(1) * delta_t;
-		break;
-
-	case DERIVATE:
-		STEP_IO(2)  = (STEP_IO(0) - STEP_IO(1)) / delta_t;
-		STEP_IO(1) = STEP_IO(0);
-		break;
-
-	case FMOD:
-		STEP_IO(2) = fmodf(STEP_IO(0), STEP_IO(1));
-		break;
-
-	case TIMER:
-		STEP_IO(2) = fmodf(STEP_IO(2) + STEP_IO(0) * delta_t, STEP_IO(1));
-		break;
-	case COMP:
-		STEP_IO(2) = STEP_IO(0) > STEP_IO(1) ? 1 : 0;
-		break;
+		if(tmr_time <= pwm_cfg.dutycycle)
+			config.start = pwm_cfg.min_val;
+		else
+			config.start = pwm_cfg.max_val;
+	} while(0);
 	}
-	if(data_ios[2].copy_ptr != nullptr)
-		*(data_ios[2].copy_ptr) = data_ios[2].value;
-}
-
-void NumericElement::relink() {
-	for(auto &io : data_ios)
-		io.copy_ptr = server.get_float_ptr(io.link);
 }
 
 } /* namespace Xasin */
