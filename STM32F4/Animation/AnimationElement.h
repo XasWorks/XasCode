@@ -24,6 +24,10 @@ struct led_coord_t {
 namespace Xasin {
 
 class AnimationElement {
+private:
+	void copy_op_tick(float delta_t);
+	void color_op_tick(float delta_t);
+
 protected:
 	friend AnimationServer;
 
@@ -35,6 +39,8 @@ public:
 	static float calc_coords(led_coord_t led, led_coord_t coords);
 
 	float delete_after;
+	std::map<animation_value_id_t, animation_copy_op> copy_ops;
+	std::map<uint8_t, animation_color_op> color_ops;
 
 	AnimationServer &server;
 	const animation_id_t ID;
@@ -47,7 +53,9 @@ public:
 	void set_flt(uint8_t val, const char *description);
 
 	virtual void tick(float delta_t);
-	virtual void relink();
+
+	void copy_tick(float delta_t);
+	void relink();
 };
 
 } /* namespace Xasin */

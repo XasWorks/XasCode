@@ -41,6 +41,8 @@ float AnimationElement::calc_coords(int led, led_coord_t coords) {
 
 AnimationElement::AnimationElement(AnimationServer &server, animation_id_t ID, int z)
 	:	draw_z(z),
+		delete_after(0),
+		copy_ops(), color_ops(),
 		server(server), ID(ID) {
 
 	server.delete_animation(ID);
@@ -62,6 +64,9 @@ animation_flt_val_t * AnimationElement::get_flt(uint8_t val_num) {
 void AnimationElement::set_flt(uint8_t val_num, const char *description) {
 	auto val = get_flt(val_num);
 	if(val == nullptr)
+Color * AnimationElement::get_color(uint8_t val_num) {
+	return nullptr;
+}
 		return;
 
 	if(strspn(description, " 0123456789.-+") == strlen(description)) {
@@ -77,7 +82,50 @@ void AnimationElement::set_flt(uint8_t val_num, const char *description) {
 
 void AnimationElement::tick(float delta_t) {
 }
+
+void AnimationElement::copy_op_tick(float delta_t) {
+	for(auto c_it = copy_ops.begin(); c_it != copy_ops.end(); c_it++) {
+		animation_copy_op &c = (*c_it).second;
+
+		float tgt_val = (c.from == nullptr) ? 0 : *(c.from);
+		tgt_val += c.add_offset;
+
+		if(c.mult_offset != 0)
+			tgt_val *= c.mult_offset;
+
+		if(c.pt2_d < 0.01)
+			(*c.to) = tgt_val;
+		else if(c.pt2_t < 0.01) {
+			(*c.to) += delta_t * (tgt_val - (*c.to)) / c.pt2_d;
+		}
+		else {
+			float target_speed = (tgt_val - (*c.to)) / c.pt2_d;
+			c.pt2_speed += delta_t * (target_speed - c.pt2_speed) / c.pt2_t;
+			(*c.to) += delta_t * c.pt2_speed;
+		}
+	}
+}
+
+void AnimationElement::color_op_tick(float delta_t) {
+	for(auto &c_it : color_ops) {
+		auto &c_op = c_it.second;
+		if(c_op.f2 == 0)
+			(*c_op.to).merge_transition(c_op.target_color, delta_t * c_op.f1);
+		else {
+			c_op.intermediate_color.merge_transition(c_op.target_color, delta_t * c_op.f1);
+			(*c_op.to).merge_transition(c_op.intermediate_color, delta_t * c_op.f2);
+		}
+	}
+}
+
+void AnimationElement::copy_tick(float delta_t) {
+	copy_op_tick(delta_t);
+	color_op_tick(delta_t);
+}
 void AnimationElement::relink() {
+	for(auto &c : copy_ops) {
+		c.second.from = server.get_float_ptr(c.second.from_id);
+	}
 }
 
 } /* namespace Xasin */

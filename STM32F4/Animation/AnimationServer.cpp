@@ -83,34 +83,40 @@ float * AnimationServer::get_float_ptr(animation_value_id_t id) {
 void AnimationServer::tick(float delta_t) {
 	synch_time += delta_t;
 
+	osMutexAcquire(animations_mutex, 0);
+
 	if(needs_deletion) {
-		std::vector<AnimationElement *> to_delete = {};
+		for(auto element = animations.begin(); element != animations.end();) {
+			const float d_time = (*element)->delete_after;
+			if((d_time != 0) && (d_time < synch_time)) {
+				auto ptr = *element;
+				element = animations.erase(element);
 
-		for(auto element : animations) {
-			if(element.second->delete_after == 0)
-				continue;
-			if(element.second->delete_after < synch_time)
-				to_delete.push_back(element.second);
+				delete ptr;
+
+				needs_relink = true;
+			}
+			else
+				element++;
 		}
-
-		for(auto ptr : to_delete)
-			delete ptr;
-
 		needs_deletion = false;
 	}
 
 	if(needs_relink) {
 		for(auto element : animations)
-			element.second->relink();
-		needs_relink = false;
+			element->relink();
 	}
+	needs_relink = false;
 
 	for(auto element : animations) {
-		if(element.second->delete_after < synch_time)
+		if(element->delete_after < synch_time)
 			needs_deletion = true;
 
-		element.second->tick(delta_t);
+		element->copy_tick(delta_t);
+		element->tick(delta_t);
 	}
+
+	osMutexRelease(animations_mutex);
 }
 
 float AnimationServer::get_synch_time() {
