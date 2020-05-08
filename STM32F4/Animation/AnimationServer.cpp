@@ -1,4 +1,4 @@
-/*HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_8);
+/*
  * AnimationServer.cpp
  *
  *  Created on: 15 Mar 2020
@@ -8,7 +8,8 @@
 #include <Animation/AnimationServer.h>
 #include <Animation/AnimationElement.h>
 
-#include <vector>
+#include <string.h>
+#include <stdlib.h>
 
 namespace Xasin {
 

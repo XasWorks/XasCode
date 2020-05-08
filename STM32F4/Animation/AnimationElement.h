@@ -11,6 +11,9 @@
 #include <Animation/AnimationServer.h>
 #include <config.h>
 
+#include <vector>
+#include <map>
+
 #ifndef ANIM_USE_CUSTOM_COORDS
 struct led_coord_t {
 	float x;

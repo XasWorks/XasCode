@@ -7,8 +7,10 @@
 
 #include <Animation/AnimationElement.h>
 
-#include <cstring>
+#include <string.h>
 #include <math.h>
+#include <stdlib.h>
+
 
 namespace Xasin {
 

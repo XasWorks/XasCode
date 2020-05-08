@@ -9,7 +9,9 @@
 #define STM32F4_NEOCONTROLLER_ANIMATORSERVER_H_
 
 #include <stdint.h>
-#include <map>
+#include <vector>
+
+#include <cmsis_os.h>
 
 namespace Xasin {
 

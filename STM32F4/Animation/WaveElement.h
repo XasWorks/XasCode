@@ -9,7 +9,6 @@
 #define STM32F4_ANIMATION_WAVEELEMENT_H_
 
 #include <Animation/AnimationElement.h>
-
 #include <NeoController/Layer.h>
 
 namespace Xasin {
