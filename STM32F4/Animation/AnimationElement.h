@@ -24,6 +24,11 @@ struct led_coord_t {
 namespace Xasin {
 
 class AnimationElement {
+protected:
+	friend AnimationServer;
+
+	const int draw_z;
+
 public:
 	static led_coord_t const * led_coordinates;
 	static float calc_coords(int led, led_coord_t coords);
@@ -34,7 +39,7 @@ public:
 	AnimationServer &server;
 	const animation_id_t ID;
 
-	AnimationElement(AnimationServer &server, animation_id_t ID);
+	AnimationElement(AnimationServer &server, animation_id_t ID, int z = 0);
 	virtual ~AnimationElement();
 
 	virtual animation_flt_val_t * get_flt(uint8_t val_num);

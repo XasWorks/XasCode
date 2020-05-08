@@ -11,6 +11,7 @@
 #include <math.h>
 #include <stdlib.h>
 
+int VIEWER_animation_count = 0;
 
 namespace Xasin {
 
@@ -38,20 +39,21 @@ float AnimationElement::calc_coords(int led, led_coord_t coords) {
 	return calc_coords(led_coordinates[led], coords);
 }
 
-AnimationElement::AnimationElement(AnimationServer &server, animation_id_t ID)
-	:	delete_after(0),
+AnimationElement::AnimationElement(AnimationServer &server, animation_id_t ID, int z)
+	:	draw_z(z),
 		server(server), ID(ID) {
 
-	server.animations[ID.uniq_id] = this;
-	server.force_relink();
+	server.delete_animation(ID);
+	server.insert_pointer(this);
+
+	VIEWER_animation_count++;
 }
 
 AnimationElement::~AnimationElement() {
-	if(server.animations[ID.uniq_id] != this)
-		return;
-
-	server.animations.erase(ID.uniq_id);
 	server.force_relink();
+	server.remove_pointer(this);
+
+	VIEWER_animation_count--;
 }
 
 animation_flt_val_t * AnimationElement::get_flt(uint8_t val_num) {

@@ -17,6 +17,41 @@ AnimationServer::AnimationServer()
 	: animations(),
 	  needs_relink(false), needs_deletion(false),
 	  synch_time(0) {
+
+	osMutexAttr_t mutex_attr = {};
+	mutex_attr.attr_bits = osMutexRecursive;
+
+	animations_mutex = osMutexNew(&mutex_attr);
+}
+
+void AnimationServer::remove_pointer(AnimationElement *elem) {
+
+	osMutexAcquire(animations_mutex, 0);
+
+	for(auto i = animations.begin(); i < animations.end(); i++) {
+		if(*i == elem)
+			animations.erase(i);
+	}
+
+	osMutexRelease(animations_mutex);
+}
+void AnimationServer::insert_pointer(AnimationElement *elem) {
+	force_relink();
+
+	osMutexAcquire(animations_mutex, 0);
+
+	for(auto i = animations.begin(); i<animations.end(); i++) {
+		if(elem->draw_z < (*i)->draw_z) {
+			animations.insert(i, elem);
+
+			osMutexRelease(animations_mutex);
+			return;
+		}
+	}
+
+	animations.push_back(elem);
+
+	osMutexRelease(animations_mutex);
 }
 
 void AnimationServer::force_relink() {
