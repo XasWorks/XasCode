@@ -89,6 +89,8 @@ void Color::set(const Color &color) {
 void Color::set(uint32_t cCode) {
 	uint8_t *colorPart = (uint8_t *)&cCode;
 
+	alpha = 1 - colorPart[3]/255.0f;
+
 	r = colorPart[2]/255.0f;
 	g = colorPart[1]/255.0f;
 	b = colorPart[0]/255.0f;
