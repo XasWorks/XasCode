@@ -147,6 +147,17 @@ Color Color::operator *(float brightness) {
 Color& Color::merge_overlay(const Color &top, float alpha) {
 	float total_alpha_top = top.alpha * alpha;
 
+	if(total_alpha_top < 0.001)
+		return *this;
+	else if(total_alpha_top > 0.999) {
+		this->r = top.r;
+		this->g = top.g;
+		this->b = top.b;
+		this->alpha = 1;
+
+		return *this;
+	}
+
 	float own_transmission = this->alpha * (1.0f - total_alpha_top);
 	float own_transmission_p = 0;
 
