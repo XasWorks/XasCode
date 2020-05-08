@@ -50,7 +50,7 @@ void NeoController::push() {
 	for(int i=0; i<length; i++)
 		write_u24(colors[i]);
 
-	HAL_SPI_Transmit(spi, write_buffer.data(), length*12, 10000);
+	HAL_SPI_Transmit_IT(spi, write_buffer.data(), length*12);
 }
 
 } /* namespace Xasin */
