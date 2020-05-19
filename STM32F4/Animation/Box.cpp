@@ -17,9 +17,6 @@ Box::Box(AnimationServer &server, animation_id_t ID, Layer &tgt_layer, int z)
 	  x_coord(), y_coord(), center(),
 	  rotation(0), up(0), down(0), left(0), right(0),
 	  draw_color() {
-
-
-	rotation = 10000;
 }
 
 float * Box::get_flt(animation_value_id_t val) {
@@ -68,7 +65,7 @@ void Box::tick(float _delta_t) {
 	const float true_center_x = calc_coords(center, x_coord);
 	const float true_center_y = calc_coords(center, y_coord);
 
-	for(int i=0; i<target.length(); i++) {
+	for(int i=0; i<ANIM_LED_COUNT; i++) {
 		const float led_x = calc_coords(i, x_coord) - true_center_x;
 		const float led_y = calc_coords(i, y_coord) - true_center_y;
 
