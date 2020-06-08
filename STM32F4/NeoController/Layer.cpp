@@ -146,8 +146,23 @@ Layer& Layer::merge_transition(const Layer &top, int offset, bool wrap) {
 			to = length();
 	}
 
+	int top_count = (from - offset) % top.length();
+	if(top_count < 0)
+		top_count += top.length();
+
+	const Color *from_ptr = &top.colors.front() + top_count;
+	const Color *from_ptr_end = &top.colors.back() + 1;
+	const Color *from_ptr_start = &top.colors.front();
+	Color *to_ptr = &this->get(from);
+	Color *to_ptr_end = &colors.back() + 1;
+	Color *to_ptr_start = &colors.front();
+
 	for(int i=from; i<to; i++) {
-		this->get(i).merge_transition(top[i-offset], top.alpha);
+		to_ptr->merge_transition(*from_ptr, top.alpha);
+		if(++to_ptr >= to_ptr_end)
+			to_ptr = to_ptr_start;
+		if(++from_ptr >= from_ptr_end)
+			from_ptr = from_ptr_start;
 	}
 
 	return *this;
