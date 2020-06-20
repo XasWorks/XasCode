@@ -24,11 +24,14 @@ class NeoController {
 	uint8_t *current_data;
 
 	void write_u24(uint32_t b);
-	void write_u24(const Color &c);
+	void write_u24(const Color &c, bool swap = false);
 
 public:
 	const bool inv_output;
 	const int length;
+
+	const uint32_t * rg_swap_map;
+
 	Layer colors;
 
 	NeoController(SPI_HandleTypeDef &spi, int num_leds, bool invert = false);
