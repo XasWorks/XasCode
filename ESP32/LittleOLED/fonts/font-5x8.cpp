@@ -1,7 +1,7 @@
 
 #include "fonttype.h"
 
-const char raw_console_font_5x8[] = {
+const char Peripheral::OLED::raw_console_font_5x8[] = {
     /*
      * code=0, hex=0x00, ascii="^@"
      */
@@ -3076,9 +3076,9 @@ const char raw_console_font_5x8[] = {
 };
 
 
-Peripheral::OLED::FontType console_font_5x8 = {
+Peripheral::OLED::FontType Peripheral::OLED::console_font_5x8 = {
 		width:  5,
 		height: 8,
 		lineHeight: 8,
-		fontData: raw_console_font_5x8
+		fontData: Peripheral::OLED::raw_console_font_5x8
 };

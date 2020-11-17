@@ -1,3 +1,0 @@
-idf_component_register(SRCS "BatteryUndicator.cpp" "DrawBox.cpp" "LittleConsole.cpp"
-									"SDD1306.cpp" "SSD1327.cpp" "StringPrimitive.cpp" "ValueBox.cpp"
-                       INCLUDE_DIRS "include")

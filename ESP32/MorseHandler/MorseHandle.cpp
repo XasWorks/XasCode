@@ -7,7 +7,7 @@
 
 #define D_TO_CH(DOT, CHAR) case DOT: return CHAR; break
 
-#include "MorseHandle.h"
+#include "xasin/MorseHandle.h"
 
 namespace Peripheral {
 

@@ -5,7 +5,7 @@
  *      Author: xasin
  */
 
-#include "NeoController.h"
+#include "xasin/NeoController.h"
 
 namespace Peripheral {
 
