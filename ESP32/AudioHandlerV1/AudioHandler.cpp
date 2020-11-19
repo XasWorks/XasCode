@@ -201,7 +201,6 @@ void AudioHandler::_audio_task() {
 		while(currentSamples.empty())
 			xTaskNotifyWait(0, 0, nullptr, portMAX_DELAY);
 
-		audioBuffer.fill(0);
 		xSemaphoreTake(sampleMutex, portMAX_DELAY);
 		for(uint16_t i=0; i<audioBuffer.size(); i++) {
 			int32_t sampBuff = 0;
@@ -225,6 +224,7 @@ void AudioHandler::_audio_task() {
 			if(samp->is_done()) {
 				ESP_LOGD("XAudio", "Deleting sample %lu\n", long(samp));
 				delete samp;
+
 				currentSamples.erase(currentSamples.begin()+sampI);
 
 				continue;
@@ -282,5 +282,17 @@ void AudioHandler::insert_cassette(const CassetteCollection &cassettes) {
 
 	insert_cassette(cassettes.at(esp_random()%cassettes.size()));
 }
+
+void AudioHandler::notify_task() {
+	xTaskNotify(audioTask, 0, eNoAction);
+}
+
+void AudioHandler::get_audio_lock() {
+	xSemaphoreTake(sampleMutex, portMAX_DELAY);
+}
+void AudioHandler::release_audio_lock() {
+	xSemaphoreGive(sampleMutex);
+}
+
 } /* namespace Peripheral */
 } /* namespace Xasin */

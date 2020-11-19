@@ -1,7 +1,7 @@
 
 #include "fonttype.h"
 
-char raw_console_font_7x9[] = {
+const char Peripheral::OLED::raw_console_font_7x9[] = {
 
     /*
      * code=0, hex=0x00, ascii="^@"
@@ -3332,9 +3332,9 @@ char raw_console_font_7x9[] = {
     0x00,  /* 0000000 */
 };
 
-Peripheral::OLED::FontType console_font_7x9 = {
+Peripheral::OLED::FontType Peripheral::OLED::console_font_7x9 = {
 		width:  7,
 		height: 9,
 		lineHeight: 8,
-		fontData: raw_console_font_7x9
+		fontData: Peripheral::OLED::raw_console_font_7x9
 };

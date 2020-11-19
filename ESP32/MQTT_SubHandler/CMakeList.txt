@@ -1,2 +1,0 @@
-idf_component_register(SRCS "Handler.cpp" "MQTTSlaveChannel.cpp" "Subscription.cpp"
-                       INCLUDE_DIRS "include")

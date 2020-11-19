@@ -9,6 +9,7 @@
 #define XASLIBS_AUDIOHANDLER_AUDIOHANDLER_H_
 
 #include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
 #include "freertos/task.h"
 
 #include "driver/i2s.h"
@@ -130,6 +131,11 @@ public:
 
 	void insert_cassette(const AudioCassette &top);
 	void insert_cassette(const CassetteCollection &cassettes);
+
+	void notify_task();
+
+	void get_audio_lock();
+	void release_audio_lock();
 };
 
 } /* namespace Peripheral */
