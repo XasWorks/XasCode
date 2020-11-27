@@ -20,14 +20,12 @@
 namespace Xasin {
 namespace Trek {
 
-using namespace Peripheral;
-
-typedef const AudioCassette snippet;
-#define SNIP_DEF(name) snippet s_ ## name = snippet(name, sizeof(name), 10000)
-#define SNIP_DEF_VOL(name, volume) snippet s_ ## name = snippet(name, sizeof(name), volume)
+typedef const Audio::bytecassette_data_t snippet;
+#define SNIP_DEF(name) snippet s_ ## name = {name, name + sizeof(name), 44100, 150}
+#define SNIP_DEF_VOL(name, volume) snippet s_ ## name = {name, name + sizeof(name), 44100, volume}
 
 #ifdef TREKCORE_AUDIO_ENABLED
-snippet s_keypress = snippet(keypress, sizeof(keypress), 2000);
+snippet s_keypress = { keypress, keypress + sizeof(keypress), 44100, 20 };
 
 SNIP_DEF(input_ok);
 SNIP_DEF(input_error);
@@ -35,21 +33,21 @@ SNIP_DEF(input_requested);
 
 SNIP_DEF(program_busy);
 SNIP_DEF(program_failed);
-SNIP_DEF_VOL(program_finished, 45000);
+SNIP_DEF_VOL(program_finished, 170);
 
 SNIP_DEF(major_error);
 #endif
 
-AudioHandler *audioHandler = nullptr;
+Audio::TX *audioHandler = nullptr;
 
-void init(AudioHandler &audio) {
+void init(Audio::TX &audio) {
 #ifdef TREKCORE_AUDIO_ENABLED
 	audioHandler = &audio;
 #endif
 }
 
 
-#define SNIP_PLAY(key, name) case key : audioHandler->insert_cassette(s_ ## name); break
+#define SNIP_PLAY(key, name) case key : Audio::ByteCassette::play(*audioHandler, s_ ## name); break
 void play(signal_type_t signal) {
 #ifdef TREKCORE_AUDIO_ENABLED
 	if(audioHandler == nullptr)
