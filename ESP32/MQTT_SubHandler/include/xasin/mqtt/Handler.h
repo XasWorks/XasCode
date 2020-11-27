@@ -13,6 +13,8 @@
 
 #include "mqtt_client.h"
 
+#include <freertos/semphr.h>
+
 #include <vector>
 #include <string>
 #include <functional>
@@ -38,6 +40,7 @@ class Handler {
 protected:
 	friend Subscription;
 
+	SemaphoreHandle_t config_lock;
 	std::vector<Subscription *> subscriptions;
 
 	esp_mqtt_client_handle_t mqtt_handle;
@@ -67,7 +70,7 @@ public:
 	void publish_to(const std::string &topic, void const *data, size_t length, bool retain = false, int qos = 0);
 	void publish_int(const std::string &topic, int32_t data, bool retain = false, int qos = 0);
 
-	void subscribe_to(const std::string &topic, mqtt_callback callback, int qos = 1);
+	Subscription * subscribe_to(const std::string &topic, mqtt_callback callback, int qos = 1);
 
 	uint8_t is_disconnected();
 };

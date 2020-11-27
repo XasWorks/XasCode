@@ -16,15 +16,6 @@
 namespace Xasin {
 namespace MQTT {
 
-extern const uint8_t TeleSec_crt[] asm("_binary_TeleSec_pem_start");
-extern const uint8_t TeleSec_crt_end[] asm("_binary_TeleSec_pem_end");
-
-extern const uint8_t wifi_cert_key[] asm("_binary_ESP_WIFI_key_start");
-extern const uint8_t wifi_cert_key_end[] asm("_binary_ESP_WIFI_key_end");
-
-extern const uint8_t wifi_cert[] asm("_binary_ESP_WIFI_pem_start");
-extern const uint8_t wifi_cert_end[] asm("_binary_ESP_WIFI_pem_end");
-
 const char *mqtt_tag = "XAQTT";
 
 bool wifi_was_configured = false;
@@ -161,6 +152,8 @@ Handler::Handler()
 	  mqtt_handle(nullptr),
 	  wifi_connected(false),
 	  mqtt_started(false), mqtt_connected(false) {
+
+	config_lock = xSemaphoreCreateMutex();
 }
 
 void Handler::start(const mqtt_cfg &config) {
@@ -220,6 +213,8 @@ void Handler::wifi_handler(system_event_t *event) {
 }
 
 void Handler::mqtt_handler(esp_mqtt_event_t *event) {
+	xSemaphoreTake(config_lock, portMAX_DELAY);
+
 	switch(event->event_id) {
 	case MQTT_EVENT_CONNECTED:
 		mqtt_connected = true;
@@ -255,6 +250,8 @@ void Handler::mqtt_handler(esp_mqtt_event_t *event) {
 
 	default: break;
 	}
+
+	xSemaphoreGive(config_lock);
 }
 
 void Handler::set_status(const std::string newStatus) {
@@ -285,10 +282,12 @@ void Handler::publish_int(const std::string &topic, int32_t data, bool retain, i
 	publish_to(topic, buffer, strlen(buffer), retain, qos);
 }
 
-void Handler::subscribe_to(const std::string &topic, mqtt_callback cb, int qos) {
+Subscription * Handler::subscribe_to(const std::string &topic, mqtt_callback cb, int qos) {
 	// NO subscribing necessary here, the subscription class already handles this
 	auto nSub = new Subscription(*this, topic, qos);
 	nSub->on_received = cb;
+
+	return nSub;
 }
 
 uint8_t Handler::is_disconnected() {
