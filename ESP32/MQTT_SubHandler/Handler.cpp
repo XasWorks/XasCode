@@ -10,6 +10,9 @@
 
 #include "esp_wpa2.h"
 
+#include "nvs.h"
+#include "nvs_flash.h"
+
 #define LOG_LOCAL_LEVEL ESP_LOG_INFO
 #include "esp_log.h"
 
@@ -43,6 +46,47 @@ void handler_wifi_checkup_task(void *eh) {
 		ESP_LOGI("XAQTT:WiFi", "Retrying connection...");
 		esp_wifi_start();
 	}
+}
+
+bool Handler::start_wifi_from_nvs() {
+	nvs_handle_t read_handle;
+
+	char ssid_buffer[64] = {};
+	size_t ssid_len = 64;
+	char pswd_buffer[64] = {};
+
+	nvs_open("xasin", NVS_READONLY, &read_handle);
+	auto ret = nvs_get_str(read_handle, "w_ssid", ssid_buffer, &ssid_len);
+
+	if(ret != ESP_OK) {
+		nvs_close(read_handle);
+		return false;
+	}
+
+	ssid_len = 64;
+	ret = nvs_get_str(read_handle, "w_pswd", pswd_buffer, &ssid_len);
+	nvs_close(read_handle);
+
+	if(ret != ESP_OK)
+		return false;
+
+	start_wifi(ssid_buffer, pswd_buffer);
+
+	return true;
+}
+
+void Handler::set_nvs_wifi(const char *wifi_ssid, const char *wifi_pswd) {
+	nvs_handle_t write_handle;
+
+	nvs_open("xasin", NVS_READWRITE, &write_handle);
+
+	if(wifi_ssid != nullptr && strlen(wifi_ssid) < 100)
+		nvs_set_str(write_handle, "w_ssid", wifi_ssid);
+	if(wifi_pswd != nullptr && strlen(wifi_pswd) < 100)
+		nvs_set_str(write_handle, "w_pswd", wifi_pswd);
+
+	nvs_commit(write_handle);
+	nvs_close(write_handle);
 }
 
 void Handler::start_wifi(const char *SSID, const char *PSWD, int psMode) {
@@ -171,7 +215,7 @@ void Handler::start(const mqtt_cfg &config) {
 	if(wifi_connected)
 		esp_mqtt_client_start(mqtt_handle);
 }
-void Handler::start(const std::string uri, const std::string status_topic) {
+void Handler::start(const std::string uri, const std::string &status_topic) {
 	mqtt_cfg config = {};
 	config.uri = uri.data();
 
@@ -192,6 +236,43 @@ void Handler::start(const std::string uri, const std::string status_topic) {
 	}
 
 	start(config);
+}
+
+bool Handler::start_from_nvs(const std::string &status_topic) {
+	if(!wifi_was_configured) {
+		if(!Handler::start_wifi_from_nvs())
+			return false;
+	}
+
+	nvs_handle_t read_handle;
+
+	char uri_buffer[254] = {};
+	size_t uri_length = 254;
+
+	nvs_open("xasin", NVS_READONLY, &read_handle);
+	auto ret = nvs_get_str(read_handle, "mqtt_uri", uri_buffer, &uri_length);
+	nvs_close(read_handle);
+
+	if(ret != ESP_OK)
+		return false;
+
+	ESP_LOGI(mqtt_tag, "Starting from NVS with URI %s", uri_buffer);
+	start(uri_buffer, status_topic);
+
+	return true;
+}
+
+void Handler::set_nvs_uri(const char *new_uri) {
+	if(strlen(new_uri) > 500)
+		return;
+
+	nvs_handle_t write_handle;
+
+	nvs_open("xasin", NVS_READWRITE, &write_handle);
+	nvs_set_str(write_handle, "mqtt_uri", new_uri);
+
+	nvs_commit(write_handle);
+	nvs_close(write_handle);
 }
 
 void Handler::wifi_handler(system_event_t *event) {

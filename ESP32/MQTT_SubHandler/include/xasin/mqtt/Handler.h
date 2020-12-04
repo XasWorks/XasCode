@@ -53,6 +53,11 @@ protected:
 	std::string status_msg;
 
 public:
+	static bool start_wifi_from_nvs();
+	static void set_nvs_wifi(const char *wifi_ssid, const char *wifi_pswd);
+	static void set_nvs_uri(const char *new_uri);
+
+
 	static void start_wifi(const char *SSID, const char *PSWD, int psMode = 0);
 	// static void start_wifi_enterprise(const char *SSID, const char *domain, const char *identity, const char *anonymousIdentity, const char *password);
 	static void try_wifi_reconnect(system_event_t *event);
@@ -60,7 +65,9 @@ public:
 	Handler();
 
 	void start(const mqtt_cfg &config);
-	void start(const std::string URI, const std::string status_topic = "");
+	void start(const std::string URI, const std::string &status_topic = "");
+
+	bool start_from_nvs(const std::string &status_topic = "");
 
 	void wifi_handler(system_event_t *event);
 	void mqtt_handler(esp_mqtt_event_t *event);
