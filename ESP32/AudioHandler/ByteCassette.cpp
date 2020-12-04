@@ -8,6 +8,9 @@
 #include <xasin/audio/AudioTX.h>
 #include <xasin/audio/ByteCassette.h>
 
+#define LOG_LOCAL_LEVEL ESP_LOG_INFO
+#include <esp_log.h>
+
 namespace Xasin {
 namespace Audio {
 
@@ -67,8 +70,9 @@ bool ByteCassette::process_frame() {
 
 void ByteCassette::play(TX &handler, const bytecassette_data_t &cassette) {
 	auto temp = new ByteCassette(handler, cassette);
-
 	temp->start(true);
+
+	ESP_LOGD("Audio", "Newly created source is %p", temp);
 }
 
 bool ByteCassette::is_finished() {

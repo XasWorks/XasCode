@@ -3,6 +3,7 @@
 #include "xasin/audio/Source.h"
 
 #include <cstring>
+#include <cmath>
 
 #define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
 #include "esp_log.h"
@@ -29,6 +30,22 @@ TX::TX(i2s_port_t port) :
 
 	calculate_volume = false;
 	volume_mod = 255;
+}
+
+void TX::calculate_audio_rms() {
+	uint64_t rms_sum = 0;
+
+	for(int16_t sample : audio_buffer) {
+		rms_sum += int32_t(sample) * sample;
+	}
+
+	rms_sum /= audio_buffer.size();
+
+	float rms_value = (sqrt(float(rms_sum)) / INT16_MAX) * sqrt(2);
+	if(rms_value <= 0.0001)
+		volume_estimate = -40;
+	else
+		volume_estimate = log10(rms_value) * 10;
 }
 
 void TX::boop_thread() {
@@ -113,11 +130,20 @@ void TX::audio_dma_fill_task() {
 	int audio_idle_count = 0;
 
 	while(true) {
+		// As long as we haven't been idling for a while, continue playback.
+		if(audio_idle_count < 0) {
+			uint32_t written_data = 0;
+			i2s_write(i2s_port, audio_buffer.data(), audio_buffer.size()*2, &written_data, portMAX_DELAY);
+		}
+		// The I2S Port has been stopped, simply wait for new data, a new audio source or similar
+		else {
+			state = IDLE;
+			xTaskNotifyWait(0, 0, nullptr, portMAX_DELAY);
+		}
+
 		// First things first we need to call the large processing thread
 		// to see what needs to be done.
-
 		state = PROCESSING;
-		ESP_LOGV("XasAudio", "Calling processing task!");
 		memset(audio_buffer.data(), 0, audio_buffer.size()*2);
 		xTaskNotify(processing_task, 0, eNoAction);
 		xTaskNotifyWait(0, 0, nullptr, portMAX_DELAY);
@@ -126,35 +152,26 @@ void TX::audio_dma_fill_task() {
 		// An audio source reported it has some audio to play
 		if(state == RUNNING) {
 			// We had put the i2s unit to sleep, unpause it.
-			if(audio_idle_count == 4) {
+			if(audio_idle_count == 0) {
 				ESP_LOGD("XasAudio", "Transitioning to running.");
 				i2s_start(i2s_port);
 			}
 
 			// Reset the idle counter.
-			audio_idle_count = 0;
+			audio_idle_count = -10;
 		}
 		// No more audio was added, increment idle counter
 		// We can't immediately stop playing as the DMA buffer must be emptied.
-		else if(audio_idle_count < 4) {
+		else if(audio_idle_count < 0) {
 			audio_idle_count++;
 
 			// We reached our four block idle time, stop the I2S Clock
 			// This helps conserve energy and processing power
-			if(audio_idle_count == 4) {
+			if(audio_idle_count == 0) {
 				ESP_LOGD("XasAudio", "Transitioning to idle.");
 				i2s_stop(i2s_port);
 			}
 		}
-
-		// As long as we haven't been idling for a while, continue playback.
-		if(audio_idle_count < 4) {
-			uint32_t written_data = 0;
-			i2s_write(i2s_port, audio_buffer.data(), audio_buffer.size()*2, &written_data, portMAX_DELAY);
-		}
-		// The I2S Port has been stopped, simply wait for new data, a new audio source or similar
-		else
-			xTaskNotifyWait(0, 0, nullptr, portMAX_DELAY);
 	}
 }
 
@@ -182,10 +199,15 @@ bool TX::largestack_process() {
 		}
 	}
 
+	if(calculate_volume)
+		calculate_audio_rms();
+	else
+		volume_estimate = 0;
+
 	if(source_is_playing)
 		state = RUNNING;
 	else
-		state = IDLE;
+		state = PRE_IDLE;
 
 	xTaskNotify(audio_task, 0, eNoAction);
 
@@ -213,6 +235,10 @@ void TX::init(TaskHandle_t processing_task, const i2s_pin_config_t &pin_config) 
 	this->processing_task = processing_task;
 
 	xTaskCreate(start_audio_task, "XasAudio TX DMA", 6*1024, this, configMAX_PRIORITIES - 5, &audio_task);
+}
+
+float TX::get_volume_estimate() {
+	return volume_estimate;
 }
 
 }

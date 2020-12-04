@@ -26,7 +26,8 @@ public:
 	enum audio_tx_state_t {
 		RUNNING,			// The audio handler is active and playing
 		PROCESSING,			// The audio handler is waiting on processed data
-		IDLE,				// There is no audio to be played from any source
+		PRE_IDLE,				// There is no audio to be played from any source
+		IDLE,
 	};
 
 private:
@@ -37,7 +38,9 @@ private:
 	std::vector<Source *> audio_sources;
 	SemaphoreHandle_t audio_config_mutex;
 
-	uint16_t volume_estimate;
+	float volume_estimate;
+
+	void calculate_audio_rms();
 
 protected:
 friend Source;
@@ -77,7 +80,7 @@ public:
 
 	void init(TaskHandle_t processing_task, const i2s_pin_config_t &pin_config);
 
-	uint16_t get_volume_estimate();
+	float get_volume_estimate();
 	bool had_clipping();
 };
 
