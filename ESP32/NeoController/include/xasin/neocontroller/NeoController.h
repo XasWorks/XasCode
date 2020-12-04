@@ -8,16 +8,17 @@
 #ifndef MAIN_NEOCONTROLLER_H_
 #define MAIN_NEOCONTROLLER_H_
 
+#include "Color.h"
+#include "Layer.h"
 #include "driver/rmt.h"
 #include "esp_pm.h"
 #include "esp32/pm.h"
 
 #include "freertos/task.h"
 
-#include "Color.h"
-#include "Layer.h"
 
-namespace Peripheral {
+namespace Xasin {
+namespace NeoController {
 
 class NeoController {
 public:
@@ -50,6 +51,7 @@ public:
 	void swipeTransition(uint32_t duration, bool desc = false);
 };
 
+}
 } /* namespace Touch */
 
 #endif /* MAIN_NEOCONTROLLER_H_ */

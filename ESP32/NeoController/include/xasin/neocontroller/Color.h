@@ -9,6 +9,7 @@
 #define COMPONENTS_NEOCONTROLLER_COLOR_H_
 
 #include "driver/rmt.h"
+#include <stdint.h>
 
 enum Material : uint32_t {
 	BLACK 	= 0x000000,
@@ -27,7 +28,8 @@ enum Material : uint32_t {
 	DEEP_ORANGE = 0xFF4700
 };
 
-namespace Peripheral {
+namespace Xasin {
+namespace NeoController {
 
 class Color {
 public:
@@ -78,7 +80,7 @@ public:
 	Color calculate_add(const Color &top, uint8_t alpha = 255) const;
 };
 
-
+}
 } /* namespace Peripheral */
 
 #endif /* COMPONENTS_NEOCONTROLLER_COLOR_H_ */

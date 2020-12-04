@@ -5,9 +5,10 @@
  *      Author: xasin
  */
 
-#include "xasin/Color.h"
+#include "xasin/neocontroller/Color.h"
 
-namespace Peripheral {
+namespace Xasin {
+namespace NeoController {
 
 Color Color::HSV(int16_t H, uint8_t S, uint8_t V) {
 	H %= 360;
@@ -214,4 +215,5 @@ Color Color::calculate_add(const Color &top, uint8_t alpha) const {
 	return (oColor.merge_add(top, alpha));
 }
 
+}
 } /* namespace Peripheral */
