@@ -13,7 +13,7 @@
 
 #include "sock_target.h"
 
-#include "tcpip_adapter.h"
+#include "esp_netif.h"
 #include "lwip/sockets.h"
 
 namespace Xasin {
