@@ -77,6 +77,7 @@ public:
 	bool largestack_process();
 
 	TX(i2s_port_t tx_port = I2S_NUM_0);
+	TX(const TX&) = delete;
 
 	void init(TaskHandle_t processing_task, const i2s_pin_config_t &pin_config);
 

@@ -8,7 +8,7 @@
 #include "xasin/audio/TXStream.h"
 #include <cstring>
 
-#define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE
+#define LOG_LOCAL_LEVEL ESP_LOG_INFO
 #include "esp_log.h"
 
 namespace Xasin {
@@ -113,7 +113,8 @@ void TXStream::feed_packet(const uint8_t * packet_ptr, uint16_t packet_size) {
 
 	xSemaphoreGive(packet_semaphore);
 
-	boop_playback();
+	if(packet_count > packet_buf.size() / 2)
+		boop_playback();
 }
 
 void TXStream::feed_packets(const uint8_t * data_ptr, uint16_t packet_size, uint8_t packet_no) {
@@ -150,11 +151,15 @@ void TXStream::feed_packets(const uint8_t * data_ptr, uint16_t packet_size, uint
 
 	xSemaphoreGive(packet_semaphore);
 
-	boop_playback();
+	if(packet_count > packet_buf.size() / 2)
+		boop_playback();
 }
 
 bool TXStream::is_finished() {
 	return false;
+}
+bool TXStream::has_audio() {
+	return packet_count > 0;
 }
 
 } /* namespace Audio */

@@ -5,7 +5,7 @@
 #include <cstring>
 #include <cmath>
 
-#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
+#define LOG_LOCAL_LEVEL ESP_LOG_INFO
 #include "esp_log.h"
 
 namespace Xasin {
@@ -146,7 +146,8 @@ void TX::audio_dma_fill_task() {
 		state = PROCESSING;
 		memset(audio_buffer.data(), 0, audio_buffer.size()*2);
 		xTaskNotify(processing_task, 0, eNoAction);
-		xTaskNotifyWait(0, 0, nullptr, portMAX_DELAY);
+		while(state == PROCESSING)
+			xTaskNotifyWait(0, 0, nullptr, portMAX_DELAY);
 		ESP_LOGV("XasAudio", "Processing finished.");
 
 		// An audio source reported it has some audio to play
@@ -234,7 +235,7 @@ void TX::init(TaskHandle_t processing_task, const i2s_pin_config_t &pin_config) 
 
 	this->processing_task = processing_task;
 
-	xTaskCreate(start_audio_task, "XasAudio TX DMA", 6*1024, this, configMAX_PRIORITIES - 5, &audio_task);
+	xTaskCreate(start_audio_task, "XasAudio TX DMA", 4*1024, this, configMAX_PRIORITIES - 5, &audio_task);
 }
 
 float TX::get_volume_estimate() {

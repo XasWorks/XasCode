@@ -57,6 +57,7 @@ public:
 	void feed_packets(const uint8_t * data_ptr, uint16_t packet_size, uint8_t packet_count);
 
 	bool is_finished();
+	bool has_audio();
 };
 
 } /* namespace Audio */

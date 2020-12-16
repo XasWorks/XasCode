@@ -44,6 +44,7 @@ public:
 
 	bool can_be_deleted();
 	virtual bool is_finished();
+	virtual bool has_audio();
 
 	void start(bool deletable = true);
 };

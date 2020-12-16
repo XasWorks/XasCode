@@ -42,6 +42,9 @@ bool Source::can_be_deleted() {
 bool Source::is_finished() {
 	return true;
 }
+bool Source::has_audio() {
+	return false;
+}
 
 void Source::start(bool deletable) {
 	if(was_started)
