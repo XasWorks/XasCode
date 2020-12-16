@@ -36,5 +36,12 @@ menu "XasCode Audio"
 			help
 				Samplerate of the receiving I2S master bus.
 				The default of 16kHz is fine for most I2S Microphones, without overwhelming the CPU if performing Opus encoding.
+		
+		config XASAUDIO_RX_FRAMELENGTH
+			int "RX Frame length"
+			default 20
+			help
+				Frame length used per DMA buffer, in milliseconds.
+				20ms is a good default together with OPUS decoding.	
 	endmenu
 endmenu
