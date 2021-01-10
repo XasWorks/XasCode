@@ -35,7 +35,7 @@ RX::RX(i2s_port_t rx_port) :
 void RX::calculate_audio_rms() {
 	uint64_t rms_sum = 0;
 
-	for(int16_t sample : audio_buffer[used_buffer]) {
+	for(auto sample : audio_buffer[used_buffer]) {
 		rms_sum += int32_t(sample) * sample;
 	}
 
@@ -56,16 +56,16 @@ void RX::audio_dma_read_task() {
 		i2s_read(i2s_port, raw_dma_buffer.data(), raw_dma_buffer.size(), &read_bytes, portMAX_DELAY);
 		// ESP_LOGD("Audio RX", "Read %d bytes, expected %d", read_bytes, raw_dma_buffer.size());
 
-		uint8_t *data_ptr = reinterpret_cast<uint8_t *>(raw_dma_buffer.data()) + 2;
+		uint8_t *data_ptr = reinterpret_cast<uint8_t *>(raw_dma_buffer.data()) + 0;
 		for(int i=0; i < XASAUDIO_RX_FRAME_SAMPLE_NO; i++) {
-			int32_t temp = *reinterpret_cast<int16_t*>(data_ptr);
+			int32_t temp = *reinterpret_cast<int32_t*>(data_ptr) / 16384;
 
 			int16_t current_dc_sample = current_dc_value >> 16;
 			current_dc_value += (temp - current_dc_sample) * 1024;
 
 			temp -= current_dc_sample;
 
-			temp = (temp * gain) >> 8;
+			temp = (temp * gain) / 255;
 
 			if(temp > INT16_MAX)
 				temp = INT16_MAX;
@@ -91,8 +91,8 @@ void RX::init(TaskHandle_t processing_task, const i2s_pin_config_t &pin_cfg) {
 
 	cfg.mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_RX);
 	cfg.sample_rate = CONFIG_XASAUDIO_RX_SAMPLERATE;
-	cfg.bits_per_sample = I2S_BITS_PER_SAMPLE_24BIT;
-	cfg.channel_format = I2S_CHANNEL_FMT_ALL_RIGHT;
+	cfg.bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT;
+	cfg.channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT;
 	cfg.communication_format = I2S_COMM_FORMAT_I2S_MSB;
 	cfg.intr_alloc_flags = 0;
 
