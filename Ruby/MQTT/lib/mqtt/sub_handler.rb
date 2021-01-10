@@ -137,8 +137,8 @@ class SubHandler < BaseHandler
 	end
 	alias lock_and_listen lockAndListen
 
-	def initialize(mqttClient, jsonify: true)
-		super(mqttClient);
+	def initialize(mqttClient, jsonify: true, **extra_opts)
+		super(mqttClient, **extra_opts);
 
 		@jsonifyHashes = jsonify;
 	end

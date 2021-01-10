@@ -297,11 +297,11 @@ module MQTT
 		# @example Starting the handler
 		#  mqtt = MQTT::SubHandler.new('mqtt.eclipse.org');
 		#  mqtt = MQTT::SubHandler.new(MQTT::Client.new("Your.Client.Opts"))
-		def initialize(mqttClient, logger: nil)
+		def initialize(mqttClient, logger: nil, **extra_opts)
 			@callbackList = Array.new();
 			if mqttClient.is_a? String
 				@mqtt = MQTT::Client.new(mqttClient);
-				@mqtt.clean_session = false;
+				@mqtt.clean_session = false unless extra_opts[:client_id].nil?
 			else
 				@mqtt = mqttClient;
 			end
@@ -313,7 +313,7 @@ module MQTT
 			@connected 		 = false;
 			@reconnectCount = 0;
 
-			@mqtt.client_id ||= MQTT::Client.generate_client_id("MQTT_Sub_", 8);
+			@mqtt.client_id ||= extra_opts[:client_id] || MQTT::Client.generate_client_id("MQTT_Sub_", 8);
 
 			@packetQueue = Array.new();
 			@packetQueueMutex = Mutex.new();
