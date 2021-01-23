@@ -42,7 +42,7 @@ bool ByteCassette::process_frame() {
 	if(current_sample == nullptr)
 		return false;
 
-	std::array<int16_t, XASAUDIO_TX_FRAME_SAMPLE_NO> temp_buffer;
+	std::array<int16_t, XASAUDIO_TX_FRAME_SAMPLE_NO> temp_buffer = {};
 
 	for(int i=0; i<XASAUDIO_TX_FRAME_SAMPLE_NO; i++) {
 		if((current_sample+1) >= sample_end) {
@@ -73,6 +73,21 @@ void ByteCassette::play(TX &handler, const bytecassette_data_t &cassette) {
 	temp->start(true);
 
 	ESP_LOGD("Audio", "Newly created source is %p", temp);
+}
+
+void ByteCassette::play(TX &handler, const ByteCassetteCollection &cassettes) {
+	if(cassettes.size() == 0)
+		return;
+
+	play(handler, cassettes.at(esp_random()%cassettes.size()));
+}
+
+template<>
+Source * TX::play(const bytecassette_data_t &sample, bool auto_delete) {
+	auto new_sound = new ByteCassette(*this, sample);
+	new_sound->start(auto_delete);
+
+	return new_sound;
 }
 
 bool ByteCassette::is_finished() {

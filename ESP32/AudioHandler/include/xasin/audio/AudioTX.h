@@ -83,6 +83,8 @@ public:
 
 	float get_volume_estimate();
 	bool had_clipping();
+
+	template<class T> Source * play(const T &sample, bool auto_delete = true);
 };
 
 }
