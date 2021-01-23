@@ -11,6 +11,8 @@
 #include <xasin/audio/Source.h>
 #include <stdint.h>
 
+#define XASAUDIO_CASSETTE(container, samplerate, volume) ((const Xasin::Audio::bytecassette_data_t){container, container + sizeof(container), samplerate, volume})
+
 namespace Xasin {
 namespace Audio {
 
@@ -20,6 +22,8 @@ struct bytecassette_data_t {
 	uint32_t data_samplerate;
 	uint8_t volume;
 };
+
+typedef std::vector<bytecassette_data_t> ByteCassetteCollection;
 
 class ByteCassette: public Source {
 private:
@@ -42,6 +46,7 @@ public:
 	ByteCassette(TX &handler, const bytecassette_data_t &cassette);
 
 	static void play(TX &handler, const bytecassette_data_t &cassette);
+	static void play(TX &handler, const ByteCassetteCollection &cassette);
 
 	~ByteCassette();
 

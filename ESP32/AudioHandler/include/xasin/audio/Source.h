@@ -26,8 +26,6 @@ friend TX;
 	TX &audio_handler;
 
 	virtual bool process_frame();
-
-
 	void boop_playback();
 
 	// These functions will always add exactly one frame (20ms) of the given data
@@ -43,10 +41,14 @@ public:
 	virtual ~Source();
 
 	bool can_be_deleted();
+
 	virtual bool is_finished();
 	virtual bool has_audio();
 
+	virtual void fade_out();
+
 	void start(bool deletable = true);
+	void release();
 };
 
 } /* namespace Audio */

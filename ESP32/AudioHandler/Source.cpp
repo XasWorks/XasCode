@@ -43,8 +43,10 @@ bool Source::is_finished() {
 	return true;
 }
 bool Source::has_audio() {
-	return false;
+	return !is_finished();
 }
+
+void Source::fade_out() {}
 
 void Source::start(bool deletable) {
 	if(was_started)
@@ -54,6 +56,14 @@ void Source::start(bool deletable) {
 
 	was_started = true;
 	audio_handler.insert_source(this);
+}
+
+void Source::release() {
+	if(is_deletable)
+		return;
+
+	is_deletable = true;
+	boop_playback();
 }
 
 } /* namespace Audio */
