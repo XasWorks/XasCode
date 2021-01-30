@@ -46,6 +46,10 @@ bool Source::has_audio() {
 	return !is_finished();
 }
 
+TickType_t Source::remaining_runtime() {
+	return 0;
+}
+
 void Source::fade_out() {}
 
 void Source::start(bool deletable) {

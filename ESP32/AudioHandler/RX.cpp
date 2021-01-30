@@ -22,7 +22,7 @@ void call_rx_dma_read(void *args) {
 
 RX::RX(i2s_port_t rx_port) :
 		array_read_cnt(0),
-		audio_buffer(), used_buffer(0), buffer_was_read(true),
+		audio_buffer(), buffer_fill_pos(0), buffer_read_pos(0),
 		is_running(false), volume_estimate(-40),
 		audio_task(nullptr),
 		processing_task_handle(nullptr),
@@ -35,11 +35,11 @@ RX::RX(i2s_port_t rx_port) :
 void RX::calculate_audio_rms() {
 	uint64_t rms_sum = 0;
 
-	for(auto sample : audio_buffer[used_buffer]) {
+	for(auto sample : audio_buffer[buffer_fill_pos]) {
 		rms_sum += int32_t(sample) * sample;
 	}
 
-	rms_sum /= audio_buffer[used_buffer].size();
+	rms_sum /= audio_buffer[buffer_fill_pos].size();
 
 	float rms_value = (sqrt(float(rms_sum)) / INT16_MAX) * sqrt(2);
 	if(rms_value <= 0.0001)
@@ -50,8 +50,12 @@ void RX::calculate_audio_rms() {
 
 void RX::audio_dma_read_task() {
 	while(true) {
+		while(!is_running)
+			vTaskDelay(CONFIG_XASAUDIO_RX_FRAMELENGTH / portTICK_PERIOD_MS);
+
 		size_t read_bytes = 0;
-		auto & read_buffer = audio_buffer[(used_buffer+1) & 1];
+
+		auto & read_buffer = audio_buffer[buffer_fill_pos];
 
 		i2s_read(i2s_port, raw_dma_buffer.data(), raw_dma_buffer.size(), &read_bytes, portMAX_DELAY);
 		// ESP_LOGD("Audio RX", "Read %d bytes, expected %d", read_bytes, raw_dma_buffer.size());
@@ -76,10 +80,13 @@ void RX::audio_dma_read_task() {
 			data_ptr += 8;
 		}
 
-		used_buffer = (used_buffer + 1) & 1;
-		buffer_was_read = false;
-
 		calculate_audio_rms();
+
+		buffer_fill_pos = (buffer_fill_pos + 1) % audio_buffer.size();
+		if(buffer_read_pos == buffer_fill_pos) {
+			buffer_read_pos = (buffer_read_pos + 1) % audio_buffer.size();
+			ESP_LOGW("Audio RX", "Buffer wasn't read fast enough!");
+		}
 
 		if(processing_task_handle != nullptr)
 			xTaskNotify(processing_task_handle, 0, eNoAction);
@@ -96,7 +103,9 @@ void RX::init(TaskHandle_t processing_task, const i2s_pin_config_t &pin_cfg) {
 	cfg.communication_format = I2S_COMM_FORMAT_I2S_MSB;
 	cfg.intr_alloc_flags = 0;
 
-	cfg.dma_buf_count = 8;
+	uint32_t num_buffer_bytes = XASAUDIO_RX_FRAME_SAMPLE_NO * 2;
+
+	cfg.dma_buf_count = 1 + ((num_buffer_bytes - 1) / 512);
 	cfg.dma_buf_len = 512;
 
 	i2s_driver_install(i2s_port, &cfg, 0, nullptr);
@@ -104,21 +113,24 @@ void RX::init(TaskHandle_t processing_task, const i2s_pin_config_t &pin_cfg) {
 
 	processing_task_handle = processing_task;
 
-	xTaskCreate(call_rx_dma_read, "XasAudio RX DMA", 5*1024, this, configMAX_PRIORITIES - 2, &audio_task);
+	xTaskCreate(call_rx_dma_read, "XasAudio RX DMA", 3*1024, this, configMAX_PRIORITIES - 2, &audio_task);
 }
 
 bool RX::has_new_audio() {
 	if(!is_running)
 		return false;
-	if(buffer_was_read)
+	if(buffer_fill_pos == buffer_read_pos)
 		return false;
 
 	return true;
 }
 const rx_buffer_t &RX::get_buffer() {
-	buffer_was_read = true;
+	const rx_buffer_t & out_buffer = audio_buffer[buffer_read_pos];
 
-	return audio_buffer[used_buffer];
+	if(buffer_read_pos != buffer_fill_pos)
+		buffer_read_pos = (buffer_read_pos + 1) % audio_buffer.size();
+
+	return out_buffer;
 }
 
 void RX::start() {

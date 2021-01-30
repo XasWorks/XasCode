@@ -56,6 +56,8 @@ public:
 
 	bool is_finished();
 
+	TickType_t remaining_runtime();
+
 	void fade_out();
 };
 

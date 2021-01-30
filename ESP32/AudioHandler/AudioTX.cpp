@@ -52,8 +52,7 @@ void TX::boop_thread() {
 	if(audio_task == nullptr)
 		return;
 
-	if(state == IDLE)
-		xTaskNotify(audio_task, 0, eNoAction);
+	xTaskNotify(audio_task, 0, eNoAction);
 }
 
 void TX::remove_source(Source * source) {
@@ -61,12 +60,14 @@ void TX::remove_source(Source * source) {
 
 	ESP_LOGD("XasAudio", "Erasing source 0x%p", source);
 
-	for(auto i = audio_sources.begin(); i != audio_sources.end(); i++) {
-		if(*i == source) {
-			audio_sources.erase(i);
-			break;
-		}
+	for(auto i = audio_sources.begin(); i != audio_sources.end();) {
+		if(*i == source)
+			i = audio_sources.erase(i);
+		else
+			i++;
 	}
+
+	ESP_LOGD("XasAudio", "New held count: %d", audio_sources.size());
 
 	xSemaphoreGive(audio_config_mutex);
 }
@@ -78,10 +79,10 @@ void TX::insert_source(Source * source) {
 
 	audio_sources.push_back(source);
 
-	if(state == IDLE)
-		xTaskNotify(audio_task, 0, eNoAction);
-
+	ESP_LOGD("XasAudio", "New held count: %d", audio_sources.size());
 	xSemaphoreGive(audio_config_mutex);
+
+	xTaskNotify(audio_task, 0, eNoAction);
 }
 
 void TX::add_interleaved_frame(const int16_t *data, uint8_t volume) {
@@ -143,8 +144,8 @@ void TX::audio_dma_fill_task() {
 
 		// First things first we need to call the large processing thread
 		// to see what needs to be done.
-		state = PROCESSING;
 		memset(audio_buffer.data(), 0, audio_buffer.size()*2);
+		state = PROCESSING;
 		xTaskNotify(processing_task, 0, eNoAction);
 		while(state == PROCESSING)
 			xTaskNotifyWait(0, 0, nullptr, portMAX_DELAY);
@@ -191,13 +192,6 @@ bool TX::largestack_process() {
 	bool source_is_playing = false;
 	for(auto source : sources_copy) {
 		source_is_playing |= source->process_frame();
-
-		// FIXME This really should be a std::shared_pointer, it's a perfect
-		// use case, I just need to muster the courage to use it :P
-		if(source->is_finished() && source->can_be_deleted()) {
-			ESP_LOGD("XasAudio", "Starting delete of 0x%p", source);
-			delete source;
-		}
 	}
 
 	if(calculate_volume)
@@ -211,6 +205,17 @@ bool TX::largestack_process() {
 		state = PRE_IDLE;
 
 	xTaskNotify(audio_task, 0, eNoAction);
+
+	for (auto source : sources_copy)
+	{
+		// FIXME This really should be a std::shared_pointer, it's a perfect
+		// use case, I just need to muster the courage to use it :P
+		if (source->is_finished() && source->can_be_deleted())
+		{
+			ESP_LOGD("XasAudio", "Starting delete of 0x%p", source);
+			delete source;
+		}
+	}
 
 	return true;
 }
@@ -235,7 +240,7 @@ void TX::init(TaskHandle_t processing_task, const i2s_pin_config_t &pin_config) 
 
 	this->processing_task = processing_task;
 
-	xTaskCreate(start_audio_task, "XasAudio TX DMA", 4*1024, this, configMAX_PRIORITIES - 5, &audio_task);
+	xTaskCreate(start_audio_task, "XasAudio TX DMA", 3*1024, this, 7, &audio_task);
 }
 
 float TX::get_volume_estimate() {

@@ -10,6 +10,8 @@
 
 #include <stdint.h>
 
+#include <freertos/FreeRTOS.h>
+
 namespace Xasin {
 namespace Audio {
 
@@ -44,6 +46,8 @@ public:
 
 	virtual bool is_finished();
 	virtual bool has_audio();
+
+	virtual TickType_t remaining_runtime();
 
 	virtual void fade_out();
 

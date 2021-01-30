@@ -12,6 +12,11 @@
 
 #include <array>
 
+#define LOG_LOCAL_LEVEL ESP_LOG_INFO
+#include <esp_log.h>
+
+#include <esp_heap_caps.h>
+
 namespace Xasin {
 namespace Audio {
 
@@ -21,7 +26,11 @@ OpusCassette::OpusCassette(TX &handler, const opus_audio_bundle_t &data) :
 	decoder(nullptr), volume(data.volume),
 	fade_out_active(false), repeat(false) {
 
-	decoder = opus_decoder_create(CONFIG_XASAUDIO_TX_SAMPLERATE, 1, nullptr);
+	int error = 0;
+	decoder = opus_decoder_create(CONFIG_XASAUDIO_TX_SAMPLERATE, 1, &error);
+
+	if(error != OPUS_OK)
+		ESP_LOGW("Audio::Opus", "Allocation failed with :%d", error);
 }
 
 OpusCassette::~OpusCassette() {
@@ -33,11 +42,19 @@ bool OpusCassette::process_frame() {
 	if(decoder == nullptr)
 		return false;
 
-	if(packet_no >= audio_data.num_packets)
+	if(packet_no >= audio_data.num_packets) {
+		opus_decoder_destroy(decoder);
+		decoder = nullptr;
+		
 		return false;
+	}
 
-	if(volume == 0)
+	if(volume <= 1 && fade_out_active) {
+		opus_decoder_destroy(decoder);
+		decoder = nullptr;
+
 		return false;
+	}
 
 	std::array<int16_t, XASAUDIO_TX_FRAME_SAMPLE_NO> decode_buffer = {};
 
@@ -54,13 +71,13 @@ bool OpusCassette::process_frame() {
 		packet_no = 0;
 
 	if(fade_out_active)
-		volume *= 0.6F;
+		volume *= 0.4F;
 
 	return true;
 }
 
 bool OpusCassette::is_finished() {
-	if((volume == 0) && fade_out_active)
+	if((volume <= 1) && fade_out_active)
 		return true;
 	if(packet_no >= audio_data.num_packets)
 		return true;
@@ -68,6 +85,13 @@ bool OpusCassette::is_finished() {
 		return true;
 
 	return false;
+}
+
+TickType_t OpusCassette::remaining_runtime() {
+	if(is_finished())
+		return 0;
+	
+	return (audio_data.num_packets - packet_no) * CONFIG_XASAUDIO_TX_FRAMELENGTH / portTICK_PERIOD_MS;
 }
 
 void OpusCassette::fade_out() {
