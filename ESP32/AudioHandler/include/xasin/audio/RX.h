@@ -24,6 +24,7 @@ typedef std::array<int16_t, XASAUDIO_RX_FRAME_SAMPLE_NO> rx_buffer_t;
 
 class RX {
 private:
+	const uint8_t data_offset;
 	int array_read_cnt;
 
 	std::array<uint8_t, 4 * 2 * XASAUDIO_RX_FRAME_SAMPLE_NO> raw_dma_buffer;
@@ -48,7 +49,7 @@ public:
 
 	void audio_dma_read_task();
 
-	RX(i2s_port_t rx_port = I2S_NUM_1);
+	RX(uint8_t data_offset = 0, i2s_port_t rx_port = I2S_NUM_1);
 	RX(const RX&) = delete;
 
 	// virtual ~RX();

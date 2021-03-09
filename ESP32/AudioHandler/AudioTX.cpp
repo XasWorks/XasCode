@@ -5,7 +5,7 @@
 #include <cstring>
 #include <cmath>
 
-#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
+#define LOG_LOCAL_LEVEL ESP_LOG_INFO
 #include "esp_log.h"
 
 namespace Xasin {

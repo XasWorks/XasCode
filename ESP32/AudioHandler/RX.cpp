@@ -20,7 +20,8 @@ void call_rx_dma_read(void *args) {
 	reinterpret_cast<RX*>(args)->audio_dma_read_task();
 }
 
-RX::RX(i2s_port_t rx_port) :
+RX::RX(uint8_t data_offset, i2s_port_t rx_port) :
+		data_offset(data_offset),
 		array_read_cnt(0),
 		audio_buffer(), buffer_fill_pos(0), buffer_read_pos(0),
 		is_running(false), volume_estimate(-40),
@@ -60,7 +61,9 @@ void RX::audio_dma_read_task() {
 		i2s_read(i2s_port, raw_dma_buffer.data(), raw_dma_buffer.size(), &read_bytes, portMAX_DELAY);
 		// ESP_LOGD("Audio RX", "Read %d bytes, expected %d", read_bytes, raw_dma_buffer.size());
 
-		uint8_t *data_ptr = reinterpret_cast<uint8_t *>(raw_dma_buffer.data()) + 0;
+		// memcpy(read_buffer.data(), raw_dma_buffer.data(), 20);
+
+		uint8_t *data_ptr = reinterpret_cast<uint8_t *>(raw_dma_buffer.data()) + data_offset;
 		for(int i=0; i < XASAUDIO_RX_FRAME_SAMPLE_NO; i++) {
 			int32_t temp = *reinterpret_cast<int32_t*>(data_ptr) / 16384;
 
