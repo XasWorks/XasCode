@@ -13,13 +13,17 @@
 #include "nvs.h"
 #include "nvs_flash.h"
 
+#include <lwip/apps/sntp.h>
+
 #define LOG_LOCAL_LEVEL ESP_LOG_INFO
 #include "esp_log.h"
+
+#include <xnm/net_helpers.h>
 
 namespace Xasin {
 namespace MQTT {
 
-const char *mqtt_tag = "XAQTT";
+const char *mqtt_tag = "XNMQTT";
 
 bool wifi_was_configured = false;
 volatile int  wifi_task_conn_counter = 0;
@@ -43,7 +47,7 @@ void handler_wifi_checkup_task(void *eh) {
 
 		if(wifi_task_conn_counter == -1)
 			continue;
-		ESP_LOGI("XAQTT:WiFi", "Retrying connection...");
+		ESP_LOGI("XNM:WiFi", "Retrying connection...");
 		esp_wifi_start();
 	}
 }
@@ -98,6 +102,10 @@ void Handler::start_wifi(const char *SSID, const char *PSWD, int psMode) {
 		ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_STA) );
 
 		xTaskCreate(handler_wifi_checkup_task, "XAQTT::Wifi", 2*1024, nullptr, 10, &wifi_task_handle);
+
+		sntp_setoperatingmode(SNTP_OPMODE_POLL);
+		sntp_set_sync_mode(SNTP_SYNC_MODE_IMMED);
+		sntp_setservername(0, "pool.ntp.org\0");
 	}
 
 	wifi_was_configured = true;
@@ -165,11 +173,21 @@ void Handler::start_wifi(const char *SSID, const char *PSWD, int psMode) {
 //}
 
 void Handler::try_wifi_reconnect(system_event_t *event) {
+	static bool sntp_was_initialized = false;
+
 	switch(event->event_id) {
 	case SYSTEM_EVENT_STA_CONNECTED:
 		ESP_LOGI("XAQTT:WiFi", "Reconnected");
 		wifi_task_conn_counter = -1;
+
 		break;
+	case SYSTEM_EVENT_STA_GOT_IP:
+		ESP_LOGI("XAQTT:WiFi", "Got IP!");
+
+		if(!sntp_was_initialized)
+			sntp_init();
+		sntp_was_initialized = true;
+
 	case SYSTEM_EVENT_STA_START:
 		esp_wifi_connect();
 		break;
@@ -195,9 +213,28 @@ Handler::Handler()
 	: subscriptions(),
 	  mqtt_handle(nullptr),
 	  wifi_connected(false),
-	  mqtt_started(false), mqtt_connected(false) {
+	  mqtt_started(false), mqtt_connected(false),
+	  status_topic("status"), status_msg("OK") {
 
 	config_lock = xSemaphoreCreateMutex();
+
+	base_topic.reserve(64);
+
+	base_topic 	= "/dev/esp/";
+	base_topic += CONFIG_PROJECT_NAME;
+	base_topic += "/";
+	base_topic += XNM::NetHelpers::get_device_id();
+	base_topic += "/";
+}
+Handler::Handler(const std::string &base_t) : Handler() {
+	base_topic = base_t;
+}
+
+void Handler::topicsize_string(std::string &topic) {
+	if(topic[0] == '/')
+		return;
+
+	topic = base_topic + topic;
 }
 
 void Handler::start(const mqtt_cfg &config) {
@@ -215,30 +252,27 @@ void Handler::start(const mqtt_cfg &config) {
 	if(wifi_connected)
 		esp_mqtt_client_start(mqtt_handle);
 }
-void Handler::start(const std::string uri, const std::string &status_topic) {
+void Handler::start(const std::string uri) {
 	mqtt_cfg config = {};
 	config.uri = uri.data();
 
-	config.buffer_size = 6*1024;
-	config.task_prio = 20;
-
 	config.disable_clean_session = false;
 
-	if(status_topic != "") {
-		config.lwt_topic = status_topic.data();
-		config.lwt_retain = true;
-		config.lwt_qos = 1;
-		config.lwt_msg_len = 0;
+	config.use_global_ca_store = true;
 
-		config.keepalive = 5;
+	topicsize_string(this->status_topic);
 
-		this->status_topic = status_topic;
-	}
+	config.lwt_topic = this->status_topic.data();
+	config.lwt_retain = true;
+	config.lwt_qos = 1;
+	config.lwt_msg_len = 0;
+
+	config.keepalive = 5;
 
 	start(config);
 }
 
-bool Handler::start_from_nvs(const std::string &status_topic) {
+bool Handler::start_from_nvs() {
 	if(!wifi_was_configured) {
 		if(!Handler::start_wifi_from_nvs())
 			return false;
@@ -257,7 +291,7 @@ bool Handler::start_from_nvs(const std::string &status_topic) {
 		return false;
 
 	ESP_LOGI(mqtt_tag, "Starting from NVS with URI %s", uri_buffer);
-	start(uri_buffer, status_topic);
+	start(uri_buffer);
 
 	return true;
 }
@@ -335,7 +369,7 @@ void Handler::mqtt_handler(esp_mqtt_event_t *event) {
 	xSemaphoreGive(config_lock);
 }
 
-void Handler::set_status(const std::string newStatus) {
+void Handler::set_status(const std::string &newStatus) {
 	if(status_topic == "")
 		return;
 
@@ -344,14 +378,17 @@ void Handler::set_status(const std::string newStatus) {
 		this->publish_to(status_topic, status_msg.data(), status_msg.length(), true);
 }
 
-void Handler::publish_to(const std::string &topic, const void *data, size_t length, bool retain, int qos) {
+void Handler::publish_to(std::string topic, const void *data, size_t length, bool retain, int qos) {
 	if(!mqtt_connected) {
-		ESP_LOGW(mqtt_tag, "Packet to %s dropped (disconnected)", topic.data());
+		ESP_LOGD(mqtt_tag, "Packet to %s dropped (disconnected)", topic.data());
 		return;
 	}
 
+	topicsize_string(topic);
+
 	ESP_LOGD(mqtt_tag, "Publishing to %s", topic.data());
 	ESP_LOG_BUFFER_HEXDUMP(mqtt_tag, data, length, ESP_LOG_VERBOSE);
+	
 	esp_mqtt_client_publish(mqtt_handle, topic.data(), reinterpret_cast<const char*>(data)
 				, length, qos, retain);
 }
@@ -363,7 +400,9 @@ void Handler::publish_int(const std::string &topic, int32_t data, bool retain, i
 	publish_to(topic, buffer, strlen(buffer), retain, qos);
 }
 
-Subscription * Handler::subscribe_to(const std::string &topic, mqtt_callback cb, int qos) {
+Subscription * Handler::subscribe_to(std::string topic, mqtt_callback cb, int qos) {
+	topicsize_string(topic);	
+
 	// NO subscribing necessary here, the subscription class already handles this
 	auto nSub = new Subscription(*this, topic, qos);
 	nSub->on_received = cb;
