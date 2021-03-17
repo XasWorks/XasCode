@@ -34,7 +34,7 @@ private:
 	uint8_t buffer_read_pos;
 
 	bool is_running;
-	float volume_estimate;
+	float amplitude;
 
 	TaskHandle_t audio_task;
 	TaskHandle_t processing_task_handle;
@@ -58,6 +58,10 @@ public:
 	void init(TaskHandle_t processing_task, const i2s_pin_config_t &pin_cfg);
 
 	float get_volume_estimate();
+	float get_amplitude_rms();
+
+	float get_goertzel(float frequency, int N = -1);
+	int32_t get_autocorrelation(float frequency);
 
 	bool has_new_audio();
 	const rx_buffer_t &get_buffer();

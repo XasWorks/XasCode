@@ -24,7 +24,7 @@ RX::RX(uint8_t data_offset, i2s_port_t rx_port) :
 		data_offset(data_offset),
 		array_read_cnt(0),
 		audio_buffer(), buffer_fill_pos(0), buffer_read_pos(0),
-		is_running(false), volume_estimate(-40),
+		is_running(false), amplitude(0),
 		audio_task(nullptr),
 		processing_task_handle(nullptr),
 		current_dc_value(0),
@@ -42,11 +42,7 @@ void RX::calculate_audio_rms() {
 
 	rms_sum /= audio_buffer[buffer_fill_pos].size();
 
-	float rms_value = (sqrt(float(rms_sum)) / INT16_MAX) * sqrt(2);
-	if(rms_value <= 0.0001)
-		volume_estimate = -40;
-	else
-		volume_estimate = log10(rms_value) * 10;
+	amplitude = (sqrt(float(rms_sum)) / INT16_MAX) * sqrt(2);
 }
 
 void RX::audio_dma_read_task() {
@@ -153,12 +149,68 @@ void RX::stop() {
 	i2s_stop(i2s_port);
 }
 
+float RX::get_amplitude_rms() {
+	return amplitude;
+}
+
 float RX::get_volume_estimate() {
 	if(!is_running)
 		return -40;
 
-	return volume_estimate;
-
+	if(amplitude <= 0.0001)
+		return -40;
+	else
+		return log10(amplitude) * 10;
 }
+
+float RX::get_goertzel(float frequency, int n_samples) {
+	if(n_samples < 0)
+		n_samples = XASAUDIO_RX_FRAME_SAMPLE_NO;
+
+	n_samples = CONFIG_XASAUDIO_RX_SAMPLERATE/frequency * floorf(n_samples / (CONFIG_XASAUDIO_RX_SAMPLERATE / frequency));
+
+	const float k = roundf(0.5F + n_samples * frequency / (CONFIG_XASAUDIO_RX_SAMPLERATE));
+	const float w = (2 * M_PI * k / n_samples);
+
+	const float cosine_fact = cosf(w);
+	const float sine_fact = sinf(w);
+
+	const float coeff = 2 * cosine_fact;
+
+	float q0 = 0;
+	float q1 = 0;
+	float q2 = 0;
+
+	for(int i=0; i<n_samples; i++) {
+		q0 = coeff * q1 - q2 + audio_buffer[(buffer_fill_pos + 1 + i/XASAUDIO_RX_FRAME_SAMPLE_NO) & 0b11][i % XASAUDIO_RX_FRAME_SAMPLE_NO];
+		q2 = q1;
+		q1 = q0;
+	}
+
+	return sqrtf(powf(q1 - q2 * cosine_fact, 2) + powf(q2 * sine_fact, 2)) / (n_samples * INT16_MAX);
+}
+
+int32_t RX::get_autocorrelation(float frequency) {
+	float stepsize = 0;
+	if(frequency > 0.001/float(CONFIG_XASAUDIO_RX_FRAMELENGTH*3))
+		stepsize = CONFIG_XASAUDIO_RX_SAMPLERATE / frequency;
+	
+	int64_t sum_count = 0;
+
+	uint32_t i = 0;
+
+	for(int i = 0; i <= floorf(stepsize); i++) {
+		const auto samp_a = audio_buffer[(buffer_fill_pos + 1 + i/XASAUDIO_RX_FRAME_SAMPLE_NO) & 0b11][i % XASAUDIO_RX_FRAME_SAMPLE_NO];
+		
+		for(float step = i + stepsize; step < XASAUDIO_RX_FRAME_SAMPLE_NO*3; step += stepsize) {
+			const auto samp_b = audio_buffer[(buffer_fill_pos + 1 + int(step)/XASAUDIO_RX_FRAME_SAMPLE_NO) & 0b11][int(step) % XASAUDIO_RX_FRAME_SAMPLE_NO];
+		
+			sum_count += samp_a * int32_t(samp_b);
+		}
+	}
+
+	return sum_count / INT16_MAX;
+}
+
 } /* namespace Audio */
 } /* namespace Xasin */
