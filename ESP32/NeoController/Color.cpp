@@ -6,6 +6,9 @@
  */
 
 #include "xasin/neocontroller/Color.h"
+#include <math.h>
+
+#include "esp_log.h"
 
 namespace Xasin {
 namespace NeoController {
@@ -34,6 +37,66 @@ Color Color::HSV(int16_t H, uint8_t S, uint8_t V) {
 	}
 
 	return oC;
+}
+
+Color Color::Temperature(float temperature, float brightness) {
+	    Xasin::NeoController::Color out = 0;
+
+    float r_temp = 0;
+    float g_temp = 0;
+    float b_temp = 0;
+
+    temperature /= 100;
+    if(temperature < 66) {
+        out.r = 255*255;
+
+        g_temp = temperature;
+        g_temp = 99.4708025861F * logf(g_temp) - 161.1195681661F;
+
+        if(temperature >= 19) {
+            b_temp = temperature - 10;
+            b_temp = 138.5177312231F * logf(b_temp) - 305.0447927307F;
+        }
+    }
+    else {
+        r_temp = temperature - 60;
+        r_temp = 329.698727446F * powf(r_temp, -0.1332047592F);
+
+        g_temp = temperature - 60;
+        g_temp = 288.1221695283F * powf(g_temp, -0.0755148492F);
+    
+        b_temp = 255;
+    }
+
+    if(r_temp >= 255)
+        out.r = 255*255;
+    else if(r_temp > 0)
+        out.r = 255 * r_temp;
+
+    if(g_temp >= 255)
+        out.g = 255*255;
+    else if(g_temp > 0)
+        out.g = 255 * g_temp;
+
+    if(b_temp >= 255) {
+        out.b = 255*255;
+	}
+	else if(b_temp > 0) {
+        out.b = b_temp * 255;
+	}
+
+	if(brightness <= -1) {
+		if(temperature < 10)
+			brightness = 0.1;
+		else if(temperature < 25)
+			brightness = 0.1 + logf(temperature / 10.0F) * 0.9822F;
+		else
+			brightness = 1;
+	}
+
+    out.bMod(255 * brightness);
+
+	return out;
 }
 
 Color::Color() {
@@ -115,14 +178,14 @@ void Color::overlay(Color bottom, Color top, uint8_t alpha) {
 		(&this->r)[i] = (uint32_t((&bottom.r)[i])*(255 - alpha) + (&top.r)[i]*(alpha))/255;
 }
 
-Color Color::operator +(Color secondColor) {
+Color Color::operator +(Color secondColor) const {
 	Color oColor = *this;
 	for(uint8_t i=0; i<3; i++)
 		(&(oColor.r))[i] = (&secondColor.r)[i] + (&this->r)[i];
 
 	return oColor;
 }
-Color Color::operator *(uint8_t brightness) {
+Color Color::operator *(uint8_t brightness) const {
 	Color oColor = *this;
 	oColor.bMod(brightness);
 
