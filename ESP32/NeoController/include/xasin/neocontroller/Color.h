@@ -9,6 +9,7 @@
 #define COMPONENTS_NEOCONTROLLER_COLOR_H_
 
 #include "driver/rmt.h"
+#include <stdint.h>
 
 enum Material : uint32_t {
 	BLACK 	= 0x000000,
@@ -27,7 +28,8 @@ enum Material : uint32_t {
 	DEEP_ORANGE = 0xFF4700
 };
 
-namespace Peripheral {
+namespace Xasin {
+namespace NeoController {
 
 class Color {
 public:
@@ -43,6 +45,7 @@ public:
 	uint16_t alpha;
 
 	static Color HSV(int16_t H, uint8_t S = 255, uint8_t V = 255);
+	static Color Temperature(float temp, float brightness = -1);
 
 	Color();
 	Color(uint32_t cCode, uint8_t brightness = 255);
@@ -62,8 +65,8 @@ public:
 	Color overlay(Color topColor, uint8_t level);
 	void  overlay(Color bottom, Color top, uint8_t alpha);
 
-	Color operator +(Color secondColor);
-	Color operator *(uint8_t brightness);
+	Color operator +(Color secondColor) const;
+	Color operator *(uint8_t brightness) const;
 
 	Color& merge_overlay(const Color &top, uint8_t alpha = 255);
 	Color& merge_multiply(const Color &top, uint8_t alpha = 255);
@@ -78,7 +81,7 @@ public:
 	Color calculate_add(const Color &top, uint8_t alpha = 255) const;
 };
 
-
+}
 } /* namespace Peripheral */
 
 #endif /* COMPONENTS_NEOCONTROLLER_COLOR_H_ */

@@ -12,7 +12,9 @@
 
 #include "Color.h"
 
-namespace Peripheral {
+namespace Xasin {
+namespace NeoController {
+
 	class Layer {
 	public:
 		std::vector<Color> colors;
@@ -45,6 +47,7 @@ namespace Peripheral {
 //		Layer& calculate_multiply(const uint8_t *scalars) const;
 //		Layer& calculate_add(const Layer &top, int offset = 0, bool wrap = false) const;
 	};
+}
 }
 
 #endif
