@@ -6,9 +6,17 @@
  */
 
 #include "xasin/neocontroller/Color.h"
+
+#include <algorithm>
 #include <math.h>
 
 #include "esp_log.h"
+
+#define RAW_C_MAX (255*257)
+#define BOUND_RAW_C(v) std::min<int32_t>(RAW_C_MAX, std::max<int32_t>(0, v))
+#define U8_TO_RAW_C(v) uint8_t(v) * uint16_t(257)
+#define RAW_TO_U8(v)   uint8_t(v/257)
+
 
 namespace Xasin {
 namespace NeoController {
@@ -28,7 +36,7 @@ Color Color::HSV(int16_t H, uint8_t S, uint8_t V) {
 	Color oC = Color();
 
 	switch(h) {
-	default:oC.r = V*255; oC.g = t; oC.b = p; break;
+	default:oC.r = V; oC.g = t; oC.b = p; break;
 	case 1: oC.r = q; oC.g = V*255; oC.b = p; break;
 	case 2: oC.r = p; oC.g = V*255; oC.b = t; break;
 	case 3: oC.r = p; oC.g = q; oC.b = V*255; break;
@@ -39,64 +47,82 @@ Color Color::HSV(int16_t H, uint8_t S, uint8_t V) {
 	return oC;
 }
 
+#define MIN_B (0.2F)
+#define MIN_B_TEMP (9)
+#define MAX_B_TEMP (20)
 Color Color::Temperature(float temperature, float brightness) {
-	    Xasin::NeoController::Color out = 0;
+	Xasin::NeoController::Color out = 0;
 
     float r_temp = 0;
     float g_temp = 0;
     float b_temp = 0;
 
     temperature /= 100;
-    if(temperature < 66) {
-        out.r = 255*255;
+    if(temperature <= 66) {
+        r_temp = 255;
 
-        g_temp = temperature;
-        g_temp = 99.4708025861F * logf(g_temp) - 161.1195681661F;
+        g_temp = temperature - 2;
+        g_temp = -155.25485562709179F - 0.44596950469579133F * g_temp + 104.49216199393888F * logf(g_temp); // 99.4708025861F * logf(g_temp) - 161.1195681661F;
 
-        if(temperature >= 19) {
+        if(temperature > 19) {
             b_temp = temperature - 10;
-            b_temp = 138.5177312231F * logf(b_temp) - 305.0447927307F;
+			b_temp = -254.76935184120902F + 0.8274096064007395F * b_temp + 115.67994401066147F * logf(b_temp);
+			//b_temp = 138.5177312231F * logf(b_temp) - 305.0447927307F;
         }
     }
     else {
-        r_temp = temperature - 60;
-        r_temp = 329.698727446F * powf(r_temp, -0.1332047592F);
+        r_temp = temperature - 55;
+        r_temp = 351.97690566805693F + 0.114206453784165 * r_temp - 40.25366309332127F * logf(r_temp);
 
-        g_temp = temperature - 60;
-        g_temp = 288.1221695283F * powf(g_temp, -0.0755148492F);
+        g_temp = temperature - 50;
+        g_temp = 325.4494125711974F + 0.07943456536662342F * g_temp - 28.0852963507957F * logf(g_temp);
+		//g_temp = 288.1221695283F * powf(g_temp, -0.0755148492F);
     
         b_temp = 255;
     }
 
     if(r_temp >= 255)
-        out.r = 255*255;
+        out.r = RAW_C_MAX;
     else if(r_temp > 0)
-        out.r = 255 * r_temp;
+        out.r = U8_TO_RAW_C(r_temp);
 
     if(g_temp >= 255)
-        out.g = 255*255;
-    else if(g_temp > 0)
-        out.g = 255 * g_temp;
+        out.g = RAW_C_MAX;
+    else if((g_temp > 0) && (temperature <= 66))
+        out.g = U8_TO_RAW_C(255*sqrtf(g_temp/255));
+	else if(g_temp > 0)
+		out.g = U8_TO_RAW_C(g_temp);
 
     if(b_temp >= 255) {
-        out.b = 255*255;
+        out.b = RAW_C_MAX;
 	}
 	else if(b_temp > 0) {
-        out.b = b_temp * 255;
+        out.b = U8_TO_RAW_C(b_temp);
 	}
 
 	if(brightness <= -1) {
-		if(temperature < 10)
-			brightness = 0.1;
-		else if(temperature < 25)
-			brightness = 0.1 + logf(temperature / 10.0F) * 0.9822F;
+		if(temperature < MIN_B_TEMP)
+			brightness = MIN_B;
+		else if(temperature < MAX_B_TEMP)
+			brightness = MIN_B + (1 - MIN_B) * logf(temperature / MIN_B_TEMP) / logf(MAX_B_TEMP/MIN_B_TEMP);
 		else
 			brightness = 1;
 	}
 
-    out.bMod(255 * brightness);
+    out.bMod(255 * std::min(1.0F, std::max(0.0F, brightness)));
 
 	return out;
+}
+
+Color Color::strtoc(const char *str) {
+	if(str == nullptr)
+		return 0;
+	if(*str == '#') str++;
+
+	if(*str == 0)
+		return 0;
+
+	return Color(strtol(str, nullptr, 16));
 }
 
 Color::Color() {
@@ -106,6 +132,7 @@ Color::Color() {
 
 	alpha = 255;
 }
+
 Color::Color(uint32_t cCode, uint8_t brightness) : Color() {
 	set(cCode);
 	bMod(brightness);
@@ -116,17 +143,15 @@ Color::Color(uint32_t cCode, uint8_t brightness, uint8_t alpha) : Color(cCode, b
 
 Color::ColorData Color::getLEDValue() const {
 	ColorData out = {};
-	out.r = ((uint32_t)r*r)/0xFFFFFF;
-	out.g = ((uint32_t)g*g)/0xFFFFFF;
-	out.b = ((uint32_t)b*b)/0xFFFFFF;
+	out.r = (uint32_t(r)*r)/(RAW_C_MAX) >> 8;
+	out.g = (uint32_t(g)*g)/(RAW_C_MAX) >> 8;
+	out.b = (uint32_t(b)*b)/(RAW_C_MAX) >> 8;
 
 	return out;
 }
 
 uint32_t Color::getPrintable() const {
-	auto data = this->getLEDValue();
-
-	return data.r << 16 | data.g << 8 | data.b;
+	return (uint32_t(RAW_TO_U8(r)) << 16) | (uint32_t(RAW_TO_U8(g)) << 8) | (RAW_TO_U8(b));
 }
 
 void Color::set(Color color) {
@@ -136,9 +161,9 @@ void Color::set(Color color) {
 }
 void Color::set(uint32_t cCode) {
 	uint8_t *colorPart = (uint8_t *)&cCode;
-	r = uint16_t(colorPart[2])*257;
-	g = uint16_t(colorPart[1])*257;
-	b = uint16_t(colorPart[0])*257;
+	r = U8_TO_RAW_C(colorPart[2]);
+	g = U8_TO_RAW_C(colorPart[1]);
+	b = U8_TO_RAW_C(colorPart[0]);
 }
 void Color::set(uint32_t cCode, uint8_t factor) {
 	set(cCode);
@@ -234,10 +259,8 @@ Color& Color::merge_add(const Color &top, uint8_t alpha) {
 	for(uint8_t i=0; i<3; i++) {
 		uint16_t& c = (&r)[i];
 		uint32_t cB = c + ((&top.r)[i]*total_alpha/255);
-		if(cB > 65535)
-			cB = 65535;
 
-		c = cB;
+		c = BOUND_RAW_C(cB);
 	}
 	uint16_t alphaB = this->alpha + total_alpha;
 	if(alphaB > 255)

@@ -46,6 +46,7 @@ public:
 
 	static Color HSV(int16_t H, uint8_t S = 255, uint8_t V = 255);
 	static Color Temperature(float temp, float brightness = -1);
+	static Color strtoc(const char *str);
 
 	Color();
 	Color(uint32_t cCode, uint8_t brightness = 255);
