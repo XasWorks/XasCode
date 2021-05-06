@@ -220,7 +220,7 @@ Handler::Handler()
 
 	base_topic.reserve(64);
 
-	base_topic 	= "/dev/esp/";
+	base_topic 	= "/esp32/";
 	base_topic += CONFIG_PROJECT_NAME;
 	base_topic += "/";
 	base_topic += XNM::NetHelpers::get_device_id();
@@ -241,7 +241,7 @@ void Handler::start(const mqtt_cfg &config) {
 	assert(!mqtt_started);
 
 	mqtt_started = true;
-	esp_log_level_set("MQTT_CLIENT", ESP_LOG_WARN);
+	esp_log_level_set("MQTT_CLIENT", ESP_LOG_NONE);
 
 	mqtt_cfg modConfig = config;
 
@@ -344,8 +344,8 @@ void Handler::mqtt_handler(esp_mqtt_event_t *event) {
 	break;
 
 	case MQTT_EVENT_DISCONNECTED:
-		ESP_LOGW(mqtt_tag, "Disconnected from broker!");
 		mqtt_connected = false;
+		ESP_LOGW(mqtt_tag, "Disconnected from broker!");
 
 //		if(wifi_connected)
 //			esp_mqtt_client_reconnect(mqtt_handle);

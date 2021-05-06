@@ -35,6 +35,8 @@ std::string get_device_id();
 void set_mqtt(Xasin::MQTT::Handler &mqtt);
 vprintf_like_t init_mqtt_logs();
 
+void report_boot_reason();
+
 void init_global_r3_ca();
 
 void init();

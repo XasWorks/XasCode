@@ -108,7 +108,7 @@ namespace OTA {
         snprintf(buf, 128, "/esp32/%s/ota", CONFIG_PROJECT_NAME);
 
         if(mqtt_ptr == nullptr) {
-            ESP_LOGW("XNM OTA", "No MQTT was provided, no OTA fetch possible!");
+            ESP_LOGE("XNM OTA", "No MQTT was provided, no OTA fetch possible!");
             return;
         }
 
@@ -164,11 +164,7 @@ int vprintf_like_mqtt(const char *format, va_list args) {
     char printf_buffer[256] = {};
     vsnprintf(printf_buffer, sizeof(printf_buffer), format, args);
 
-    static char topic[64] = {};
-    if(topic[0] == 0)
-        snprintf(topic, 64, "/esp32/%s/%s/logs", CONFIG_PROJECT_NAME, device_id.data());
-
-    mqtt_ptr->publish_to(topic, printf_buffer, strlen(printf_buffer));
+    mqtt_ptr->publish_to("logs", printf_buffer, strlen(printf_buffer));
     return strlen(printf_buffer);
 }
 
@@ -181,9 +177,35 @@ void init_global_r3_ca() {
     esp_tls_set_global_ca_store(reinterpret_cast<const unsigned char*>(lets_encrypt_rX_pem_start), lets_encrypt_rX_pem_end - lets_encrypt_rX_pem_start);
 }
 
+void report_boot_reason() {
+    switch(esp_reset_reason()) {
+        default: ESP_LOGW("XNM", "ESP restarted, unknown reason!"); break;
+        case ESP_RST_DEEPSLEEP: ESP_LOGI("XNM", "ESP restarted after deep sleep"); break;
+        case ESP_RST_POWERON: ESP_LOGI("XNM", "ESP restarted after poweron."); break;
+        
+        case ESP_RST_SW: ESP_LOGI("XNM", "ESP restarted due to software reset."); break;
+
+        case ESP_RST_PANIC: ESP_LOGE("XNM", "ESP restarted due to kernel panic!"); break;
+        
+        case ESP_RST_INT_WDT:
+        case ESP_RST_TASK_WDT:
+        case ESP_RST_WDT:
+            ESP_LOGE("XNM", "ESP restarted due to a watchdog panic!");
+        break;
+
+        case ESP_RST_BROWNOUT: ESP_LOGE("XNM", "ESP restarted due to a brownout!"); break;
+
+        case ESP_RST_EXT:
+        case ESP_RST_SDIO:
+            ESP_LOGI("XNM", "ESP restarted, external.");
+        break;
+    }
+}
+
 void init() {
 #ifdef CONFIG_AUTOSTART_MQTT_LOG_REDIR
     init_mqtt_logs();
+    esp_log_level_set("TRANS_TCP", ESP_LOG_NONE);
 #endif
 
 #ifdef CONFIG_AUTOSTART_OTA
