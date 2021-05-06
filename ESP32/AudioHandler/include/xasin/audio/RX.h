@@ -39,7 +39,7 @@ private:
 	TaskHandle_t audio_task;
 	TaskHandle_t processing_task_handle;
 
-	int32_t current_dc_value;
+	int64_t current_dc_value;
 
 	void calculate_audio_rms();
 

@@ -7,6 +7,8 @@
 
 #include "xasin/audio/RX.h"
 
+#include <xasin/audio/exact_blackman_lut.h>
+
 #include <cmath>
 #include <cstring>
 
@@ -15,6 +17,18 @@
 
 namespace Xasin {
 namespace Audio {
+
+constexpr float calculate_exact_blackman(float nN) {
+	return 0.426591 - 0.496561*cosf(2*M_PI*nN) + 0.076848*cosf(4*M_PI*nN);
+}
+
+float get_blackman(float nN) {
+	nN *= 200;
+	int lut_n = floorf(nN);
+	float lut_p = nN - lut_n;
+
+	return XNM::Audio::blackman_lut[lut_n] * (1.0F - lut_p) + XNM::Audio::blackman_lut[lut_n+1] * lut_p;
+}
 
 void call_rx_dma_read(void *args) {
 	reinterpret_cast<RX*>(args)->audio_dma_read_task();
@@ -37,7 +51,7 @@ void RX::calculate_audio_rms() {
 	uint64_t rms_sum = 0;
 
 	for(auto sample : audio_buffer[buffer_fill_pos]) {
-		rms_sum += int32_t(sample) * sample;
+		rms_sum += int64_t(sample) * sample;
 	}
 
 	rms_sum /= audio_buffer[buffer_fill_pos].size();
@@ -45,7 +59,19 @@ void RX::calculate_audio_rms() {
 	amplitude = (sqrt(float(rms_sum)) / INT16_MAX) * sqrt(2);
 }
 
+#define LOW1_FRAC 25
+#define LOW2_FRAC 50
+
+#define HIGH1_FRAC 150
+#define HIGH2_FRAC 150
+
 void RX::audio_dma_read_task() {
+	int64_t lowpass_1 = 0;
+	int64_t lowpass_2 = 0;
+
+	int64_t highpass_1 = 0;
+	int64_t highpass_2 = 0;
+
 	while(true) {
 		while(!is_running)
 			vTaskDelay(CONFIG_XASAUDIO_RX_FRAMELENGTH / portTICK_PERIOD_MS);
@@ -61,14 +87,18 @@ void RX::audio_dma_read_task() {
 
 		uint8_t *data_ptr = reinterpret_cast<uint8_t *>(raw_dma_buffer.data()) + data_offset;
 		for(int i=0; i < XASAUDIO_RX_FRAME_SAMPLE_NO; i++) {
-			int32_t temp = *reinterpret_cast<int32_t*>(data_ptr) / 16384;
+			// Input data is in the upper 24 bit, divide by 256 to get a real 24 bit value
+			int64_t temp = *reinterpret_cast<int32_t*>(data_ptr) / 256;
 
-			int16_t current_dc_sample = current_dc_value >> 16;
-			current_dc_value += (temp - current_dc_sample) * 1024;
+			highpass_1 = (highpass_1 * (256 - HIGH1_FRAC) + temp * (HIGH1_FRAC)) / 256;
+			highpass_2 = (highpass_2 * (256 - HIGH2_FRAC) + highpass_1 * (HIGH2_FRAC)) / 256;
 
-			temp -= current_dc_sample;
+			lowpass_1 = (highpass_2 * (256 - LOW1_FRAC) + lowpass_1 * (LOW1_FRAC)) / 256;
+			lowpass_2 = (lowpass_1  * (256 - LOW2_FRAC) + lowpass_2 * (LOW2_FRAC)) / 256;
 
-			temp = (temp * gain) / 255;
+			temp = highpass_2 - lowpass_2;
+
+			temp = (temp * gain) / (255);
 
 			if(temp > INT16_MAX)
 				temp = INT16_MAX;
@@ -165,11 +195,11 @@ float RX::get_volume_estimate() {
 
 float RX::get_goertzel(float frequency, int n_samples) {
 	if(n_samples < 0)
-		n_samples = XASAUDIO_RX_FRAME_SAMPLE_NO;
+		n_samples = 3*XASAUDIO_RX_FRAME_SAMPLE_NO;
 
 	n_samples = CONFIG_XASAUDIO_RX_SAMPLERATE/frequency * floorf(n_samples / (CONFIG_XASAUDIO_RX_SAMPLERATE / frequency));
 
-	const float k = roundf(0.5F + n_samples * frequency / (CONFIG_XASAUDIO_RX_SAMPLERATE));
+	const float k = floorf(0.5F + n_samples * frequency / (CONFIG_XASAUDIO_RX_SAMPLERATE));
 	const float w = (2 * M_PI * k / n_samples);
 
 	const float cosine_fact = cosf(w);
@@ -182,7 +212,11 @@ float RX::get_goertzel(float frequency, int n_samples) {
 	float q2 = 0;
 
 	for(int i=0; i<n_samples; i++) {
-		q0 = coeff * q1 - q2 + audio_buffer[(buffer_fill_pos + 1 + i/XASAUDIO_RX_FRAME_SAMPLE_NO) & 0b11][i % XASAUDIO_RX_FRAME_SAMPLE_NO];
+		float samp = audio_buffer[(buffer_fill_pos + 1 + i/XASAUDIO_RX_FRAME_SAMPLE_NO) & 0b11][i % XASAUDIO_RX_FRAME_SAMPLE_NO];
+
+		samp *= get_blackman(float(i)/n_samples);
+
+		q0 = coeff * q1 - q2 + samp;
 		q2 = q1;
 		q1 = q0;
 	}

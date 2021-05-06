@@ -21,6 +21,8 @@ TXStream::TXStream(TX &handler) : Source(handler),
 		decode_buffer_pos(UINT32_MAX), decode_buffer(), decode_playback_speed(1<<16) {
 
 	decoder = opus_decoder_create(CONFIG_XASAUDIO_TX_SAMPLERATE, 1, nullptr);
+	if(decoder <= 0)
+		ESP_LOGE("audio_tx", "Decoder could not be created!");
 
 	packet_semaphore = xSemaphoreCreateMutex();
 }
