@@ -1,0 +1,47 @@
+menu "XasCode Audio"
+	menu "Audio Source"
+		config XASAUDIO_TX_SAMPLERATE
+			int "TX Samplerate"
+			default 48000
+			help
+				Samplerate of the I2S bus. The default of 48kHz works best for most cases
+		
+		config XASAUDIO_TX_FRAMELENGTH
+			int "TX Frame length"
+			default 20
+			help
+				Frame length used per DMA buffer, in milliseconds.
+				20ms is a good default together with OPUS decoding.
+		config XASAUDIO_TX_DMA_COUNT
+			int "TX DMA buffer count"
+			default 2
+			help
+				Number of TX DMA buffers for frames.
+				2 provides smooth playback without too much latency.
+		config XASAUDIO_TX_STREAM_MAX_BITRATE
+			int "Maximum stream playback bitrate"
+			default 24000
+			help
+				Maximum supported bitrate for stream playback. 
+				Used to determine the buffer size for the TX Stream.
+		config XASAUDIO_TX_STREAM_BUFFER_LENGTH
+			int "TX Stream buffer length, in ms"
+			default 1000
+	endmenu
+	
+	menu "Audio Sink"
+		config XASAUDIO_RX_SAMPLERATE
+			int "RX Samplerate"
+			default 16000
+			help
+				Samplerate of the receiving I2S master bus.
+				The default of 16kHz is fine for most I2S Microphones, without overwhelming the CPU if performing Opus encoding.
+		
+		config XASAUDIO_RX_FRAMELENGTH
+			int "RX Frame length"
+			default 20
+			help
+				Frame length used per DMA buffer, in milliseconds.
+				20ms is a good default together with OPUS decoding.	
+	endmenu
+endmenu

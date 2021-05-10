@@ -1,0 +1,14 @@
+menu "XNM NetHelpers"
+    config PROJECT_NAME
+        string "Logging and OTA Project name"
+        default "DEV_PROJECT"
+    config AUTOSTART_OTA
+        bool "Start OTA hook on init"
+        default 1
+    config AUTOSTART_MQTT_LOG_REDIR
+        bool "Start MQTT Log Relay on init"
+        default 1
+    config AUTOCONFIG_DEVICE_NAME
+        bool "Use WiFi MAC as device ID"
+        default 1
+endmenu

@@ -1,7 +1,8 @@
 
-#include "Layer.h"
+#include "xasin/neocontroller/Layer.h"
 
-namespace Peripheral {
+namespace Xasin {
+namespace NeoController {
 
 Layer::Layer(const int length) : colors(length) {
 	alpha = 255;
@@ -164,4 +165,5 @@ Layer& Layer::alpha_set(const std::vector<uint8_t> &newAlphas) {
 	return *this;
 }
 
+}
 }

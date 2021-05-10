@@ -5,10 +5,10 @@
  *      Author: xasin
  */
 
-#include "NeoController.h"
+#include "xasin/neocontroller/NeoController.h"
 
-namespace Peripheral {
-
+namespace Xasin {
+namespace NeoController {
 
 rmt_item32_t bits[2] = {};
 
@@ -100,7 +100,7 @@ Color& NeoController::operator[](int id) {
 	return *get(id);
 }
 Color * NeoController::get(int id) {
-	return &this->nextColors[id%length];
+	return &this->colors[id%length];
 }
 
 void NeoController::apply() {
@@ -158,4 +158,5 @@ void NeoController::swipeTransition(uint32_t duration, bool desc) {
 	this->update();
 }
 
-} /* namespace Touch */
+}
+}

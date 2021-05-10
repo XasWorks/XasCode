@@ -23,6 +23,10 @@ extern FontType console_font_5x8;
 extern FontType console_font_6x8;
 extern FontType console_font_7x9;
 
+extern const char raw_console_font_5x8[];
+extern const char raw_console_font_6x8[];
+extern const char raw_console_font_7x9[];
+
 }
 }
 

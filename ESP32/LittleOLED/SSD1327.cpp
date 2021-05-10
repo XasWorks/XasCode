@@ -12,9 +12,7 @@
 namespace Peripheral {
 namespace OLED {
 
-#include "fonts/font-5x8.c"
-#include "fonts/font-6x8.c"
-#include "fonts/font-7x9.c"
+#include "fonttype.h"
 
 void SSD1327::call_raw_update(void *args) {
 	puts("Started updater thread!");

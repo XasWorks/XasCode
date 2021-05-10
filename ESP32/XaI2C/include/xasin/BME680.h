@@ -96,7 +96,7 @@ private:
 	void load_calibration();
 public:
 	const uint8_t addr;
-
+	
 	BME680(uint8_t address = 0b1110110);
 
 	esp_err_t init_quickstart();

@@ -10,22 +10,20 @@
 
 #include "esp_wpa2.h"
 
+#include "nvs.h"
+#include "nvs_flash.h"
+
+#include <lwip/apps/sntp.h>
+
 #define LOG_LOCAL_LEVEL ESP_LOG_INFO
 #include "esp_log.h"
+
+#include <xnm/net_helpers.h>
 
 namespace Xasin {
 namespace MQTT {
 
-extern const uint8_t TeleSec_crt[] asm("_binary_TeleSec_pem_start");
-extern const uint8_t TeleSec_crt_end[] asm("_binary_TeleSec_pem_end");
-
-extern const uint8_t wifi_cert_key[] asm("_binary_ESP_WIFI_key_start");
-extern const uint8_t wifi_cert_key_end[] asm("_binary_ESP_WIFI_key_end");
-
-extern const uint8_t wifi_cert[] asm("_binary_ESP_WIFI_pem_start");
-extern const uint8_t wifi_cert_end[] asm("_binary_ESP_WIFI_pem_end");
-
-const char *mqtt_tag = "XAQTT";
+const char *mqtt_tag = "XNMQTT";
 
 bool wifi_was_configured = false;
 volatile int  wifi_task_conn_counter = 0;
@@ -49,9 +47,50 @@ void handler_wifi_checkup_task(void *eh) {
 
 		if(wifi_task_conn_counter == -1)
 			continue;
-		ESP_LOGI("XAQTT:WiFi", "Retrying connection...");
+		ESP_LOGI("XNM:WiFi", "Retrying connection...");
 		esp_wifi_start();
 	}
+}
+
+bool Handler::start_wifi_from_nvs() {
+	nvs_handle_t read_handle;
+
+	char ssid_buffer[64] = {};
+	size_t ssid_len = 64;
+	char pswd_buffer[64] = {};
+
+	nvs_open("xasin", NVS_READONLY, &read_handle);
+	auto ret = nvs_get_str(read_handle, "w_ssid", ssid_buffer, &ssid_len);
+
+	if(ret != ESP_OK) {
+		nvs_close(read_handle);
+		return false;
+	}
+
+	ssid_len = 64;
+	ret = nvs_get_str(read_handle, "w_pswd", pswd_buffer, &ssid_len);
+	nvs_close(read_handle);
+
+	if(ret != ESP_OK)
+		return false;
+
+	start_wifi(ssid_buffer, pswd_buffer);
+
+	return true;
+}
+
+void Handler::set_nvs_wifi(const char *wifi_ssid, const char *wifi_pswd) {
+	nvs_handle_t write_handle;
+
+	nvs_open("xasin", NVS_READWRITE, &write_handle);
+
+	if(wifi_ssid != nullptr && strlen(wifi_ssid) < 100)
+		nvs_set_str(write_handle, "w_ssid", wifi_ssid);
+	if(wifi_pswd != nullptr && strlen(wifi_pswd) < 100)
+		nvs_set_str(write_handle, "w_pswd", wifi_pswd);
+
+	nvs_commit(write_handle);
+	nvs_close(write_handle);
 }
 
 void Handler::start_wifi(const char *SSID, const char *PSWD, int psMode) {
@@ -63,6 +102,10 @@ void Handler::start_wifi(const char *SSID, const char *PSWD, int psMode) {
 		ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_STA) );
 
 		xTaskCreate(handler_wifi_checkup_task, "XAQTT::Wifi", 2*1024, nullptr, 10, &wifi_task_handle);
+
+		sntp_setoperatingmode(SNTP_OPMODE_POLL);
+		sntp_set_sync_mode(SNTP_SYNC_MODE_IMMED);
+		sntp_setservername(0, "pool.ntp.org\0");
 	}
 
 	wifi_was_configured = true;
@@ -88,53 +131,63 @@ void Handler::start_wifi(const char *SSID, const char *PSWD, int psMode) {
 	ESP_ERROR_CHECK( esp_wifi_start() );
 }
 
-void Handler::start_wifi_enterprise(const char *SSID, const char *domain, const char *identity, const char *anonymousIdentity, const char *password) {
-	if(!wifi_was_configured) {
-		wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-
-		ESP_ERROR_CHECK( esp_wifi_init(&cfg) );
-		ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_RAM) );
-		ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_STA) );
-
-		xTaskCreate(handler_wifi_checkup_task, "XAQTT::Wifi", 2*1024, nullptr, 10, &wifi_task_handle);
-	}
-
-	wifi_was_configured = true;
-
-	wifi_config_t wifi_cfg = {};
-	memcpy(&wifi_cfg.sta.ssid, SSID, strlen(SSID));
-	esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_cfg);
-
-	esp_wpa2_config_t wpaCFG = WPA2_CONFIG_INIT_DEFAULT();
-
-	esp_wifi_sta_wpa2_ent_set_identity(reinterpret_cast<const unsigned char *>(anonymousIdentity)
-			, strlen(anonymousIdentity));
-	esp_wifi_sta_wpa2_ent_set_username(reinterpret_cast<const unsigned char *>(identity)
-			, strlen(identity));
-	esp_wifi_sta_wpa2_ent_set_password(reinterpret_cast<const unsigned char *>(password)
-			, strlen(password));
-
-	esp_log_level_set("wpa", ESP_LOG_DEBUG);
-
-	ESP_ERROR_CHECK(esp_wifi_sta_wpa2_ent_set_ca_cert(TeleSec_crt, TeleSec_crt_end - TeleSec_crt));
-
-	const char *keyPassword = "\0";
-
-	//ESP_ERROR_CHECK(esp_wifi_sta_wpa2_ent_set_cert_key(wifi_cert, wifi_cert_end - wifi_cert,
-	//			wifi_cert_key, wifi_cert_key_end - wifi_cert_key,
-	//			reinterpret_cast<const unsigned char*>(keyPassword), 0));
-
-	esp_wifi_sta_wpa2_ent_enable(&wpaCFG);
-
-	esp_wifi_start();
-}
+//void Handler::start_wifi_enterprise(const char *SSID, const char *domain, const char *identity, const char *anonymousIdentity, const char *password) {
+//	if(!wifi_was_configured) {
+//		wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+//
+//		ESP_ERROR_CHECK( esp_wifi_init(&cfg) );
+//		ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_RAM) );
+//		ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_STA) );
+//
+//		xTaskCreate(handler_wifi_checkup_task, "XAQTT::Wifi", 2*1024, nullptr, 10, &wifi_task_handle);
+//	}
+//
+//	wifi_was_configured = true;
+//
+//	wifi_config_t wifi_cfg = {};
+//	memcpy(&wifi_cfg.sta.ssid, SSID, strlen(SSID));
+//	esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_cfg);
+//
+//	esp_wpa2_config_t wpaCFG = WPA2_CONFIG_INIT_DEFAULT();
+//
+//	esp_wifi_sta_wpa2_ent_set_identity(reinterpret_cast<const unsigned char *>(anonymousIdentity)
+//			, strlen(anonymousIdentity));
+//	esp_wifi_sta_wpa2_ent_set_username(reinterpret_cast<const unsigned char *>(identity)
+//			, strlen(identity));
+//	esp_wifi_sta_wpa2_ent_set_password(reinterpret_cast<const unsigned char *>(password)
+//			, strlen(password));
+//
+//	esp_log_level_set("wpa", ESP_LOG_DEBUG);
+//
+//	ESP_ERROR_CHECK(esp_wifi_sta_wpa2_ent_set_ca_cert(TeleSec_crt, TeleSec_crt_end - TeleSec_crt));
+//
+//	const char *keyPassword = "\0";
+//
+//	//ESP_ERROR_CHECK(esp_wifi_sta_wpa2_ent_set_cert_key(wifi_cert, wifi_cert_end - wifi_cert,
+//	//			wifi_cert_key, wifi_cert_key_end - wifi_cert_key,
+//	//			reinterpret_cast<const unsigned char*>(keyPassword), 0));
+//
+//	esp_wifi_sta_wpa2_ent_enable(&wpaCFG);
+//
+//	esp_wifi_start();
+//}
 
 void Handler::try_wifi_reconnect(system_event_t *event) {
+	static bool sntp_was_initialized = false;
+
 	switch(event->event_id) {
 	case SYSTEM_EVENT_STA_CONNECTED:
 		ESP_LOGI("XAQTT:WiFi", "Reconnected");
 		wifi_task_conn_counter = -1;
+
 		break;
+	case SYSTEM_EVENT_STA_GOT_IP:
+		ESP_LOGI("XAQTT:WiFi", "Got IP!");
+
+		if(!sntp_was_initialized)
+			sntp_init();
+		sntp_was_initialized = true;
+
 	case SYSTEM_EVENT_STA_START:
 		esp_wifi_connect();
 		break;
@@ -160,14 +213,35 @@ Handler::Handler()
 	: subscriptions(),
 	  mqtt_handle(nullptr),
 	  wifi_connected(false),
-	  mqtt_started(false), mqtt_connected(false) {
+	  mqtt_started(false), mqtt_connected(false),
+	  status_topic("status"), status_msg("OK") {
+
+	config_lock = xSemaphoreCreateMutex();
+
+	base_topic.reserve(64);
+
+	base_topic 	= "/esp32/";
+	base_topic += CONFIG_PROJECT_NAME;
+	base_topic += "/";
+	base_topic += XNM::NetHelpers::get_device_id();
+	base_topic += "/";
+}
+Handler::Handler(const std::string &base_t) : Handler() {
+	base_topic = base_t;
+}
+
+void Handler::topicsize_string(std::string &topic) {
+	if(topic[0] == '/')
+		return;
+
+	topic = base_topic + topic;
 }
 
 void Handler::start(const mqtt_cfg &config) {
 	assert(!mqtt_started);
 
 	mqtt_started = true;
-	esp_log_level_set("MQTT_CLIENT", ESP_LOG_WARN);
+	esp_log_level_set("MQTT_CLIENT", ESP_LOG_NONE);
 
 	mqtt_cfg modConfig = config;
 
@@ -178,27 +252,61 @@ void Handler::start(const mqtt_cfg &config) {
 	if(wifi_connected)
 		esp_mqtt_client_start(mqtt_handle);
 }
-void Handler::start(const std::string uri, const std::string status_topic) {
+void Handler::start(const std::string uri) {
 	mqtt_cfg config = {};
 	config.uri = uri.data();
 
-	config.buffer_size = 6*1024;
-	config.task_prio = 20;
-
 	config.disable_clean_session = false;
 
-	if(status_topic != "") {
-		config.lwt_topic = status_topic.data();
-		config.lwt_retain = true;
-		config.lwt_qos = 1;
-		config.lwt_msg_len = 0;
+	config.use_global_ca_store = true;
 
-		config.keepalive = 5;
+	topicsize_string(this->status_topic);
 
-		this->status_topic = status_topic;
-	}
+	config.lwt_topic = this->status_topic.data();
+	config.lwt_retain = true;
+	config.lwt_qos = 1;
+	config.lwt_msg_len = 0;
+
+	config.keepalive = 5;
 
 	start(config);
+}
+
+bool Handler::start_from_nvs() {
+	if(!wifi_was_configured) {
+		if(!Handler::start_wifi_from_nvs())
+			return false;
+	}
+
+	nvs_handle_t read_handle;
+
+	char uri_buffer[254] = {};
+	size_t uri_length = 254;
+
+	nvs_open("xasin", NVS_READONLY, &read_handle);
+	auto ret = nvs_get_str(read_handle, "mqtt_uri", uri_buffer, &uri_length);
+	nvs_close(read_handle);
+
+	if(ret != ESP_OK)
+		return false;
+
+	ESP_LOGI(mqtt_tag, "Starting from NVS with URI %s", uri_buffer);
+	start(uri_buffer);
+
+	return true;
+}
+
+void Handler::set_nvs_uri(const char *new_uri) {
+	if(strlen(new_uri) > 500)
+		return;
+
+	nvs_handle_t write_handle;
+
+	nvs_open("xasin", NVS_READWRITE, &write_handle);
+	nvs_set_str(write_handle, "mqtt_uri", new_uri);
+
+	nvs_commit(write_handle);
+	nvs_close(write_handle);
 }
 
 void Handler::wifi_handler(system_event_t *event) {
@@ -220,6 +328,8 @@ void Handler::wifi_handler(system_event_t *event) {
 }
 
 void Handler::mqtt_handler(esp_mqtt_event_t *event) {
+	xSemaphoreTake(config_lock, portMAX_DELAY);
+
 	switch(event->event_id) {
 	case MQTT_EVENT_CONNECTED:
 		mqtt_connected = true;
@@ -234,8 +344,8 @@ void Handler::mqtt_handler(esp_mqtt_event_t *event) {
 	break;
 
 	case MQTT_EVENT_DISCONNECTED:
-		ESP_LOGW(mqtt_tag, "Disconnected from broker!");
 		mqtt_connected = false;
+		ESP_LOGW(mqtt_tag, "Disconnected from broker!");
 
 //		if(wifi_connected)
 //			esp_mqtt_client_reconnect(mqtt_handle);
@@ -255,9 +365,11 @@ void Handler::mqtt_handler(esp_mqtt_event_t *event) {
 
 	default: break;
 	}
+
+	xSemaphoreGive(config_lock);
 }
 
-void Handler::set_status(const std::string newStatus) {
+void Handler::set_status(const std::string &newStatus) {
 	if(status_topic == "")
 		return;
 
@@ -266,14 +378,17 @@ void Handler::set_status(const std::string newStatus) {
 		this->publish_to(status_topic, status_msg.data(), status_msg.length(), true);
 }
 
-void Handler::publish_to(const std::string &topic, const void *data, size_t length, bool retain, int qos) {
+void Handler::publish_to(std::string topic, const void *data, size_t length, bool retain, int qos) {
 	if(!mqtt_connected) {
-		ESP_LOGW(mqtt_tag, "Packet to %s dropped (disconnected)", topic.data());
+		ESP_LOGD(mqtt_tag, "Packet to %s dropped (disconnected)", topic.data());
 		return;
 	}
 
+	topicsize_string(topic);
+
 	ESP_LOGD(mqtt_tag, "Publishing to %s", topic.data());
 	ESP_LOG_BUFFER_HEXDUMP(mqtt_tag, data, length, ESP_LOG_VERBOSE);
+	
 	esp_mqtt_client_publish(mqtt_handle, topic.data(), reinterpret_cast<const char*>(data)
 				, length, qos, retain);
 }
@@ -285,10 +400,14 @@ void Handler::publish_int(const std::string &topic, int32_t data, bool retain, i
 	publish_to(topic, buffer, strlen(buffer), retain, qos);
 }
 
-void Handler::subscribe_to(const std::string &topic, mqtt_callback cb, int qos) {
+Subscription * Handler::subscribe_to(std::string topic, mqtt_callback cb, int qos) {
+	topicsize_string(topic);	
+
 	// NO subscribing necessary here, the subscription class already handles this
 	auto nSub = new Subscription(*this, topic, qos);
 	nSub->on_received = cb;
+
+	return nSub;
 }
 
 uint8_t Handler::is_disconnected() {

@@ -1,2 +1,0 @@
-idf_component_register(SRCS "BLEHandler.cpp" "BLESlaveChannel.cpp" "Characteristic.cpp" "Service.cpp"
-                       INCLUDE_DIRS "include")

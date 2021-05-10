@@ -8,7 +8,7 @@
 #ifndef XASLIBS_TREKCORE_INCLUDE_XASIN_TREKAUDIO_H_
 #define XASLIBS_TREKCORE_INCLUDE_XASIN_TREKAUDIO_H_
 
-#include "AudioHandler.h"
+#include <xasin/audio.h>
 
 #define TREKCORE_AUDIO_ENABLED
 
@@ -26,7 +26,7 @@ enum signal_type_t {
 	ERROR_MAJOR,
 };
 
-void init(Peripheral::AudioHandler &audio);
+void init(Audio::TX &audio);
 
 void play(signal_type_t signal);
 

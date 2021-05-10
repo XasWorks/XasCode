@@ -17,22 +17,30 @@ Subscription::Subscription(Handler &handler, const std::string topic, int qos)
 	 topic(topic), qos(qos),
 	 on_received(nullptr) {
 
+	xSemaphoreTake(mqtt_handler.config_lock, portMAX_DELAY);
 	handler.subscriptions.push_back(this);
+	xSemaphoreGive(mqtt_handler.config_lock);
 
 	if(handler.mqtt_connected)
 		raw_subscribe();
 }
 
 Subscription::~Subscription() {
-	puts("MQTT Unsubscribing!");
+	xSemaphoreTake(mqtt_handler.config_lock, portMAX_DELAY);
 
 	bool conflictFound = false;
-	for(auto s = mqtt_handler.subscriptions.begin(); s < mqtt_handler.subscriptions.end(); s++) {
+
+	for(auto s = mqtt_handler.subscriptions.begin(); s < mqtt_handler.subscriptions.end(); ) {
 		if((*s) == this)
 			mqtt_handler.subscriptions.erase(s);
-		else if((*s)->topic == this->topic)
-			conflictFound = true;
+		else {
+			if((*s)->topic == this->topic)
+				conflictFound = true;
+			s++;
+		}
 	}
+
+	xSemaphoreGive(mqtt_handler.config_lock);
 
 	if(conflictFound)
 		return;

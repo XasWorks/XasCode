@@ -13,6 +13,8 @@
 
 #include "mqtt_client.h"
 
+#include <freertos/semphr.h>
+
 #include <vector>
 #include <string>
 #include <functional>
@@ -38,6 +40,7 @@ class Handler {
 protected:
 	friend Subscription;
 
+	SemaphoreHandle_t config_lock;
 	std::vector<Subscription *> subscriptions;
 
 	esp_mqtt_client_handle_t mqtt_handle;
@@ -49,25 +52,36 @@ protected:
 	std::string status_topic;
 	std::string status_msg;
 
+	std::string base_topic;
+
 public:
+	static bool start_wifi_from_nvs();
+	static void set_nvs_wifi(const char *wifi_ssid, const char *wifi_pswd);
+	static void set_nvs_uri(const char *new_uri);
+
 	static void start_wifi(const char *SSID, const char *PSWD, int psMode = 0);
-	static void start_wifi_enterprise(const char *SSID, const char *domain, const char *identity, const char *anonymousIdentity, const char *password);
+	// static void start_wifi_enterprise(const char *SSID, const char *domain, const char *identity, const char *anonymousIdentity, const char *password);
 	static void try_wifi_reconnect(system_event_t *event);
 
 	Handler();
+	Handler(const std::string & base_topic);
+
+	void topicsize_string(std::string &topic);
 
 	void start(const mqtt_cfg &config);
-	void start(const std::string URI, const std::string status_topic = "");
+	void start(const std::string URI);
+
+	bool start_from_nvs();
 
 	void wifi_handler(system_event_t *event);
 	void mqtt_handler(esp_mqtt_event_t *event);
 
-	void set_status(const std::string newStatus);
+	void set_status(const std::string &newStatus);
 
-	void publish_to(const std::string &topic, void const *data, size_t length, bool retain = false, int qos = 0);
+	void publish_to(std::string topic, void const *data, size_t length, bool retain = false, int qos = 0);
 	void publish_int(const std::string &topic, int32_t data, bool retain = false, int qos = 0);
 
-	void subscribe_to(const std::string &topic, mqtt_callback callback, int qos = 1);
+	Subscription * subscribe_to(std::string topic, mqtt_callback callback, int qos = 1);
 
 	uint8_t is_disconnected();
 };
