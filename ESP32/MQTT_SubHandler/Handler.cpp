@@ -101,7 +101,7 @@ void Handler::start_wifi(const char *SSID, const char *PSWD, int psMode) {
 		ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_RAM) );
 		ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_STA) );
 
-		xTaskCreate(handler_wifi_checkup_task, "XAQTT::Wifi", 2*1024, nullptr, 10, &wifi_task_handle);
+		xTaskCreate(handler_wifi_checkup_task, "XAQTT::Wifi", 3*1024, nullptr, 10, &wifi_task_handle);
 
 		sntp_setoperatingmode(SNTP_OPMODE_POLL);
 		sntp_set_sync_mode(SNTP_SYNC_MODE_IMMED);
