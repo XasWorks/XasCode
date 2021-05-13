@@ -1,7 +1,7 @@
 
 require_relative "HTTPCore.rb"
 
-module Xasin
+module XNM
 module Telegram
 	class SingleUser
 		attr_reader :httpCore

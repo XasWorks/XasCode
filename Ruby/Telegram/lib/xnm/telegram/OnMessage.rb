@@ -1,6 +1,6 @@
 
 
-module Xasin
+module XNM
 	module Telegram
 		class OnMessage < OnTelegramEvent
 			def initialize(options)

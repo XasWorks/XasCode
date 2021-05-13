@@ -1,5 +1,5 @@
 
-module Xasin
+module XNM
 	module Telegram
 		class Chat
 			attr_reader :chat_id

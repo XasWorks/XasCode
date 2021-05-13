@@ -1,7 +1,7 @@
 
 require_relative 'Chat.rb'
 
-module Xasin
+module XNM
 	module Telegram
 		# Telegram User class.
 		#

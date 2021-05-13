@@ -2,7 +2,7 @@
 require_relative 'GroupingAdapter.rb'
 require 'mqtt/sub_handler'
 
-module Xasin
+module XNM
 module Telegram
 	module MQTT
 		class Server < GroupingAdapter

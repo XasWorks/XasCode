@@ -1,7 +1,7 @@
 
 require_relative 'HTTPCore.rb'
 
-module Xasin
+module XNM
 	module Telegram
 		# This is a purely test-related class. It implements all of HTTPCore's
 		# functionality, but does not connect to the Telegram API. Instead,

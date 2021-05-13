@@ -1,7 +1,7 @@
 
 require_relative 'HTTPCore.rb'
 
-module Xasin
+module XNM
 	module Telegram
 		# This class handles translating the sometimes a bit interesting
 		# Telegram API data to more usable types.

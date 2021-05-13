@@ -1,5 +1,5 @@
 
-module Xasin
+module XNM
 	module Telegram
 		class KeyboardLayout
 			def initialize(start_config = nil)

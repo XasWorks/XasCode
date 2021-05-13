@@ -1,6 +1,6 @@
 
 
-module Xasin
+module XNM
 	module Telegram
 		class OnCommand < OnTelegramEvent
 			attr_accessor :deny_message

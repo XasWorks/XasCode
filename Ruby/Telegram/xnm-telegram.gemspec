@@ -1,8 +1,8 @@
 Gem::Specification.new do |s|
-  s.name        = 'xasin-telegram'
+  s.name        = 'xnm-telegram'
   s.version     = '0.3.0'
   s.date        = '2020-04-12'
-  s.summary     = "Xasin's Telegram gem"
+  s.summary     = "XasinTheSystem's Telegram gem"
   s.description = "Multi-Purpose Telegram gem. Mainly for personal use, but also used as a Telegram to MQTT Bridge for IoT devices"
   s.authors     = ["Xasin", "Neira"]
   s.files       = [  Dir.glob('{bin,lib}/**/*'), 'README.md'].flatten

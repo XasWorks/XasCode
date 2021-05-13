@@ -3,7 +3,7 @@ require_relative 'HTTPCore.rb'
 require_relative 'Message.rb'
 require_relative 'User.rb'
 
-module Xasin
+module XNM
 	module Telegram
 		# Dummy class to provide sensible defaults for most things.
 		# Only really matters for priority, so that we can sort
@@ -120,7 +120,8 @@ module Xasin
 					from: cbq[:from],
 					text: cbq[:data],
 					chat: cbq[:message][:chat],
-					message_id: cbq[:message][:message_id]
+					message_id: cbq[:message][:message_id],
+					reply_to_message: { message_id: cbq[:message][:message_id] }
 				}
 
 				handle_message fake_msg

@@ -3,7 +3,7 @@ require 'net/http'
 require 'json'
 require 'shellwords'
 
-module Xasin
+module XNM
 module Telegram
 	# This class handles the direct connection to the Telegram API
 	# All it does is handle a receive loop with the fitting update IDs, as well

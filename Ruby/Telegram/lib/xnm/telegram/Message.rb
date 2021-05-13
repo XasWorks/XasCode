@@ -1,5 +1,5 @@
 
-module Xasin
+module XNM
 	module Telegram
 		class Message
 			# Return whether or not parsing of the message was successful.
@@ -53,9 +53,9 @@ module Xasin
 				@message_id = message_object[:message_id]
 
 				@chat = handler[message_object[:chat]]
-				@user = handler[message_object[:from]]
+				@user = handler[message_object[:from] || message_object[:sender_chat]]
 
-				@reply_to_id = message_object.dig(:reply_to_message, :id)
+				@reply_to_id = message_object.dig(:reply_to_message, :message_id)
 
 				@text = message_object[:text] || "";
 
