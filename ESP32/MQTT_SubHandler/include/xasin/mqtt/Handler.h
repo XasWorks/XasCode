@@ -24,6 +24,13 @@
 namespace Xasin {
 namespace MQTT {
 
+enum wifif_ps_t {
+	NONE = -1,
+	DEFAULT = 0,
+	MAX_MODEMSLEEP = 1,
+	SKIP_STA = 2
+}
+
 extern const char *mqtt_tag;
 
 typedef esp_mqtt_client_config_t mqtt_cfg;
@@ -55,7 +62,7 @@ protected:
 	std::string base_topic;
 
 public:
-	static bool start_wifi_from_nvs();
+	static bool start_wifi_from_nvs(int psMode = 0);
 	static void set_nvs_wifi(const char *wifi_ssid, const char *wifi_pswd);
 	static void set_nvs_uri(const char *new_uri);
 
@@ -71,7 +78,7 @@ public:
 	void start(const mqtt_cfg &config);
 	void start(const std::string URI);
 
-	bool start_from_nvs();
+	bool start_from_nvs(int psMode);
 
 	void wifi_handler(system_event_t *event);
 	void mqtt_handler(esp_mqtt_event_t *event);

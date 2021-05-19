@@ -52,7 +52,7 @@ void handler_wifi_checkup_task(void *eh) {
 	}
 }
 
-bool Handler::start_wifi_from_nvs() {
+bool Handler::start_wifi_from_nvs(int psMode) {
 	nvs_handle_t read_handle;
 
 	char ssid_buffer[64] = {};
@@ -74,7 +74,7 @@ bool Handler::start_wifi_from_nvs() {
 	if(ret != ESP_OK)
 		return false;
 
-	start_wifi(ssid_buffer, pswd_buffer);
+	start_wifi(ssid_buffer, pswd_buffer, psMode);
 
 	return true;
 }
