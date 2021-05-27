@@ -29,7 +29,7 @@ enum wifif_ps_t {
 	DEFAULT = 0,
 	MAX_MODEMSLEEP = 1,
 	SKIP_STA = 2
-}
+};
 
 extern const char *mqtt_tag;
 
@@ -78,7 +78,7 @@ public:
 	void start(const mqtt_cfg &config);
 	void start(const std::string URI);
 
-	bool start_from_nvs(int psMode);
+	bool start_from_nvs();
 
 	void wifi_handler(system_event_t *event);
 	void mqtt_handler(esp_mqtt_event_t *event);
