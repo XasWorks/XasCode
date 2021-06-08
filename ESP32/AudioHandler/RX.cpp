@@ -179,6 +179,10 @@ void RX::stop() {
 	i2s_stop(i2s_port);
 }
 
+bool RX::running() {
+	return is_running;
+}
+
 float RX::get_amplitude_rms() {
 	return amplitude;
 }
