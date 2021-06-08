@@ -11,6 +11,8 @@
 #include "driver/rmt.h"
 #include <stdint.h>
 
+#include <string>
+
 enum Material : uint32_t {
 	BLACK 	= 0x000000,
 	RED 	= 0xF42316,
@@ -54,6 +56,8 @@ public:
 
 	ColorData getLEDValue() const;
 	uint32_t  getPrintable() const;
+
+	std::string to_s() const;
 
 	void set(uint32_t cCode);
 	void set(uint32_t cCode, uint8_t div);
