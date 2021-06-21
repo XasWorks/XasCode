@@ -18,7 +18,7 @@ struct CHARGE_POINT {
 
 // TODO - replace this with a real, measured curve!
 
-const std::vector<CHARGE_POINT> discharge_curve {
+static const std::vector<CHARGE_POINT> discharge_curve {
 	{100, 	4200},
 	{90,	4080},
 	{80,	3930},
