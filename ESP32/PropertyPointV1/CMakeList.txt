@@ -1,0 +1,3 @@
+idf_component_register(SRCS 	"BaseChannel.cpp" "BaseProperty.cpp" "FloatArrayProp.cpp"
+										"PropActuator.cpp" "PropertyHandler.cpp" "PropThrustMotor.cpp"
+                       INCLUDE_DIRS "include")
