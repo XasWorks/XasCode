@@ -6,6 +6,11 @@ K I2S, Microphone, MEMS
 F https://www.cuidevices.com/product/resource/cmm-4030d-261-i2s-tr.pdf
 $ENDCMP
 #
+$CMP DRV2605
+D DRV2605 Haptic Feedback Driver
+K DRV2605, Motor Driver, Haptic
+$ENDCMP
+#
 $CMP ROF-78E3.3-0.5SMD-R
 D RECOM DC/DC Converter fixed output voltage
 K DC/DC, RECOM
