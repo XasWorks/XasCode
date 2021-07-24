@@ -25,13 +25,6 @@ friend Handler;
 
 	uint32_t change_index;
 
-	// Call whenever this property is changed.
-	//
-	// This function call will initiate a update cycle for 
-	// the corresponding BaseHandler, as well as nudging the 
-	// change index of this property.
-	void poke_update();
-
 	state_t property_state;
 
 public:
@@ -41,11 +34,22 @@ public:
 	const char * const key;
 
 	bool readonly;
+	// Whether or not this property is already initialized.
+	// When set to false, will allow an output with persistence (presumably only the MQTT Output) to update this
+	// property once, to initialize its state.
+	bool initialized; 
 	
 	BaseProperty(Handler &handler, const char *key);
 
 	BaseProperty & operator=(const BaseProperty &) = delete;
 	BaseProperty(const BaseProperty&) = delete;
+
+	// Call whenever this property is changed.
+	//
+	// This function call will initiate a update cycle for 
+	// the corresponding BaseHandler, as well as nudging the 
+	// change index of this property.
+	void poke_update();
 
 	std::function<void(void)> on_update;
 
@@ -79,7 +83,6 @@ public:
 	 *			poke_update() in order to forward the update to all other listeners
 	 */
 	void upd_json(const cJSON * update_data);
-
 
 	virtual void process_json_command(const cJSON * data);
 

@@ -12,6 +12,7 @@ BaseProperty::BaseProperty(Handler &handler, const char *key) :
 	change_index(handler.bump_change_index()), 
 	
 	key(key), readonly(false),
+	initialized(true),
 	on_update(nullptr) {
 
 	handler.insert_property(*this);
@@ -22,6 +23,7 @@ void BaseProperty::poke_update() {
 		return;
 
 	change_index = handler.bump_change_index();
+	initialized = true;
 
 	cJSON * state_json = get_current_state();
 	handler.broadcast_update(state_json, *this);
@@ -37,6 +39,8 @@ void BaseProperty::set_json(const cJSON * data) {
 	if(readonly)
 		return;
 
+	initialized = true;
+
 	if(truth_holder == nullptr) {
 		this->process_json_command(data);
 
@@ -47,10 +51,12 @@ void BaseProperty::set_json(const cJSON * data) {
 }
 
 void BaseProperty::upd_json(const cJSON * upd_data) {
-	if(truth_holder != nullptr) {
+	if((truth_holder != nullptr) || (!initialized)) {
 		process_json_command(upd_data);
 
 		if(on_update) on_update();
+
+		initialized = true;
 	}
 }
 

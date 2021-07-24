@@ -1,5 +1,7 @@
 
 
+#pragma once
+
 #include "BaseProperty.h"
 
 #include <xasin/neocontroller/Color.h>
@@ -48,6 +50,8 @@ template<> \
 void SingleProperty<type>::process_json_command(const cJSON *);
 
 SinglePropertySpecialization(double);
+SinglePropertySpecialization(int);
+
 SinglePropertySpecialization(std::string);
 
 SinglePropertySpecialization(Xasin::NeoController::Color);

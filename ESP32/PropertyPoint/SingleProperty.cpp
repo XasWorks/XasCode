@@ -35,6 +35,11 @@ SinglePropertySpecializationCode(double,
 	cJSON_IsNumber(data), 
 	cJSON_CreateNumber(this->value))
 
+SinglePropertySpecializationCode(int, 
+	data->valueint, 
+	cJSON_IsNumber(data), 
+	cJSON_CreateNumber(this->value))
+
 SinglePropertySpecializationCode(std::string, 
 	std::string(data->valuestring), 
 	cJSON_IsString(data), 

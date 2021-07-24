@@ -39,7 +39,8 @@ MQTTOutput::MQTTOutput(Handler &handler, MQTT &mqtt) : BaseOutput(handler),
 
 		if(prop == nullptr)
 			return;
-		if(this != prop->get_truthholder())
+			
+		if((this != prop->get_truthholder()) && (prop->initialized))
 			return;
 
 		auto json = cJSON_Parse(data.data.data());
@@ -48,6 +49,7 @@ MQTTOutput::MQTTOutput(Handler &handler, MQTT &mqtt) : BaseOutput(handler),
 
 		if(cJSON_IsObject(json)) {
 			ESP_LOGD("PROPP", "Got upd for %s, ptr %p", data.topic.data(), prop);
+			
 			prop->upd_json(json);
 		}
 
