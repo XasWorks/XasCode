@@ -13,7 +13,7 @@ namespace Housekeeping {
 BatteryManager::BatteryManager(uint8_t cellCount)
 	: current_mv_var(3300 * cellCount),
 	  cell_count(cellCount),
-	  cutoff_voltage(3500),
+	  cutoff_voltage(3200),
 	  is_charging(false) {
 
 	cutoff_percentage = raw_capacity_for_voltage(cutoff_voltage);
@@ -85,7 +85,7 @@ void BatteryManager::set_voltage(uint32_t millivolts) {
 }
 
 uint8_t BatteryManager::current_capacity() {
-	return capacity_for_voltage(current_mv_var);
+	return 50; // capacity_for_voltage(current_mv_var);
 }
 uint32_t BatteryManager::current_mv() {
 	return current_mv_var;
