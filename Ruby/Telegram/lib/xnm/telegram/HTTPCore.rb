@@ -43,9 +43,12 @@ module Telegram
 		end
 
 		private def _raw_post(addr, data)
-			d_str = Shellwords.escape(data.to_json)
+			response = '';
 
-			response = `curl -s -X POST -H "Content-Type: application/json" -d #{d_str} "#{addr}"`
+			IO.popen(['curl', '-s', '-XPOST', '-HContent-Type: application/json', "-d#{data.to_json}", "#{addr}"]) do |resp|
+				response = resp.read
+			end
+
 
 			JSON.parse(response, symbolize_names: true)
 		end
@@ -61,10 +64,10 @@ module Telegram
 			# Rescue-construct to prevent a HTTP error from
 			# crashing our system.
 			timeoutLen = data[:timeout] if data.is_a? Hash
-			timeoutLen ||= 4;
+			timeoutLen ||= 3;
 			retryCount = 0;
 			begin
-				Timeout.timeout(timeoutLen) do
+				Timeout.timeout(timeoutLen*1.3) do
 					return _raw_post(call_address, _double_json_data(data));
 				end
 			rescue

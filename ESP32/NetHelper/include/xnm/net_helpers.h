@@ -1,3 +1,4 @@
+#pragma once
 
 #include <xasin/mqtt.h>
 

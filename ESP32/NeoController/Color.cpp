@@ -154,6 +154,14 @@ uint32_t Color::getPrintable() const {
 	return (uint32_t(RAW_TO_U8(r)) << 16) | (uint32_t(RAW_TO_U8(g)) << 8) | (RAW_TO_U8(b));
 }
 
+std::string Color::to_s() const {
+	char buffer[8] = {};
+
+	sprintf(buffer, "#%06X", getPrintable());
+
+	return std::string(buffer);
+}
+
 void Color::set(Color color) {
 	for(uint8_t i=0; i<4; i++) {
 		*(&this->r + i) = *(&color.r + i);

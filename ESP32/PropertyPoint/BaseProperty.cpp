@@ -1,50 +1,70 @@
-/*
- * BaseProperty.cpp
- *
- *  Created on: 3 Aug 2019
- *      Author: xasin
- */
 
-#include "xasin/propertypoint/BaseProperty.h"
-#include "xasin/propertypoint/PropertyHandler.h"
+#include "xnm/property_point/BaseOutput.h"
+#include "xnm/property_point/BaseProperty.h"
+#include "xnm/property_point/BaseHandler.h"
 
-namespace Xasin {
-namespace PropP {
+namespace XNM {
+namespace PropertyPoint {
 
-BaseProperty::BaseProperty(PropertyHandler &handler, std::string name, uint16_t simple_id)
-	: last_modified_rev(0), handler(handler), name(name), simple_id(simple_id) {
+BaseProperty::BaseProperty(Handler &handler, const char *key) : 
+	handler(handler),
+	truth_holder(nullptr),
+	change_index(handler.bump_change_index()), 
+	
+	key(key), readonly(false),
+	initialized(true),
+	on_update(nullptr) {
 
-	handler.properties.push_back(this);
+	handler.insert_property(*this);
 }
 
-BaseProperty::~BaseProperty() {
+void BaseProperty::poke_update() {
+	if(truth_holder != nullptr)
+		return;
+
+	change_index = handler.bump_change_index();
+	initialized = true;
+
+	cJSON * state_json = get_current_state();
+	handler.broadcast_update(state_json, *this);
+
+	cJSON_Delete(state_json);
 }
 
-void BaseProperty::update_me() {
-	this->last_modified_rev = handler.get_mod_revision();
-	handler.update_property(this);
-}
-
-cJSON *BaseProperty::get_metadata() {
-	auto json = cJSON_CreateObject();
-
-	cJSON_AddStringToObject(json, "name", name.data());
-
-	return json;
-}
-
-cJSON *BaseProperty::get_cJSON(uint32_t from) {
+cJSON * BaseProperty::get_current_state() {
 	return cJSON_CreateNull();
 }
 
-void BaseProperty::from_cJSON(const cJSON *obj) {}
+void BaseProperty::set_json(const cJSON * data) {
+	if(readonly)
+		return;
 
+	initialized = true;
 
-uint32_t BaseProperty::get_last_modified() {
-	return last_modified_rev;
+	if(truth_holder == nullptr) {
+		this->process_json_command(data);
+
+		if(on_update) on_update();
+	}
+	else
+		this->truth_holder->send_set_json(data, *this);
 }
 
-void BaseProperty::update() {}
+void BaseProperty::upd_json(const cJSON * upd_data) {
+	if((truth_holder != nullptr) || (!initialized)) {
+		process_json_command(upd_data);
 
-} /* namespace PropP */
-} /* namespace Xasin */
+		if(on_update) on_update();
+
+		initialized = true;
+	}
+}
+
+void BaseProperty::process_json_command(const cJSON * data) {}
+
+BaseOutput * BaseProperty::get_truthholder() {
+	return truth_holder;
+}
+
+}
+}

@@ -61,7 +61,7 @@ bool TXStream::decode_next_packet() {
 	int low_watermark_fill_percent = (packet_low_watermark << 8) / packet_buf.size();
 	ESP_LOGV("TXStream", "Audio low watermark fill percent %d", low_watermark_fill_percent);
 
-	decode_playback_speed = (1<<16) + (low_watermark_fill_percent - 51) * 12.85;
+	decode_playback_speed = (1<<16) + (low_watermark_fill_percent - 51) * 6;
 
 	xSemaphoreGive(packet_semaphore);
 
@@ -115,7 +115,7 @@ void TXStream::feed_packet(const uint8_t * packet_ptr, uint16_t packet_size) {
 
 	xSemaphoreGive(packet_semaphore);
 
-	if(packet_count > packet_buf.size() / 2)
+	if(packet_count > (packet_buf.size() *2 / 3))
 		boop_playback();
 }
 
@@ -153,7 +153,7 @@ void TXStream::feed_packets(const uint8_t * data_ptr, uint16_t packet_size, uint
 
 	xSemaphoreGive(packet_semaphore);
 
-	if(packet_count > packet_buf.size() / 2)
+	if(packet_count > (packet_buf.size() *2 / 3))
 		boop_playback();
 }
 

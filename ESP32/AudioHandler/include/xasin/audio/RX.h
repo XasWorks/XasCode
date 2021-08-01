@@ -68,6 +68,8 @@ public:
 
 	void start();
 	void stop();
+
+	bool running();
 };
 
 } /* namespace Audio */
