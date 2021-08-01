@@ -1,14 +1,52 @@
 EESchema-DOCLIB  Version 2.0
 #
+$CMP 74LVC1G74GT-Q100X
+D D Flip-Flop with set and reset, complementary output
+K D-Type Flip-Flop, Flip-Flop
+$ENDCMP
+#
+$CMP AP7354x-xxxFS4
+D LDO, Ultra-Low Iq, Tiny footprint
+$ENDCMP
+#
+$CMP BQ25157
+D Tiny BGA I2C LiPo charger, LDO, Load Switch
+K LDO, Load Switch, Battery Charger
+$ENDCMP
+#
 $CMP CMM-4030
 D CUI Devices I2S MEMS Microphone Top Port
 K I2S, Microphone, MEMS
 F https://www.cuidevices.com/product/resource/cmm-4030d-261-i2s-tr.pdf
 $ENDCMP
 #
+$CMP DRV2605
+D DRV2605 Haptic Feedback Driver
+K DRV2605, Motor Driver, Haptic
+$ENDCMP
+#
+$CMP MIC94066
+D MIC9406x dual load switch, P-Type Load Switch
+K 2 channel, load switch, P-Channel load switch
+$ENDCMP
+#
 $CMP ROF-78E3.3-0.5SMD-R
 D RECOM DC/DC Converter fixed output voltage
 K DC/DC, RECOM
+$ENDCMP
+#
+$CMP SR1
+D SR1 Smart Reset, Automatic reset after programmed delay
+K reset, smart reset, timed reset
+$ENDCMP
+#
+$CMP TPSM8282x
+D DC/DC 3A output fixed voltage, uSIP
+$ENDCMP
+#
+$CMP UJC-HP-3-SMT-TR
+D USB C Power Only connector
+K USB-C, USB C, Power Only
 $ENDCMP
 #
 #End Doc Library
