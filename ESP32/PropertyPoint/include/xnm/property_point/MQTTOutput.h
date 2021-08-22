@@ -22,6 +22,8 @@ protected:
 
 public:
 	MQTTOutput(Handler &handler, MQTT &mqtt);
+
+	void init();
 };
 
 }

@@ -48,7 +48,7 @@ public:
 
 	static Color HSV(int16_t H, uint8_t S = 255, uint8_t V = 255);
 	static Color Temperature(float temp, float brightness = -1);
-	static Color strtoc(const char *str);
+	static Color strtoc(const char *str, bool *ok = nullptr);
 
 	Color();
 	Color(uint32_t cCode, uint8_t brightness = 255);
@@ -63,6 +63,8 @@ public:
 	void set(uint32_t cCode, uint8_t div);
 	void set(Color color);
 	Color& operator=(const Color& nColor);
+
+	bool operator==(const Color& compare) const;
 
 	Color& bMod(uint8_t div);
 	Color  bMod(uint8_t div) const;
