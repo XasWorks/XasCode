@@ -17,6 +17,8 @@ Subscription::Subscription(Handler &handler, const std::string topic, int qos)
 	 topic(topic), qos(qos),
 	 on_received(nullptr) {
 
+	assert(mqtt_handler.config_lock);
+
 	xSemaphoreTake(mqtt_handler.config_lock, portMAX_DELAY);
 	handler.subscriptions.push_back(this);
 	xSemaphoreGive(mqtt_handler.config_lock);

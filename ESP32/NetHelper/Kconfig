@@ -1,7 +1,43 @@
-menu "XNM NetHelpers"
+menu "! XNM NetHelpers"
     config PROJECT_NAME
         string "Logging and OTA Project name"
         default "DEV_PROJECT"
+    config XNM_AUTOSTART_WIFI
+        bool "Autostart WiFi"
+        default 1
+
+    menu "WiFi settings"
+        config XNM_WIFI_DEFAULT_SSID
+            string "Default SSID to connect to"
+        config XNM_WIFI_DEFAULT_PASSWORD
+            string "Default password to use to connect"
+        config XNM_WIFI_PSMODE
+            int "Default power-save mode"
+            default 0
+        config XNM_WIFI_LOAD_NVS
+            bool "Load WiFi setting from NVS"
+            default 1
+        config XNM_WIFI_FIRST_MAX_RETRIES
+            int "Default retry count before stopping"
+            default 3
+        config XNM_WIFI_CONNECTED_MAX_RETRIES
+            int "Default retry count after successful connection"
+            default 0
+        config XNM_WIFI_MIN_RETRY_TIME
+            int "Minimum time before retry (in ms)"
+            default 100
+        config XNM_WIFI_MAX_RETRY_TIME
+            int "Maximum time between retries (in ms)"
+            default 20000
+        config XNM_WIFI_AUTO_SOFTAP
+            bool "Enable automatic soft-ap when no Wifi station is found"
+            default 0
+        config XNM_WIFI_AP_SSID
+            string "Hardcoded AP SSID"
+        config XNM_WIFI_AP_PASSWORD
+            string "Hardcoded AP Password"
+    endmenu
+
     config AUTOSTART_OTA
         bool "Start OTA hook on init"
         default 1
@@ -11,4 +47,6 @@ menu "XNM NetHelpers"
     config AUTOCONFIG_DEVICE_NAME
         bool "Use WiFi MAC as device ID"
         default 1
+    
+
 endmenu

@@ -15,7 +15,7 @@
 
 #include <lwip/apps/sntp.h>
 
-#define LOG_LOCAL_LEVEL ESP_LOG_INFO
+#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
 #include "esp_log.h"
 
 #include <xnm/net_helpers.h>
@@ -216,6 +216,9 @@ Handler::Handler()
 	  mqtt_started(false), mqtt_connected(false),
 	  status_topic("status"), status_msg("OK") {
 
+
+	ESP_LOGD(mqtt_tag, "Early MQTT init");
+
 	config_lock = xSemaphoreCreateMutex();
 
 	base_topic.reserve(64);
@@ -273,10 +276,10 @@ void Handler::start(const std::string uri) {
 }
 
 bool Handler::start_from_nvs() {
-	if(!wifi_was_configured) {
-		if(!Handler::start_wifi_from_nvs())
-			return false;
-	}
+	// if(!wifi_was_configured) {
+	// 	if(!Handler::start_wifi_from_nvs())
+	// 		return false;
+	// }
 
 	nvs_handle_t read_handle;
 

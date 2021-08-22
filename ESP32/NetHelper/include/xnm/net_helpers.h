@@ -6,6 +6,7 @@
 typedef int (*vprintf_like_t)(const char *, va_list);
 
 #include <string>
+#include "net_helpers/wifi.h"
 
 namespace XNM {
 namespace NetHelpers {
