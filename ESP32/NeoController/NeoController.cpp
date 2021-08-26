@@ -7,6 +7,9 @@
 
 #include "xasin/neocontroller/NeoController.h"
 
+#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
+#include <esp_log.h>
+
 namespace Xasin {
 namespace NeoController {
 
@@ -46,6 +49,8 @@ NeoController::NeoController(gpio_num_t pin, rmt_channel_t channel, uint8_t leng
 		length(length),
 		colors(length), nextColors(length),
 		pinNo(pin), channel(channel) {
+
+	ESP_LOGD("neocontroller", "Early init");
 
 	rawColors = new Color::ColorData[length];
 

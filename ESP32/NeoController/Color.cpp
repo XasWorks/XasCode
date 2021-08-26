@@ -114,15 +114,37 @@ Color Color::Temperature(float temperature, float brightness) {
 	return out;
 }
 
-Color Color::strtoc(const char *str) {
+Color Color::strtoc(const char *str, bool *ok) {
+	if(ok) *ok = false;
+
 	if(str == nullptr)
 		return 0;
-	if(*str == '#') str++;
 
-	if(*str == 0)
-		return 0;
+	if(*str == '#') {
+			str++;
 
-	return Color(strtol(str, nullptr, 16));
+		if(*str == 0)
+			return 0;
+
+		if(ok) *ok = true;
+
+		return Color(strtol(str, nullptr, 16));
+	}
+	else if(*str == 'K') {
+		str++;
+		if(*str == 0)
+			return 0;
+
+		auto temperature = strtol(str, nullptr, 10);
+
+		if(temperature < 0 || temperature > 20000)
+			return 0;
+		
+		if(ok) *ok = true;
+		return Temperature(temperature);
+	}
+
+	return 0;
 }
 
 Color::Color() {
@@ -181,6 +203,15 @@ Color& Color::operator=(const Color& nColor) {
 	this->set(nColor);
 
 	return *this;
+}
+
+#define COMPARE_PART(part) if(RAW_TO_U8(this->part) != RAW_TO_U8(compare.part)) return false;
+bool Color::operator==(const Color& compare) const {
+	COMPARE_PART(r);
+	COMPARE_PART(g);
+	COMPARE_PART(b);
+
+	return true;
 }
 
 Color &Color::bMod(uint8_t factor) {

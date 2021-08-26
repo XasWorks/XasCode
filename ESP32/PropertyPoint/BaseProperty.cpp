@@ -14,8 +14,6 @@ BaseProperty::BaseProperty(Handler &handler, const char *key) :
 	key(key), readonly(false),
 	initialized(true),
 	on_update(nullptr) {
-
-	handler.insert_property(*this);
 }
 
 void BaseProperty::poke_update() {
@@ -64,6 +62,10 @@ void BaseProperty::process_json_command(const cJSON * data) {}
 
 BaseOutput * BaseProperty::get_truthholder() {
 	return truth_holder;
+}
+
+void BaseProperty::init() {
+	handler.insert_property(*this);
 }
 
 }

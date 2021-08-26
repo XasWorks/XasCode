@@ -10,11 +10,11 @@ class Handler;
 class BaseProperty;
 
 class BaseOutput {
-private:
-	Handler &handler;
 protected:
 friend Handler;
 friend BaseProperty;
+
+	Handler &handler;
 
 	/* Send a update command to this output
 	 *
