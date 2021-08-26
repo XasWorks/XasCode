@@ -3,7 +3,6 @@
 
 #include <vector>
 
-#include "esp_nimble_hci.h"
 #include "host/ble_hs.h"
 
 namespace XNM {
