@@ -250,8 +250,6 @@ void load_nvs() {
 }
 
 void init() {
-	set_nvs("TP-LINK_84CDC2", "f36eebda48");
-
 	esp_netif_init();
 
    esp_netif_create_default_wifi_sta();
@@ -259,7 +257,7 @@ void init() {
 	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 
 	ESP_ERROR_CHECK( esp_wifi_init(&cfg) );
-	ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_RAM) );
+	ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_FLASH) );
 	
 
 #if CONFIG_XNM_WIFI_LOAD_NVS

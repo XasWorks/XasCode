@@ -65,9 +65,9 @@ int vprintf_like_mqtt(const char *format, va_list args) {
     
     char printf_buffer[256] = {};
     if(print_nest_count < 2) {
-    vsnprintf(printf_buffer, sizeof(printf_buffer), format, args);
+        vsnprintf(printf_buffer, sizeof(printf_buffer), format, args);
 
-    mqtt_ptr->publish_to("logs", printf_buffer, strlen(printf_buffer));
+        mqtt_ptr->publish_to("logs", printf_buffer, strlen(printf_buffer));
     }
     
     print_nest_count--;
