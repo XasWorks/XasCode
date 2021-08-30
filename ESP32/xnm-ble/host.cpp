@@ -17,87 +17,55 @@
 namespace XNM {
 namespace BLE {
 
-const char * msgs[] = {
-	"one",
-	"two",
-	"three"
-};
-int msg_point = 0;
+int Server::static_gap_cb(ble_gap_event *event, void *arg) {
+	assert(arg);
 
-static uint16_t gconn_handle = 0xFFFF;
-static uint16_t gattr_handle = 0xFFFF;
-
-// int gatt_access_fn(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg) {
-
-// 	gconn_handle = conn_handle;
-// 	gattr_handle = attr_handle;
-
-// 	ESP_LOGI(tag, "Got a %s!", ctxt->op == BLE_GATT_ACCESS_OP_READ_CHR ? "read" : "write");
-
-// 	if(ctxt->op == BLE_GATT_ACCESS_OP_READ_CHR) {
-// 		auto m = msgs[msg_point++ % 3];
-// 		os_mbuf_append(ctxt->om, m, strlen(m));
-// 	}
-// 	else if(ctxt->op == BLE_GATT_ACCESS_OP_WRITE_CHR) {
-// 		auto len = OS_MBUF_PKTLEN(ctxt->om);
-
-// 		uint8_t * print_buffer = new uint8_t[len];
-
-// 		ble_hs_mbuf_to_flat(ctxt->om, print_buffer, len, nullptr);
-
-// 		ESP_LOGI(tag, "Got message: %s", print_buffer);
-
-// 		delete print_buffer;
-// 	}
-
-// 	return 0;
-// }
+	return reinterpret_cast<Server*>(arg)->gap_cb(event);
+}
+void ble_host_task(void *args) {
+	nimble_port_run();
+	nimble_port_freertos_deinit();
+}
 
 Server::Server() : services() {
-
-	// ble_uuid128_t * tUUID = new ble_uuid128_t({
-	// 	BLE_UUID_TYPE_128,
-	// 	{
-	// 		0x53, 0xfe, 0xf2, 0x10, 
-	// 		0x9e, 0xaa, 0x4d, 0x0b, 0xa3, 0x7f, 
-	// 		0x49, 0x20, 0x77, 0x6b, 0xc1, 0xb6
-	// 	}
-	// });
-
-	// ble_uuid128_t * tUUID2 = new ble_uuid128_t({
-	// 	BLE_UUID_TYPE_128,
-	// 	{
-	// 		0x53, 0xfe, 0xf2, 0x11, 
-	// 		0x9e, 0xaa, 0x4d, 0x0b, 0xa3, 0x7f, 
-	// 		0x49, 0x20, 0x77, 0x6b, 0xc1, 0xb6
-	// 	}
-	// });
-
-	// ble_gatt_chr_def * tCHR = new ble_gatt_chr_def[2] {
-	// 	{
-	// 		reinterpret_cast<ble_uuid_t*>(tUUID2),
-	// 		gatt_access_fn,
-	// 		nullptr,
-	// 		nullptr,
-	// 		BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_WRITE | BLE_GATT_CHR_F_NOTIFY,
-	// 		0,
-	// 		0,
-	// 	},
-	// 	{
-	// 		0
-	// 	}
-	// };
-
-	// services.push_back((ble_gatt_svc_def) {
-	// 	BLE_GATT_SVC_TYPE_PRIMARY,
-	// 	reinterpret_cast<ble_uuid_t*>(tUUID),
-	// 	nullptr,
-	// 	tCHR,
-	// });
-
 	// Append an empty element to the very back that serves as 
 	// terminator for the nimBLE stack.
 	services.push_back({});
+}
+
+int Server::gap_cb(ble_gap_event * event) {
+	switch(event->type) {
+		default: 
+			ESP_LOGD(TAG, "Unused GAP event %d", event->type);
+		break;
+
+		case BLE_GAP_EVENT_CONNECT:
+			if(event->connect.status == 0) {
+				ESP_LOGI(TAG, "Connected!");
+				is_connected = true;
+			}
+			else {
+				is_connected = false;
+
+				if(should_advertise)
+					start_advertising();
+			}
+		break;
+
+		case BLE_GAP_EVENT_MTU:
+			mtu = event->mtu.value;
+			ESP_LOGD(TAG, "New MTU is: %d", mtu);
+		break;
+
+		case BLE_GAP_EVENT_DISCONNECT:
+			ESP_LOGI(TAG, "Disconnected!");
+
+			if(should_advertise)
+				start_advertising();
+		break;
+	}
+
+	return 0;
 }
 
 void Server::append_service(Service & service) {
@@ -105,13 +73,8 @@ void Server::append_service(Service & service) {
 	services.push_back({});
 }
 
-void ble_host_task(void *args) {
-	nimble_port_run();
-	nimble_port_freertos_deinit();
-}
-
 void Server::init() {
-	ESP_LOGI(tag, "Initializing NimBLE GATT Server!");
+	ESP_LOGI(TAG, "Initializing NimBLE GATT Server!");
 	
 	int ret = esp_nimble_hci_and_controller_init();
 
@@ -138,7 +101,9 @@ void Server::init() {
 }
 
 void Server::start_advertising(const char * name) {
-	ESP_LOGI(tag, "Starting advertisement");
+	ESP_LOGI(TAG, "Starting advertisement");
+
+	should_advertise = true;
 
 	while(!ble_hs_synced())
 		vTaskDelay(10);
@@ -150,7 +115,7 @@ void Server::start_advertising(const char * name) {
 	/* Figure out address to use while advertising (no privacy for now) */
 	rc = ble_hs_id_infer_auto(0, &own_addr_type);
 	if (rc != 0) {
-		ESP_LOGE(tag, "Error determining address type; rc=%d\n", rc);
+		ESP_LOGE(TAG, "Error determining address type; rc=%d\n", rc);
 		return;
 	}
 
@@ -183,15 +148,10 @@ void Server::start_advertising(const char * name) {
    ble_gap_adv_set_fields(&fields);
 
 	rc = ble_gap_adv_start(own_addr_type, nullptr,
-		BLE_HS_FOREVER, &ad, nullptr, nullptr
-		);
+		BLE_HS_FOREVER, &ad, static_gap_cb, this);
 	
 	if(rc != 0)
-		ESP_LOGE(tag, "BLE GAP Start error: %d", rc);
-}
-
-void Server::DBG_send_str(const char * str) {
-	//ble_gattc_notify_custom(gconn_handle, gattr_handle, ble_hs_mbuf_from_flat(str, strlen(str)));
+		ESP_LOGE(TAG, "BLE GAP Start error: %d", rc);
 }
 
 }

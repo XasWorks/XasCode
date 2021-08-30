@@ -1,24 +1,33 @@
 
 #pragma once
 
-#include <vector>
 
-#include "host/ble_hs.h"
+#include "host/ble_gatt.h"
+#include "host/ble_gap.h"
+
+#include <vector>
 
 namespace XNM {
 namespace BLE {
 
-static const char * tag = "xnmble";
-
 class Service;
 
 class Server {
+private:
+	static int static_gap_cb(ble_gap_event *event, void *arg);
+	int gap_cb(ble_gap_event *event);
+
 protected:
 friend Service;
 
-	std::vector<ble_gatt_svc_def> services;
+	int mtu;
 
+	std::vector<ble_gatt_svc_def> services;
 	void append_service(Service & service);
+
+	bool is_connected;
+	bool should_advertise;
+
 public:
 	Server();
 
@@ -27,8 +36,6 @@ public:
 	void start_gatt();
 	
 	void start_advertising(const char * name = "TEST NAME");
-
-	void DBG_send_str(const char *str);
 };
 
 }
