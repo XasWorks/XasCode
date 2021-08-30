@@ -6,6 +6,7 @@
 typedef int (*vprintf_like_t)(const char *, va_list);
 
 #include <string>
+#include "net_helpers/wifi.h"
 
 namespace XNM {
 namespace NetHelpers {
@@ -24,7 +25,7 @@ namespace OTA {
 
     ota_state_t get_state();
 
-    uint32_t get_version();
+    uint32_t get_local_version();
     void set_upstream_version(uint32_t up_version);
 }
 
@@ -35,6 +36,7 @@ std::string get_device_id();
 
 void set_mqtt(Xasin::MQTT::Handler &mqtt);
 vprintf_like_t init_mqtt_logs();
+// std::function<void (const char*)> also_print_to;
 
 void report_boot_reason();
 

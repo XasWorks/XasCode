@@ -39,6 +39,8 @@ struct MQTT_Packet {
 	const std::string &topic;
 	const std::string &data;
 };
+typedef MQTT_Packet Packet;
+
 typedef std::function<void (const MQTT_Packet)> mqtt_callback;
 
 class Subscription;

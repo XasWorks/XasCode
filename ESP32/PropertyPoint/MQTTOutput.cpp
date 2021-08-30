@@ -10,8 +10,10 @@ namespace PropertyPoint {
 
 MQTTOutput::MQTTOutput(Handler &handler, MQTT &mqtt) : BaseOutput(handler),
 	mqtt(mqtt) {
+}
 
-	mqtt.subscribe_to("set/#", [this, &handler](Xasin::MQTT::Packet data) {
+void MQTTOutput::init() {
+		mqtt.subscribe_to("set/#", [this](Xasin::MQTT::Packet data) {
 		auto prop = handler[data.topic.data()];
 
 
@@ -33,7 +35,7 @@ MQTTOutput::MQTTOutput(Handler &handler, MQTT &mqtt) : BaseOutput(handler),
 		cJSON_Delete(json);
 	});
 
-	mqtt.subscribe_to("upd/#", [this, &handler](Xasin::MQTT::Packet data) {
+	mqtt.subscribe_to("upd/#", [this](Xasin::MQTT::Packet data) {
 		auto prop = handler[data.topic.data()];
 
 

@@ -87,6 +87,11 @@ public:
 	virtual void process_json_command(const cJSON * data);
 
 	BaseOutput * get_truthholder();
+
+	// Must be called to link this property up to the main
+	// property handler, to avoid initialization reorders issues.
+	// May also do other things, I suppose.
+	virtual void init();
 };
 
 }
