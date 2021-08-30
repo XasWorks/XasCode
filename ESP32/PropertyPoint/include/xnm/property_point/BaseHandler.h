@@ -38,6 +38,8 @@ friend BaseOutput;
 	 */
 	void broadcast_update(cJSON * item, BaseProperty &prop);
 
+
+
 public:
 	Handler();
 
@@ -45,6 +47,7 @@ public:
 	uint32_t get_change_index();
 
 	BaseProperty *operator[](const char *key);
+	void process_command_json(const char * str, BaseOutput &output);
 };
 
 }

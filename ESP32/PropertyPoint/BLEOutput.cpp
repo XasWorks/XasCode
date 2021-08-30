@@ -28,6 +28,10 @@ void BLEOutput::send_upd_json(const cJSON * item, BaseProperty &prop) {
 
 void BLEOutput::init() {
 	ble.init();
+
+	ble.on_receive = [this](std::vector<char> && data) {
+		this->handler.process_command_json(data.data(), *this);
+	};
 }
 
 }
