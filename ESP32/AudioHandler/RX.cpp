@@ -12,7 +12,7 @@
 #include <cmath>
 #include <cstring>
 
-#define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE
+// #define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE
 #include <esp_log.h>
 
 namespace Xasin {
@@ -76,15 +76,19 @@ void RX::audio_dma_read_task() {
 		while(!is_running)
 			vTaskDelay(CONFIG_XASAUDIO_RX_FRAMELENGTH / portTICK_PERIOD_MS);
 
-		size_t read_bytes = 0;
+		size_t total_read_bytes = 0;
+		while(total_read_bytes < raw_dma_buffer.size()) {
+			size_t fresh_read_bytes = 0;
 
-		auto & read_buffer = audio_buffer[buffer_fill_pos];
+			i2s_read(i2s_port, raw_dma_buffer.data() + total_read_bytes, raw_dma_buffer.size() - total_read_bytes, &fresh_read_bytes, portMAX_DELAY);
 
-		i2s_read(i2s_port, raw_dma_buffer.data(), raw_dma_buffer.size(), &read_bytes, portMAX_DELAY);
+			total_read_bytes += fresh_read_bytes;
+		}
 		// ESP_LOGD("Audio RX", "Read %d bytes, expected %d", read_bytes, raw_dma_buffer.size());
 
 		// memcpy(read_buffer.data(), raw_dma_buffer.data(), 20);
 
+		auto & read_buffer = audio_buffer[buffer_fill_pos];
 		uint8_t *data_ptr = reinterpret_cast<uint8_t *>(raw_dma_buffer.data()) + data_offset;
 		for(int i=0; i < XASAUDIO_RX_FRAME_SAMPLE_NO; i++) {
 			// Input data is in the upper 24 bit, divide by 256 to get a real 24 bit value
@@ -114,7 +118,7 @@ void RX::audio_dma_read_task() {
 		buffer_fill_pos = (buffer_fill_pos + 1) % audio_buffer.size();
 		if(buffer_read_pos == buffer_fill_pos) {
 			buffer_read_pos = (buffer_read_pos + 1) % audio_buffer.size();
-			ESP_LOGW("Audio RX", "Buffer wasn't read fast enough!");
+			ESP_LOGV("Audio RX", "Buffer wasn't read fast enough!");
 		}
 
 		if(processing_task_handle != nullptr)
@@ -132,9 +136,7 @@ void RX::init(TaskHandle_t processing_task, const i2s_pin_config_t &pin_cfg) {
 	cfg.communication_format = I2S_COMM_FORMAT_I2S_MSB;
 	cfg.intr_alloc_flags = 0;
 
-	uint32_t num_buffer_bytes = XASAUDIO_RX_FRAME_SAMPLE_NO * 2;
-
-	cfg.dma_buf_count = 1 + ((num_buffer_bytes - 1) / 512);
+	cfg.dma_buf_count = 3;
 	cfg.dma_buf_len = 512;
 
 	i2s_driver_install(i2s_port, &cfg, 0, nullptr);

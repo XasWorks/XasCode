@@ -29,7 +29,7 @@ private:
 
 	std::array<uint8_t, 4 * 2 * XASAUDIO_RX_FRAME_SAMPLE_NO> raw_dma_buffer;
 
-	std::array<rx_buffer_t, 4> audio_buffer;
+	std::array<rx_buffer_t, 6> audio_buffer;
 	uint8_t buffer_fill_pos;
 	uint8_t buffer_read_pos;
 

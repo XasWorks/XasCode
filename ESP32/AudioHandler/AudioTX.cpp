@@ -133,8 +133,14 @@ void TX::audio_dma_fill_task() {
 	while(true) {
 		// As long as we haven't been idling for a while, continue playback.
 		if(audio_idle_count < 0) {
-			uint32_t written_data = 0;
-			i2s_write(i2s_port, audio_buffer.data(), audio_buffer.size()*2, &written_data, portMAX_DELAY);
+			uint32_t total_written_data = 0;
+
+			while(total_written_data < audio_buffer.size()) {
+				uint32_t local_written_bytes = 0;
+				i2s_write(i2s_port, audio_buffer.data()+total_written_data, (audio_buffer.size()-total_written_data)*2, &local_written_bytes, portMAX_DELAY);
+
+				total_written_data += local_written_bytes/2;
+			}
 		}
 		// The I2S Port has been stopped, simply wait for new data, a new audio source or similar
 		else {
@@ -230,9 +236,10 @@ void TX::init(TaskHandle_t processing_task, const i2s_pin_config_t &pin_config) 
 	cfg.communication_format = I2S_COMM_FORMAT_I2S_MSB;
 	cfg.intr_alloc_flags = 0;
 
-	uint32_t num_buffer_bytes = XASAUDIO_TX_FRAME_SAMPLE_NO * 2 * CONFIG_XASAUDIO_TX_DMA_COUNT;
+	//uint32_t num_buffer_bytes = XASAUDIO_TX_FRAME_SAMPLE_NO * 2 * CONFIG_XASAUDIO_TX_DMA_COUNT;
 
-	cfg.dma_buf_count = 1 + (num_buffer_bytes / 1024);
+	//cfg.dma_buf_count = 1 + (num_buffer_bytes / 1024);
+	cfg.dma_buf_count = 2;
 	cfg.dma_buf_len = 1024;
 
 	i2s_driver_install(i2s_port, &cfg, 0, nullptr);
