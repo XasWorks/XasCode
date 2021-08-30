@@ -4,6 +4,8 @@
 
 #include "include/xnm/ble/services/string_stream.h"
 
+#include "host/ble_hs.h"
+
 namespace XNM {
 namespace BLE {
 
@@ -22,7 +24,7 @@ int StringStream::strstream_fn(uint16_t conn_handle, uint16_t attr_handle, ble_g
 		ble_hs_mbuf_to_flat(ctxt->om, obj->in_buffer.data() + prev_size, len, nullptr);
 
 		if(*(obj->in_buffer.rbegin()) == 0) {
-			ESP_LOGD("xnmble_str", "Got string data %s", obj->in_buffer.data());
+			ESP_LOGD(TAG, "String got string data %s", obj->in_buffer.data());
 			
 			if(obj->on_receive)
 				obj->on_receive(std::forward<std::vector<char>>(obj->in_buffer));

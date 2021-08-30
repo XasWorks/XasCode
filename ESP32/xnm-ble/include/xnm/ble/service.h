@@ -2,8 +2,7 @@
 
 #pragma once
 
-#include "esp_nimble_hci.h"
-#include "host/ble_hs.h"
+#include "host/ble_gatt.h"
 
 namespace XNM {
 namespace BLE {

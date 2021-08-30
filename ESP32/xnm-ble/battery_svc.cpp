@@ -1,4 +1,7 @@
+
 #include "include/xnm/ble/services/battery_svc.h"
+
+#include "host/ble_hs.h"
 
 namespace XNM {
 namespace BLE {

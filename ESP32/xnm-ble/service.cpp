@@ -1,4 +1,6 @@
+
 #include "include/xnm/ble.h"
+#include "host/ble_hs.h"
 
 namespace XNM {
 namespace BLE {

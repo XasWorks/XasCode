@@ -17,6 +17,7 @@
 
 namespace XNM {
 namespace BLE {
+	__attribute__((used))
 	static const char *TAG = "xnm-ble";
 }
 }
