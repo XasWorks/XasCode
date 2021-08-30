@@ -52,6 +52,8 @@ std::string get_device_id() {
 
 vprintf_like_t previous_printf = nullptr;
 int vprintf_like_mqtt(const char *format, va_list args) {
+    static volatile uint8_t print_nest_count = 0;
+
     auto prev_return = previous_printf(format, args);
     if(mqtt_ptr == nullptr)
         return prev_return;
@@ -59,10 +61,16 @@ int vprintf_like_mqtt(const char *format, va_list args) {
     if(mqtt_ptr->is_disconnected())
         return prev_return;
     
+    print_nest_count++;
+    
     char printf_buffer[256] = {};
+    if(print_nest_count < 2) {
     vsnprintf(printf_buffer, sizeof(printf_buffer), format, args);
 
     mqtt_ptr->publish_to("logs", printf_buffer, strlen(printf_buffer));
+    }
+    
+    print_nest_count--;
     return strlen(printf_buffer);
 }
 
