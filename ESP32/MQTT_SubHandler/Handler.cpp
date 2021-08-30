@@ -15,7 +15,6 @@
 
 #include <lwip/apps/sntp.h>
 
-#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
 #include "esp_log.h"
 
 #include <xnm/net_helpers.h>
