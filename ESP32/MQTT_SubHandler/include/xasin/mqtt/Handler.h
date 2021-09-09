@@ -82,6 +82,8 @@ public:
 
 	bool start_from_nvs();
 
+	void stop();
+
 	void wifi_handler(system_event_t *event);
 	void mqtt_handler(esp_mqtt_event_t *event);
 

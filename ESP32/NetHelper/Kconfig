@@ -1,4 +1,4 @@
-menu "! XNM NetHelpers"
+menu "XNM NetHelpers"
     config PROJECT_NAME
         string "Logging and OTA Project name"
         default "DEV_PROJECT"
@@ -6,7 +6,38 @@ menu "! XNM NetHelpers"
         bool "Autostart WiFi"
         default 1
 
+    config XNM_NETHELPER_INCLUDE_PROPP
+        bool "Include a NetHelper global property-point core?"
+        default 1
+
+    menuconfig XNM_NETHELP_BLE_ENABLE
+        bool "Activate a global BLE instance"
+        default 0
+    if XNM_NETHELP_BLE_ENABLE
+        config XNM_NETHELP_BLE_ALWAYSON
+            bool "Always activate the BLE server"
+            default 0
+        config XNM_NETHELP_BLE_AUTOCONF
+            bool "Activate BLE when no config is present"
+            default 1
+        config XNM_NETHELP_BLE_CONF_GPIO
+            int "Optional pin to check to force config mode (-1 to disable)"
+            default -1
+        config XNM_NETHELP_BLE_NONETWORK
+            bool "Start BLE and go into config mode if network connection fails"
+            default 1
+        config XNM_NETHELP_BLE_CONFMODE_BLOCK
+            bool "Block in BLE-Only config mode"
+            default 0
+    endif
+
     menu "WiFi settings"
+        config XNM_WIFI_AUTOSTART
+            bool "Autostart wifi connection after boot"
+            default 1
+        config XNM_WIFI_AUTOSTART_OTA
+            bool "Autostart WiFi connection if the OTA download flag is set"
+            default 1
         config XNM_WIFI_DEFAULT_SSID
             string "Default SSID to connect to"
         config XNM_WIFI_DEFAULT_PASSWORD
@@ -21,7 +52,7 @@ menu "! XNM NetHelpers"
             int "Default retry count before stopping"
             default 3
         config XNM_WIFI_CONNECTED_MAX_RETRIES
-            int "Default retry count after successful connection"
+            int "Default retry count after successful connection (0 = infinite)"
             default 0
         config XNM_WIFI_MIN_RETRY_TIME
             int "Minimum time before retry (in ms)"
@@ -29,26 +60,28 @@ menu "! XNM NetHelpers"
         config XNM_WIFI_MAX_RETRY_TIME
             int "Maximum time between retries (in ms)"
             default 20000
-        config XNM_WIFI_AUTO_SOFTAP
-            bool "Enable automatic soft-ap when no Wifi station is found"
-            default 0
-        config XNM_WIFI_AP_SSID
-            string "Hardcoded AP SSID"
-        config XNM_WIFI_AP_PASSWORD
-            string "Hardcoded AP Password"
     endmenu
 
-    config AUTOSTART_OTA
-        bool "Start OTA hook on init"
+    config XNM_OTA_BOOTCHECK
+        bool "Check the OTA version after WiFi connected and perform a OTA download"
         default 1
-    config AUTOSTART_MQTT_LOG_REDIR
-        bool "Start MQTT Log Relay on init"
+
+    menuconfig XNM_NETHELP_MQTT_ENABLE
+        bool "Include a global MQTT instance"
         default 1
+    if XNM_NETHELP_MQTT_ENABLE   
+        config XNM_NETHELP_MQTT_CON_TIME
+            int "Time (ms) to wait for MQTT connection before assuming the server is offline."
+            default 20000
+        config AUTOSTART_MQTT_LOG_REDIR
+            bool "Start MQTT Log Relay on init"
+            default 1
+    endif
+
     config ENABLE_BLE_LOG_REDIR
         default 1
+    
     config AUTOCONFIG_DEVICE_NAME
         bool "Use WiFi MAC as device ID"
         default 1
-    
-
 endmenu

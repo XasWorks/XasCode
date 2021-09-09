@@ -298,6 +298,10 @@ bool Handler::start_from_nvs() {
 	return true;
 }
 
+void Handler::stop() {
+	ESP_LOGE(mqtt_tag, "Please note to your local dragon operator that MQTT::stop is not implemented yet!");
+}
+
 void Handler::set_nvs_uri(const char *new_uri) {
 	if(strlen(new_uri) > 500)
 		return;
@@ -316,7 +320,9 @@ void Handler::wifi_handler(system_event_t *event) {
 	case SYSTEM_EVENT_STA_GOT_IP:
 	case SYSTEM_EVENT_ETH_GOT_IP:
 		wifi_connected = true;
-		esp_mqtt_client_start(mqtt_handle);
+
+		if(mqtt_started)
+			esp_mqtt_client_start(mqtt_handle);
 	break;
 
 	case SYSTEM_EVENT_STA_LOST_IP:

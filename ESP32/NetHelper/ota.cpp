@@ -1,4 +1,9 @@
 
+/*
+ *	TODO: Add NVS or RTC-memory based OTA triggers
+ *       Furthermore, make the main pull URL configurable
+ *
+ */
 
 #include <xnm/net_helpers.h>
 #include <xnm/net_helpers/r3_certificate.h>
@@ -23,8 +28,8 @@ namespace OTA {
 
 	TaskHandle_t current_update_thread = nullptr;
 
-	uint32_t current_version = 0;
-	uint32_t upstream_version = 0;
+	int32_t current_version = 0;
+	int32_t upstream_version = 0;
 
 	const char * branch_name = "main";
 
@@ -32,15 +37,15 @@ namespace OTA {
 		return branch_name;
 	}
 
-	uint32_t get_local_version() {
+	int32_t get_local_version() {
 		if(current_version != 0)
 			return current_version;
 
 		nvs_handle_t nvs;
 		nvs_open("xnmota", NVS_READONLY, &nvs);
 
-		uint32_t out = 0;
-		auto ret = nvs_get_u32(nvs, "local_v", &out);
+		int32_t out = 0;
+		auto ret = nvs_get_i32(nvs, "local_v", &out);
 
 		nvs_close(nvs);
 
@@ -52,15 +57,15 @@ namespace OTA {
 		return out;
 	}
 
-	uint32_t get_nvs_upstream_version() {
+	int32_t get_nvs_upstream_version() {
 		if(upstream_version != 0)
 			return upstream_version;
 
 		nvs_handle_t nvs;
 		nvs_open("xnmota", NVS_READONLY, &nvs);
 
-		uint32_t out = 0;
-		auto ret = nvs_get_u32(nvs, "upstream_v", &out);
+		int32_t out = 0;
+		auto ret = nvs_get_i32(nvs, "upstream_v", &out);
 
 		nvs_close(nvs);
 
@@ -72,11 +77,11 @@ namespace OTA {
 		return out;
 	}
 
-	uint32_t pull_upstream_version() {
+	int32_t pull_upstream_version() {
 		uint32_t out_version = -1;
 
 		char bfr[255] = {};
-		snprintf(bfr, 128, "https://xaseiresh.hopto.org/api/esp_ota/%s.vers", CONFIG_PROJECT_NAME);
+		snprintf(bfr, sizeof(bfr) - 1, "https://xaseiresh.hopto.org/api/esp_ota/%s/%s.vers", CONFIG_PROJECT_NAME, branch_name);
 
 		esp_http_client_config_t version_cfg = {};
 		version_cfg.url = bfr;
@@ -89,22 +94,22 @@ namespace OTA {
 		esp_http_client_set_method(client, HTTP_METHOD_GET);
 		esp_err_t err = esp_http_client_open(client, 0);
 		
+		ESP_LOGD("OTA", "Upstream fetch open returned: %d", err);
+
 		if (err == ESP_OK) {
 			size_t content_length = esp_http_client_fetch_headers(client);
-			
+			ESP_LOGD("OTA", "Content length is %d bytes!", content_length);
+
 			if (content_length > 0) {
 				bfr[0] = 0;
 
 				int data_read = esp_http_client_read(client, bfr, sizeof(bfr));
 				
-				cJSON * version_data = cJSON_Parse(bfr);
-				
-				cJSON * version_number = cJSON_GetObjectItem(version_data, get_branch_name());
+				bfr[data_read] = 0;
 
-				if(cJSON_IsNumber(version_number))
-					out_version = version_number->valueint;
+				ESP_LOGD("OTA", "Got a response of %d bytes (%s)", data_read, bfr);
 
-				cJSON_Delete(version_data);
+				out_version = std::strtol(bfr, nullptr, 10);
 			}
 		}
 
@@ -114,41 +119,37 @@ namespace OTA {
 		return out_version;
 	}
 
-	void set_local_version(uint32_t vers) {
+	void set_local_version(int32_t vers) {
 		current_version = vers;
 
 		nvs_handle_t nvs;
 		nvs_open("xnmota", NVS_READWRITE, &nvs);
 
-		nvs_set_u32(nvs, "local_v", vers);
+		nvs_set_i32(nvs, "local_v", vers);
 		nvs_close(nvs);
 	}
 
-	void esp_ota_thread(void *args) {
-		char bfr[128] = {};
-		snprintf(bfr, 128, "https://xaseiresh.hopto.org/api/esp_ota/%s.bin", CONFIG_PROJECT_NAME);
+	void perform_https_ota() {
+		ota_state = DOWNLOADING;
+
+		char bfr[255] = {};
+		snprintf(bfr, 128, "https://xaseiresh.hopto.org/api/esp_ota/%s/%s.bin", CONFIG_PROJECT_NAME, branch_name);
 
 		esp_http_client_config_t ota_cfg = {};
 		ota_cfg.url = bfr;
 		ota_cfg.use_global_ca_store = true;
 		ota_cfg.cert_pem = lets_encrypt_rX_pem_start;
 
-		esp_https_ota(&ota_cfg);
+		auto ret = esp_https_ota(&ota_cfg);
 
 		set_local_version(upstream_version);
 
-		ota_state = REBOOT_NEEDED;
-
-		vTaskDelay(10);
+		vTaskDelay(100/portTICK_PERIOD_MS);
 
 		esp_restart();
-
-		vTaskDelay(10);
-		
-		vTaskDelete(0);
 	}
 
-	void set_upstream_version(uint32_t up_version) {
+	void set_upstream_version(int32_t up_version) {
 		if(up_version == 0)
 			return;
 		if(up_version <= upstream_version)
@@ -159,8 +160,7 @@ namespace OTA {
 		upstream_version = up_version;
 
 		if(upstream_version > current_version) {
-			ota_state = DOWNLOADING;
-			xTaskCreatePinnedToCore(esp_ota_thread, "OTA Thread", 6144, nullptr, 1, nullptr, 0);
+			ota_state = UPDATE_AVAILABLE;
 		}
 		else
 			ota_state = UP_TO_DATE;
@@ -168,26 +168,24 @@ namespace OTA {
 
 	void init() {
 		static bool ota_initialized = false;
-
 		if(ota_initialized) {
 			ESP_LOGE("OTA", "OTA Set up twice, ignoring second one!");
 			return;
 		}
 		ota_initialized = true;
-		
-		get_local_version();
 
-		char buf[128] = {};
-		snprintf(buf, 128, "/esp32/%s/ota", CONFIG_PROJECT_NAME);
+#ifdef CONFIG_XNM_OTA_BOOTCHECK
+		auto pulled_vers = pull_upstream_version();
+		if(pulled_vers > 0)
+			set_upstream_version(pulled_vers);
+#endif
 
-		if(mqtt_ptr == nullptr) {
-			ESP_LOGE("XNM OTA", "No MQTT was provided, no OTA fetch possible!");
-			return;
+		if(get_nvs_upstream_version() > get_local_version()) {
+			ESP_LOGW("OTA", "Upstream version %d, local %d - performing update!", get_nvs_upstream_version(), get_local_version());
+			perform_https_ota();
 		}
-
-		mqtt_ptr->subscribe_to(buf, [](const Xasin::MQTT::MQTT_Packet data) {
-			set_upstream_version(std::stoul(data.data));
-		});
+		else
+			ESP_LOGI("OTA", "Upstream version %d, local %d - no update needed.", get_nvs_upstream_version(), get_local_version());
 
 		ota_initialized = true;
 	}

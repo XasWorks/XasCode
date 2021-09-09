@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "host/ble_gatt.h"
+#include "diy_types.h"
 
 namespace XNM {
 namespace BLE {

@@ -2,8 +2,7 @@
 #pragma once
 
 
-#include "host/ble_gatt.h"
-#include "host/ble_gap.h"
+#include "diy_types.h"
 
 #include <vector>
 
