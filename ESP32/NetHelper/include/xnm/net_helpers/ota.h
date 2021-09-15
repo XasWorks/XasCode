@@ -13,12 +13,15 @@ namespace OTA {
         UP_TO_DATE,
 		UPDATE_AVAILABLE,
         DOWNLOADING,
-        REBOOT_NEEDED,
         UNVERIFIED,
     };
 
     void init();
+    
     void cancel_rollback();
+    void force_rollback();
+
+    const char * get_branch_name();
 
     ota_state_t get_state();
 

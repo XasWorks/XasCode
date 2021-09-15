@@ -13,7 +13,6 @@
 
 #include "nvs_flash.h"
 
-#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
 #include "esp_log.h"
 
 namespace XNM {
@@ -113,7 +112,7 @@ void try_connect_sta() {
 	wifi_mode_t mode;
 	esp_wifi_get_mode(&mode);
 
-	if(mode != WIFI_MODE_STA)
+	if((state == UNINITIALIZED) || (mode != WIFI_MODE_STA))
 		config_sta();
 
 	ESP_LOGI(wifi_tag, "Trying to connect!");
@@ -206,6 +205,7 @@ void event_handler(void * arg, esp_event_base_t event_base,
 	}
 }
 
+bool nvs_data_loaded = false;
 void set_nvs(const char *ssid, const char *password) {
 	nvs_handle_t write_handle;
 	nvs_open("xnm", NVS_READWRITE, &write_handle);
@@ -216,10 +216,11 @@ void set_nvs(const char *ssid, const char *password) {
 	nvs_commit(write_handle);
 
 	nvs_close(write_handle);
+
+	nvs_data_loaded = false;
 }
 
 void load_nvs() {
-	static bool nvs_data_loaded = false;
 	if(nvs_data_loaded)
 		return;
 

@@ -9,9 +9,9 @@ typedef int (*vprintf_like_t)(const char *, va_list);
 #include "net_helpers/wifi.h"
 #include "net_helpers/ota.h"
 
-#ifdef CONFIG_XNM_NETHELP_BLE_ENABLE
 #include <xnm/ble.h>
-#endif
+
+#include <xnm/property_point.h>
 
 namespace XNM {
 namespace NetHelpers {
@@ -31,6 +31,10 @@ extern Xasin::MQTT::Handler mqtt;
 
 #ifdef CONFIG_XNM_NETHELP_BLE_ENABLE
 extern XNM::BLE::Server ble;
+#endif
+
+#ifdef CONFIG_XNM_NETHELP_INCLUDE_PROPP
+extern XNM::PropertyPoint::Handler propp;
 #endif
 
 net_state_t get_state();

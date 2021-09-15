@@ -6,7 +6,7 @@ menu "XNM NetHelpers"
         bool "Autostart WiFi"
         default 1
 
-    config XNM_NETHELPER_INCLUDE_PROPP
+    config XNM_NETHELP_INCLUDE_PROPP
         bool "Include a NetHelper global property-point core?"
         default 1
 
@@ -76,6 +76,9 @@ menu "XNM NetHelpers"
         config AUTOSTART_MQTT_LOG_REDIR
             bool "Start MQTT Log Relay on init"
             default 1
+        config AUTOSTART_MQTT_OTA_CHECK
+            bool "Use MQTT to check for updated versions and reboot"
+            default 0
     endif
 
     config ENABLE_BLE_LOG_REDIR

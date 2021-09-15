@@ -23,15 +23,30 @@ net_state_t net_state = UNINITIALIZED;
 std::string device_id = "";
 
 #ifdef CONFIG_XNM_NETHELP_MQTT_ENABLE
-Xasin::MQTT::Handler mqtt;
+Xasin::MQTT::Handler mqtt = Xasin::MQTT::Handler();
 #endif
 
 #ifdef CONFIG_XNM_NETHELP_BLE_ENABLE
-XNM::BLE::Server ble;
+XNM::BLE::Server ble = XNM::BLE::Server();
+#endif
+
+
+#ifdef CONFIG_XNM_NETHELP_INCLUDE_PROPP
+XNM::PropertyPoint::Handler propp = XNM::PropertyPoint::Handler();
+
+XNM::PropertyPoint::CustomProperty system_property(propp, "_system");
+
+#ifdef CONFIG_XNM_NETHELP_MQTT_ENABLE
+XNM::PropertyPoint::MQTTOutput propp_mqtt_out(propp, mqtt);
+#endif
+
+#ifdef CONFIG_XNM_NETHELP_BLE_ENABLE
+XNM::PropertyPoint::BLEOutput propp_ble_out(propp, ble);
+#endif
 #endif
 
 void event_handler(system_event_t *event) {
-#ifdef XNM_NETHELP_MQTT_ENABLE
+#ifdef CONFIG_XNM_NETHELP_MQTT_ENABLE
     mqtt.wifi_handler(event);
 #endif
 }
@@ -174,7 +189,23 @@ void init_mqtt() {
 
 #ifdef CONFIG_AUTOSTART_MQTT_LOG_REDIR
     esp_log_level_set("TRANS_TCP", ESP_LOG_NONE);
-    init_mqtt_logs();
+    // init_mqtt_logs();
+#endif
+
+#ifdef CONFIG_AUTOSTART_MQTT_OTA_CHECK
+    do {
+        char bfr[255] = {};
+        snprintf(bfr, 255, "/esp32/%s/ota/%s", CONFIG_PROJECT_NAME, OTA::get_branch_name());
+
+        mqtt.subscribe_to(bfr, [](Xasin::MQTT::MQTT_Packet data) {
+            auto upstream_vers = strtol(data.data.data(), nullptr, 10);
+            if(upstream_vers != 0)
+                OTA::set_upstream_version(upstream_vers);
+
+            if(OTA::get_state() == OTA::UPDATE_AVAILABLE)
+                esp_restart();
+        });
+    } while(false);
 #endif
 }
 #else
@@ -183,17 +214,88 @@ void init_mqtt() {
 }
 #endif
 
+#ifdef CONFIG_XNM_NETHELP_INCLUDE_PROPP
+
+cJSON * system_property_get_json() {
+    cJSON * out = cJSON_CreateObject();
+
+    cJSON_AddItemToObjectCS(out, "heap", cJSON_CreateNumber(esp_get_free_heap_size()));
+    cJSON_AddItemToObjectCS(out, "heap_block",
+        cJSON_CreateNumber(heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT)));
+
+    return out;
+}
+
+void system_property_set_json(const cJSON * data) {
+    auto ssid_item = cJSON_GetObjectItem(data, "wifi_ssid");
+    auto password_item = cJSON_GetObjectItem(data, "wifi_password");
+
+    if(cJSON_IsString(ssid_item) && cJSON_IsString(password_item)) {
+        WIFI::set_nvs(ssid_item->valuestring, password_item->valuestring);
+    }
+
+#ifdef CONFIG_XNM_NETHELP_MQTT_ENABLE
+    auto mqtt_item = cJSON_GetObjectItem(data, "mqtt");
+
+    if(cJSON_IsString(mqtt_item)) {
+        mqtt.set_nvs_uri(mqtt_item->valuestring);
+    }
+#endif
+
+    if(cJSON_IsTrue(cJSON_GetObjectItem(data, "rollback"))) {
+        OTA::force_rollback();
+    }
+
+    if(cJSON_IsTrue(cJSON_GetObjectItem(data, "reboot"))) {
+        esp_restart();
+    }
+}
+
+void init_propp() {
+
+#ifdef CONFIG_XNM_NETHELP_BLE_ENABLE
+    propp_ble_out.init();
+#endif
+#ifdef CONFIG_XNM_NETHELP_MQTT_ENABLE
+    propp_mqtt_out.init();
+#endif
+
+    system_property.on_get_state = system_property_get_json;
+    system_property.on_process   = system_property_set_json;
+    system_property.init();
+}
+
+void propp_housekeep_tick() {
+    static TickType_t last_housekeep_tick = 0;
+
+    if(xTaskGetTickCount() - last_housekeep_tick >= (5000/portTICK_PERIOD_MS)) {
+        last_housekeep_tick = xTaskGetTickCount();
+
+        system_property.poke_update();
+    }
+}
+#else
+void init_propp() {}
+void propp_housekeep_tick() {}
+#endif
+
 void nethelp_housekeep_tick(void *arg) {
     while(true) {
         vTaskDelay(1000/portTICK_PERIOD_MS);
 
         WIFI::housekeep_tick();
+
+        propp_housekeep_tick();
     }
 }
 
 void init() {
     xTaskCreate(nethelp_housekeep_tick, "XNM::Housekeep",
-        2048, nullptr, 3, nullptr);
+        4096, nullptr, 3, nullptr);
+
+    init_propp();
+
+    mqtt.set_nvs_uri("mqtts://xaseiresh.hopto.org");
 
 #ifdef CONFIG_XNM_NETHELP_BLE_ALWAYSON
     init_ble();
@@ -229,9 +331,10 @@ void init() {
 #ifdef CONFIG_XNM_NETHELP_BLE_NONETWORK
     if(net_state != NETWORK_MODE) {
         init_ble();
-        return;
     }
 #endif
+
+    ESP_LOGI("xnm", "NetHelpers finished, you are all set up!");
 }
 
 }

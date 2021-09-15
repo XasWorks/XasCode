@@ -172,7 +172,12 @@ namespace OTA {
 			ESP_LOGE("OTA", "OTA Set up twice, ignoring second one!");
 			return;
 		}
-		ota_initialized = true;
+
+		if(esp_get_free_heap_size() < 32000) {
+			ESP_LOGE("OTA", "Minimum free heap for safe OTA was not reached, rolling back!");
+
+			esp_ota_mark_app_invalid_rollback_and_reboot();
+		}
 
 #ifdef CONFIG_XNM_OTA_BOOTCHECK
 		auto pulled_vers = pull_upstream_version();
@@ -185,7 +190,7 @@ namespace OTA {
 			perform_https_ota();
 		}
 		else
-			ESP_LOGI("OTA", "Upstream version %d, local %d - no update needed.", get_nvs_upstream_version(), get_local_version());
+			ESP_LOGI("OTA", "Upstream version %d, local %d - no update needed, HTTPS connection confirmed", get_nvs_upstream_version(), get_local_version());
 
 		ota_initialized = true;
 	}
@@ -193,6 +198,11 @@ namespace OTA {
 	ota_state_t get_state() {
 		return ota_state;
 	}
+
+	void force_rollback() {
+		esp_ota_mark_app_invalid_rollback_and_reboot();
+	}
+
 }
 
 }

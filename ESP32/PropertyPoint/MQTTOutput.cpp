@@ -13,7 +13,7 @@ MQTTOutput::MQTTOutput(Handler &handler, MQTT &mqtt) : BaseOutput(handler),
 }
 
 void MQTTOutput::init() {
-		mqtt.subscribe_to("set/#", [this](Xasin::MQTT::Packet data) {
+	mqtt.subscribe_to("set/#", [this](Xasin::MQTT::Packet data) {
 		auto prop = handler[data.topic.data()];
 
 

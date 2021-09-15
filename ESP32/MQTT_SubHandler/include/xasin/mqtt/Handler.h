@@ -46,11 +46,15 @@ typedef std::function<void (const MQTT_Packet)> mqtt_callback;
 class Subscription;
 
 class Handler {
+private:
+	SemaphoreHandle_t subscription_config_lock;
+
 protected:
 	friend Subscription;
 
-	SemaphoreHandle_t config_lock;
 	std::vector<Subscription *> subscriptions;
+	bool sub_sem_lock();
+	void sub_sem_unlock();
 
 	esp_mqtt_client_handle_t mqtt_handle;
 
@@ -64,13 +68,7 @@ protected:
 	std::string base_topic;
 
 public:
-	static bool start_wifi_from_nvs(int psMode = 0);
-	static void set_nvs_wifi(const char *wifi_ssid, const char *wifi_pswd);
 	static void set_nvs_uri(const char *new_uri);
-
-	static void start_wifi(const char *SSID, const char *PSWD, int psMode = 0);
-	// static void start_wifi_enterprise(const char *SSID, const char *domain, const char *identity, const char *anonymousIdentity, const char *password);
-	static void try_wifi_reconnect(system_event_t *event);
 
 	Handler();
 	Handler(const std::string & base_topic);
