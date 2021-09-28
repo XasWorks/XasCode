@@ -189,7 +189,7 @@ void init_mqtt() {
 
 #ifdef CONFIG_AUTOSTART_MQTT_LOG_REDIR
     esp_log_level_set("TRANS_TCP", ESP_LOG_NONE);
-    // init_mqtt_logs();
+    init_mqtt_logs();
 #endif
 
 #ifdef CONFIG_AUTOSTART_MQTT_OTA_CHECK
@@ -199,11 +199,14 @@ void init_mqtt() {
 
         mqtt.subscribe_to(bfr, [](Xasin::MQTT::MQTT_Packet data) {
             auto upstream_vers = strtol(data.data.data(), nullptr, 10);
-            if(upstream_vers != 0)
+            if(upstream_vers != 0) {
                 OTA::set_upstream_version(upstream_vers);
 
-            if(OTA::get_state() == OTA::UPDATE_AVAILABLE)
-                esp_restart();
+                char vers_buffer[64] = {};
+                OTA::print_version(vers_buffer, 64, upstream_vers);
+
+                ESP_LOGI("OTA", "New version available: %s", vers_buffer);
+            }
         });
     } while(false);
 #endif
@@ -284,18 +287,17 @@ void nethelp_housekeep_tick(void *arg) {
         vTaskDelay(1000/portTICK_PERIOD_MS);
 
         WIFI::housekeep_tick();
-
         propp_housekeep_tick();
+
+        OTA::housekeep_tick();
     }
 }
 
-void init() {
+void init() {    
     xTaskCreate(nethelp_housekeep_tick, "XNM::Housekeep",
         4096, nullptr, 3, nullptr);
 
     init_propp();
-
-    mqtt.set_nvs_uri("mqtts://xaseiresh.hopto.org");
 
 #ifdef CONFIG_XNM_NETHELP_BLE_ALWAYSON
     init_ble();
@@ -334,7 +336,8 @@ void init() {
     }
 #endif
 
-    ESP_LOGI("xnm", "NetHelpers finished, you are all set up!");
+    report_boot_reason();
+    OTA::report_version();
 }
 
 }

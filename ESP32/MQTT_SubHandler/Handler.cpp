@@ -32,7 +32,8 @@ esp_err_t mqtt_handle_caller(esp_mqtt_event_t *event) {
 }
 
 Handler::Handler()
-	: subscriptions(),
+	: active_sub_name(nullptr),
+	  subscriptions(),
 	  mqtt_handle(nullptr),
 	  wifi_connected(false),
 	  mqtt_started(false), mqtt_connected(false),
@@ -41,6 +42,8 @@ Handler::Handler()
 
 	ESP_LOGD(mqtt_tag, "Early MQTT init");
 	
+	subscription_config_lock = xSemaphoreCreateRecursiveMutex();
+
 	base_topic.reserve(64);
 
 	base_topic 	= "/esp32/";
@@ -54,12 +57,16 @@ Handler::Handler(const std::string &base_t) : Handler() {
 }
 
 bool Handler::sub_sem_lock() {
-	if(subscription_config_lock == nullptr)
-		subscription_config_lock = xSemaphoreCreateRecursiveMutex();
+	assert(subscription_config_lock);
 
-	assert(xSemaphoreTakeRecursive(subscription_config_lock, 4000));
+	if(!xSemaphoreTakeRecursive(subscription_config_lock, 4000)) {
+		ESP_LOGE(mqtt_tag, "Locking mutex failed, active sub was %s", 
+			active_sub_name == nullptr ? "NONE" : active_sub_name);
 
-	ESP_LOGD(mqtt_tag, "Locked mutex!");
+		assert(false);
+	}
+
+	ESP_LOGV(mqtt_tag, "Locked mutex!");
 	return true;
 }
 
@@ -68,7 +75,7 @@ void Handler::sub_sem_unlock() {
 
 	assert(xSemaphoreGiveRecursive(subscription_config_lock));
 
-	ESP_LOGD(mqtt_tag, "Unlocked mutex!");
+	ESP_LOGV(mqtt_tag, "Unlocked mutex!");
 }
 
 void Handler::topicsize_string(std::string &topic) {
@@ -81,7 +88,6 @@ void Handler::topicsize_string(std::string &topic) {
 void Handler::start(const mqtt_cfg &config) {
 	assert(!mqtt_started);
 
-	mqtt_started = true;
 	esp_log_level_set("MQTT_CLIENT", ESP_LOG_NONE);
 
 	mqtt_cfg modConfig = config;
@@ -93,6 +99,8 @@ void Handler::start(const mqtt_cfg &config) {
 
 	if(wifi_connected)
 		esp_mqtt_client_start(mqtt_handle);
+	
+	mqtt_started = true;
 	
 	vTaskDelay(100/portTICK_PERIOD_MS);
 }
@@ -217,9 +225,13 @@ void Handler::mqtt_handler(esp_mqtt_event_t *event) {
 		if(!sub_sem_lock())
 			return;
 
-		for(auto s : subscriptions)
+		for(auto s : subscriptions) {
+			active_sub_name = s->topic.data();
 			s->feed_data({topicString, dataString});
+		}
 		
+		active_sub_name = nullptr;
+
 		sub_sem_unlock();
 	}
 	break;

@@ -49,6 +49,8 @@ class Handler {
 private:
 	SemaphoreHandle_t subscription_config_lock;
 
+	const char * active_sub_name;
+
 protected:
 	friend Subscription;
 
