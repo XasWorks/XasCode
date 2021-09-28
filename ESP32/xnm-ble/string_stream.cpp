@@ -1,4 +1,6 @@
 
+#define __XNM_BLE_EXCLUDE_DIY_TYPES
+
 #define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
 #include <esp_log.h>
 

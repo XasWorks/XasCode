@@ -1,4 +1,6 @@
 
+#define __XNM_BLE_EXCLUDE_DIY_TYPES
+
 #include "include/xnm/ble/services/battery_svc.h"
 
 #include "host/ble_hs.h"

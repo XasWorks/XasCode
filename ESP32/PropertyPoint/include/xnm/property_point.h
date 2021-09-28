@@ -12,3 +12,4 @@
 #include "property_point/SingleProperty.h"
 
 #include "property_point/MQTTOutput.h"
+#include "property_point/BLEOutput.h"

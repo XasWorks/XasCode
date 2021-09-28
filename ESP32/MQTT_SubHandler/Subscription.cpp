@@ -17,18 +17,25 @@ Subscription::Subscription(Handler &handler, const std::string topic, int qos)
 	 topic(topic), qos(qos),
 	 on_received(nullptr) {
 
-	assert(mqtt_handler.config_lock);
+	ESP_LOGD("xnm:mqtt:sub", "Creating new sub for %s", topic.data());
 
-	xSemaphoreTake(mqtt_handler.config_lock, portMAX_DELAY);
+	if(!mqtt_handler.sub_sem_lock())
+		return;
+
 	handler.subscriptions.push_back(this);
-	xSemaphoreGive(mqtt_handler.config_lock);
-
+	
 	if(handler.mqtt_connected)
 		raw_subscribe();
+
+	mqtt_handler.sub_sem_unlock();
+
 }
 
 Subscription::~Subscription() {
-	xSemaphoreTake(mqtt_handler.config_lock, portMAX_DELAY);
+	ESP_LOGD("xnm:mqtt:sub", "Destructing sub for %s", topic.data());
+
+	if(!mqtt_handler.sub_sem_lock())
+		return;
 
 	bool conflictFound = false;
 
@@ -42,7 +49,7 @@ Subscription::~Subscription() {
 		}
 	}
 
-	xSemaphoreGive(mqtt_handler.config_lock);
+	mqtt_handler.sub_sem_unlock();
 
 	if(conflictFound)
 		return;

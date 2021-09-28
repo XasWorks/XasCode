@@ -13,7 +13,6 @@
 
 #include "nvs_flash.h"
 
-#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
 #include "esp_log.h"
 
 namespace XNM {
@@ -68,7 +67,7 @@ void config_sta() {
 	esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_cfg);
 }
 
-void config_ap() {
+/*void config_ap() {
 	ESP_LOGI(wifi_tag, "Configuring ap mode");
 
 	esp_wifi_stop();
@@ -107,13 +106,13 @@ void open_ap() {
 	state = SOFT_AP;
 
 	esp_wifi_start();
-}
+}*/
 
 void try_connect_sta() {
 	wifi_mode_t mode;
 	esp_wifi_get_mode(&mode);
 
-	if(mode != WIFI_MODE_STA)
+	if((state == UNINITIALIZED) || (mode != WIFI_MODE_STA))
 		config_sta();
 
 	ESP_LOGI(wifi_tag, "Trying to connect!");
@@ -154,11 +153,6 @@ void on_sta_con_failed() {
 		
 		ESP_LOGW(wifi_tag, "Maximum number of WiFi connection retries reached!");
 		state = DISCONNECTED;
-
-#ifdef CONFIG_XNM_WIFI_AUTO_SOFTAP
-			open_ap();
-#endif
-
 
 		return;
 	}
@@ -211,6 +205,7 @@ void event_handler(void * arg, esp_event_base_t event_base,
 	}
 }
 
+bool nvs_data_loaded = false;
 void set_nvs(const char *ssid, const char *password) {
 	nvs_handle_t write_handle;
 	nvs_open("xnm", NVS_READWRITE, &write_handle);
@@ -221,9 +216,16 @@ void set_nvs(const char *ssid, const char *password) {
 	nvs_commit(write_handle);
 
 	nvs_close(write_handle);
+
+	nvs_data_loaded = false;
 }
 
 void load_nvs() {
+	if(nvs_data_loaded)
+		return;
+
+	nvs_data_loaded = true;
+
 	size_t write_len = 64;
 
 	nvs_handle_t read_handle;
@@ -249,7 +251,7 @@ void load_nvs() {
 	}
 }
 
-void init() {
+bool init(bool blocking) {
 	esp_netif_init();
 
    esp_netif_create_default_wifi_sta();
@@ -284,11 +286,42 @@ void init() {
 
 	if(sta_ssid[0] != 0)
 		try_connect_sta();
-#ifdef CONFIG_XNM_WIFI_AUTO_SOFTAP
 	else
-		open_ap();
+		return false;
+
+	if(!blocking)
+		return true;
+
+	while(true) {
+		if(state == CONNECTED)
+			return true;
+		if(state == DISCONNECTED)
+			return false;
+
+		vTaskDelay(100/portTICK_PERIOD_MS);
+	}
+}
+
+bool has_config() {
+#if CONFIG_XNM_WIFI_LOAD_NVS
+	load_nvs();
 #endif
 
+	return (sta_ssid[0] != 0) && (sta_password[0] != 0);
+}
+
+bool is_connected() {
+	return state == CONNECTED;
+}
+
+bool should_autostart() {
+#ifdef CONFIG_XNM_WIFI_AUTOSTART
+	return true;
+#endif
+
+	// TODO add link to OTA to check if it wants a download
+
+	return false;
 }
 
 }

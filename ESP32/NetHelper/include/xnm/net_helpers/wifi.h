@@ -15,7 +15,7 @@ enum wifi_state_t {
 	SOFT_AP						// Soft AP was started instead to self-host
 };
 
-void init();
+bool init(bool blocking = false);
 
 // Call this function approximately once a second to allow the
 // WiFi system to properly handle disconnects, timeouts, etc.
@@ -24,6 +24,10 @@ void housekeep_tick();
 // If NVS storage is enabled, this will save the given string
 // to NVS.
 void set_nvs(const char *ssid, const char * password);
+
+bool has_config();
+bool is_connected();
+bool should_autostart();
 
 }
 }
