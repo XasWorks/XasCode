@@ -11,6 +11,7 @@
 #include <esp_ota_ops.h>
 
 #include <lwip/apps/sntp.h>
+#include <esp_sntp.h>
 
 #include <cstring>
 

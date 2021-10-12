@@ -133,10 +133,11 @@ void TX::audio_dma_fill_task() {
 	while(true) {
 		// As long as we haven't been idling for a while, continue playback.
 		if(audio_idle_count < 0) {
-			uint32_t total_written_data = 0;
+			size_t total_written_data = 0;
 
 			while(total_written_data < audio_buffer.size()) {
-				uint32_t local_written_bytes = 0;
+				size_t local_written_bytes = 0;
+				
 				i2s_write(i2s_port, audio_buffer.data()+total_written_data, (audio_buffer.size()-total_written_data)*2, &local_written_bytes, portMAX_DELAY);
 
 				total_written_data += local_written_bytes/2;
@@ -233,7 +234,7 @@ void TX::init(TaskHandle_t processing_task, const i2s_pin_config_t &pin_config) 
 	cfg.sample_rate = CONFIG_XASAUDIO_TX_SAMPLERATE;
 	cfg.bits_per_sample = i2s_bits_per_sample_t(16);
 	cfg.channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT;
-	cfg.communication_format = I2S_COMM_FORMAT_I2S_MSB;
+	cfg.communication_format = I2S_COMM_FORMAT_STAND_I2S;
 	cfg.intr_alloc_flags = 0;
 
 	//uint32_t num_buffer_bytes = XASAUDIO_TX_FRAME_SAMPLE_NO * 2 * CONFIG_XASAUDIO_TX_DMA_COUNT;

@@ -36,7 +36,7 @@ Color Color::HSV(int16_t H, uint8_t S, uint8_t V) {
 	Color oC = Color();
 
 	switch(h) {
-	default:oC.r = V; oC.g = t; oC.b = p; break;
+	default:oC.r = V*255; oC.g = t; oC.b = p; break;
 	case 1: oC.r = q; oC.g = V*255; oC.b = p; break;
 	case 2: oC.r = p; oC.g = V*255; oC.b = t; break;
 	case 3: oC.r = p; oC.g = q; oC.b = V*255; break;

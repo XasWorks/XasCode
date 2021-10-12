@@ -249,7 +249,7 @@ void AudioHandler::start_thread(const i2s_pin_config_t &pinCFG) {
 	cfg.sample_rate = samplerate;
 	cfg.bits_per_sample = i2s_bits_per_sample_t(16);
 	cfg.channel_format = I2S_CHANNEL_FMT_ONLY_LEFT;
-	cfg.communication_format = I2S_COMM_FORMAT_I2S_MSB;
+	cfg.communication_format = I2S_COMM_FORMAT_STAND_I2S;
 	cfg.intr_alloc_flags = 0;
 	cfg.dma_buf_count = 2;
 	cfg.dma_buf_len = 1024;

@@ -64,7 +64,7 @@ void config_sta() {
 	if(CONFIG_XNM_WIFI_PSMODE >= 2)
 		sta_cfg->listen_interval = 10;
 
-	esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_cfg);
+	esp_wifi_set_config(WIFI_IF_STA, &wifi_cfg);
 }
 
 /*void config_ap() {
