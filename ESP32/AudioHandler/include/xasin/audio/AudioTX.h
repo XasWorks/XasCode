@@ -71,7 +71,7 @@ public:
 	const i2s_port_t i2s_port;
 
 	bool calculate_volume;
-	uint8_t volume_mod;
+	uint16_t volume_mod;
 
 	void audio_dma_fill_task();
 	bool largestack_process();

@@ -32,7 +32,7 @@ static void IRAM_ATTR u8_to_WS2812(const void* source, rmt_item32_t* destination
 	*translated_size  = 0;
 	*translated_items = 0;
 
-	while(*translated_size < source_size && *translated_items < wanted_elements) {
+	while((*translated_size < source_size) && (*translated_items < wanted_elements)) {
 		for(uint8_t i=0; i<8; i++) {
 			destination->val = bits[(*srcPointer)>>(7-i) & 1].val;
 
@@ -52,7 +52,7 @@ NeoController::NeoController(gpio_num_t pin, rmt_channel_t channel, uint8_t leng
 
 	ESP_LOGD("neocontroller", "Early init");
 
-	rawColors = new Color::ColorData[length];
+	rawColors = new uint8_t[length*3];
 
 	init_onoff_bits();
 
@@ -85,10 +85,12 @@ NeoController::NeoController(gpio_num_t pin, rmt_channel_t channel, uint8_t leng
 
 void NeoController::update() {
 	esp_pm_lock_acquire(powerLock);
-	for(uint8_t i=0; i<length; i++)
-		rawColors[i] = colors[i].getLEDValue();
 
-	rmt_write_sample(channel, reinterpret_cast<const unsigned char *>(rawColors), length*sizeof(Color::ColorData), true);
+	for(uint8_t i=0; i<length; i++)
+		*reinterpret_cast<Color::ColorData*>(rawColors + i*3) = colors[i].getLEDValue();
+
+	ESP_ERROR_CHECK(rmt_write_sample(channel, reinterpret_cast<const unsigned char *>(rawColors), length*3, true));
+	rmt_wait_tx_done(channel, 1000);
 
 	esp_pm_lock_release(powerLock);
 }

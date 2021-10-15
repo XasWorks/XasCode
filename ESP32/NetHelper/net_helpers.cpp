@@ -105,7 +105,9 @@ vprintf_like_t init_mqtt_logs() {
 }
 
 #else // If we do not have MQTT running, do nothing to initialize MQTT logging
-void init_mqtt_logs() {}
+vprintf_like_t init_mqtt_logs() {
+	return nullptr;
+}
 #endif
 
 void init_global_r3_ca() {

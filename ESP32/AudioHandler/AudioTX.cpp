@@ -88,7 +88,7 @@ void TX::insert_source(Source * source) {
 void TX::add_interleaved_frame(const int16_t *data, uint8_t volume) {
 	for(int i=0; i < 2*XASAUDIO_TX_FRAME_SAMPLE_NO; i++) {
 		int32_t new_audio_value = audio_buffer[i];
-		new_audio_value += (volume_mod * volume * int32_t(*data)) >> 16;
+		new_audio_value += (volume_mod * volume * int64_t(*data)) / (1<<16);
 
 		if(new_audio_value > INT16_MAX) {
 			clipping = true;
@@ -110,7 +110,7 @@ void TX::add_lr_frame(const int16_t *data, bool left, uint8_t volume) {
 		int audio_index = i*2 + (left ? 1 : 0);
 
 		int32_t new_audio_value = audio_buffer[audio_index];
-		new_audio_value += (volume_mod * volume * int32_t(*data)) >> 16;
+		new_audio_value += (volume_mod * volume * int64_t(*data)) / (1<<16);
 
 		if(new_audio_value > INT16_MAX) {
 			clipping = true;

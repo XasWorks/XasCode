@@ -35,11 +35,13 @@ namespace NeoController {
 
 class Color {
 public:
+#pragma pack(1)
 	struct ColorData {
 		uint8_t g;
 		uint8_t r;
 		uint8_t b;
 	};
+#pragma pack(0)
 
 	uint16_t r;
 	uint16_t g;

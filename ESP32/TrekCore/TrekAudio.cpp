@@ -21,7 +21,7 @@ namespace Xasin {
 namespace Trek {
 
 typedef const Audio::bytecassette_data_t snippet;
-#define SNIP_DEF(name) snippet s_ ## name = {name, name + sizeof(name), 44100, 150}
+#define SNIP_DEF(name) snippet s_ ## name = {name, name + sizeof(name), 44100, 200}
 #define SNIP_DEF_VOL(name, volume) snippet s_ ## name = {name, name + sizeof(name), 44100, volume}
 
 #ifdef TREKCORE_AUDIO_ENABLED
