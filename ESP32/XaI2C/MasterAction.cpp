@@ -10,6 +10,9 @@
 namespace XaI2C {
 
 void MasterAction::init(gpio_num_t sda, gpio_num_t scl, i2c_port_t port, uint32_t speed) {
+	gpio_set_direction(sda, GPIO_MODE_INPUT);
+	gpio_set_direction(scl, GPIO_MODE_INPUT);
+
 	i2c_config_t i2c_cfg = {};
 
 	i2c_cfg.mode = I2C_MODE_MASTER;

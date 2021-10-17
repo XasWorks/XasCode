@@ -43,6 +43,45 @@ esp_err_t DRV2605::autocalibrate_erm() {
 	return ESP_OK;
 }
 
+esp_err_t DRV2605::autocalibrate_lra()
+{
+	auto i2c = XaI2C::MasterAction(addr);
+
+	uint8_t mode = 0x07;
+	i2c.write(MODE, &mode, 1);
+
+	reg_feedback_t feedback = {};
+	feedback.bemf_gain = 0;
+	feedback.loop_gain = 2;
+	feedback.fb_brake_factor = 2;
+	feedback.erm_lra_mode = 1;
+
+	i2c.write(FEEDBACK_CTRL, &feedback, 1);
+
+	uint8_t rated_voltage = (2.0 / 0.02133F);
+	i2c.write(RATED_VOLTAGE, &rated_voltage, 1);
+
+	uint8_t od_clamp = (250);
+	i2c.write(OVERDRIVE_CLAMP, &od_clamp, 1);
+
+	reg_ctrl1_t c1_reg = {};
+	c1_reg.drive_time = 20;
+	c1_reg.startup_boost_en_1 = 1;
+	i2c.write(CTRL1, &c1_reg, 1);
+
+	uint8_t go = 0x01;
+	i2c.write(GO, &go, 1);
+
+	auto ret = i2c.execute();
+
+	if (ret != ESP_OK)
+		return ret;
+
+	vTaskDelay(100/portTICK_PERIOD_MS);
+
+	return ESP_OK;
+}
+
 void DRV2605::rtp_mode() {
 	uint8_t mode = 0x5;
 

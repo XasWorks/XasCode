@@ -98,6 +98,7 @@ public:
 	// Initialize and auto-calibrate the system for a standard
 	// ERM haptic device
 	esp_err_t autocalibrate_erm();
+	esp_err_t autocalibrate_lra();
 
 	void rtp_mode();
 	void sequence_mode();
