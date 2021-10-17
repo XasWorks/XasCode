@@ -4,7 +4,7 @@
 
 #include "BaseProperty.h"
 
-#include <xasin/neocontroller/Color.h>
+#include <xnm/neocontroller/Color.h>
 #include <string>
 
 namespace XNM {
@@ -54,7 +54,7 @@ SinglePropertySpecialization(int);
 
 SinglePropertySpecialization(std::string);
 
-SinglePropertySpecialization(Xasin::NeoController::Color);
+SinglePropertySpecialization(XNM::Neo::Color);
 
 }
 }

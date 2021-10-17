@@ -46,13 +46,13 @@ SinglePropertySpecializationCode(std::string,
 	cJSON_CreateStringReference(this->value.data()))
 
 template<>
-cJSON * SingleProperty<Xasin::NeoController::Color>::get_current_state() {
+cJSON * SingleProperty<XNM::Neo::Color>::get_current_state() {
 	cJSON * out = cJSON_CreateObject();
 	cJSON_AddItemToObjectCS(out, "value", cJSON_CreateString(this->value.to_s().data()));
 	return out;
 }
 template <>
-void SingleProperty<Xasin::NeoController::Color>::process_json_command(const cJSON * data) {
+void SingleProperty<XNM::Neo::Color>::process_json_command(const cJSON * data) {
 	ESP_LOGD("PROPP", "Property %s got update.", this->key);
 	if(!cJSON_IsObject(data))
 		return;
@@ -63,7 +63,7 @@ void SingleProperty<Xasin::NeoController::Color>::process_json_command(const cJS
 		return;
 
 	bool ok = false;
-	auto c = Xasin::NeoController::Color::strtoc(data->valuestring, &ok);
+	auto c = XNM::Neo::Color::strtoc(data->valuestring, &ok);
 
 	if(!ok)
 		return;
