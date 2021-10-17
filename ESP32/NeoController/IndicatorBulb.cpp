@@ -5,36 +5,27 @@
  *      Author: xasin
  */
 
-#include "xasin/neocontroller/IndicatorBulb.h"
+#include "xnm/neocontroller.h"
 #include "freertos/FreeRTOS.h"
 
-namespace Xasin {
-namespace NeoController {
+#undef CONFIG_XNM_NEO_IND_IDLE_REPEAT
+#define CONFIG_XNM_NEO_IND_IDLE_REPEAT 64
 
-uint32_t get_flashcycle_ticks() {
-	return xTaskGetTickCount() / (100 / portTICK_PERIOD_MS);
-}
-uint32_t get_flashcycle_count() {
-	return get_flashcycle_ticks() / 8;
+namespace XNM {
+namespace Neo {
+
+uint32_t get_flashcycle_tick() {
+	return xTaskGetTickCount() / (350/portTICK_PERIOD_MS); //(CONFIG_XNM_NEO_IND_SPEED/portTICK_PERIOD_MS);
 }
 
 IndicatorBulb::IndicatorBulb() :
-		current(), deactivateAfter(0),
+		current(), 
+		deactivateAfter(0),
+		last_brightness(0),
+		current_brightness(0),
 		target(), mode(OFF), flash_fill(8) {
 }
 
-IndicatorBulb& IndicatorBulb::operator =(const IndicatorBulb &top) {
-	this->target = top.target;
-	this->mode	 = top.mode;
-	this->flash_fill = top.flash_fill;
-
-	if(top.deactivateAfter != 0)
-		this->deactivateAfter = xTaskGetTickCount() + top.deactivateAfter;
-	else
-		this->deactivateAfter = 0;
-
-	return *this;
-}
 IndicatorBulb& IndicatorBulb::operator =(const bulb_config_t &config) {
 	this->target = config.target;
 	this->mode = config.mode;
@@ -51,63 +42,69 @@ void IndicatorBulb::set(Color target, bulb_mode_t mode, uint8_t fill, TickType_t
 	deactivate_after(deactivateTicks);
 }
 
-Color IndicatorBulb::tick() {
-	if((deactivateAfter != 0) && (deactivateAfter < xTaskGetTickCount())) {
+uint8_t IndicatorBulb::pattern_brightness() {
+	if ((deactivateAfter != 0) && (deactivateAfter < xTaskGetTickCount())) {
 		mode = OFF;
 		deactivateAfter = 0;
 	}
 
-	auto bufferedTarget = target;
-	bool onBuffer = false;
-
 	switch(mode) {
-	case OFF: current = Color(); break;
+	default:
+		return 0;
+
+	case OFF:
+		return 0;
 
 	case IDLE:
-		current.merge_overlay(
-				bufferedTarget.bMod((get_flashcycle_count()&1) ? 110 : 120)
-				, 30);
-	break;
+		return ((get_flashcycle_tick() % CONFIG_XNM_NEO_IND_IDLE_REPEAT) < 2) ? 180 : 0;
+	
+	case RUNNING:
+		return ((get_flashcycle_tick() % CONFIG_XNM_NEO_IND_IDLE_REPEAT) >= 2) ? 180 : 40;
+
+	case ON:
+		return 255;
 
 	case HFLASH:
-		onBuffer = ((get_flashcycle_ticks()&0b1111) < flash_fill);
-
-		current.merge_overlay(
-				bufferedTarget.bMod(onBuffer ? 160 : 90)
-				, onBuffer ? 120 : 80);
-	break;
+		return (((2*get_flashcycle_tick() / CONFIG_XNM_NEO_IND_IDLE_REPEAT) % 2 ) == 0) ? 200 : 0;
 
 	case FLASH:
-		onBuffer = ((get_flashcycle_ticks()&0b111) < flash_fill/2);
-		current.merge_overlay(
-				bufferedTarget.bMod(onBuffer ? 180 : 80)
-				, onBuffer ? 120 : 90);
-	break;
-
+		return (get_flashcycle_tick() / 2) % 2 == 0 ? 255 : 0;
+	
 	case DFLASH:
-		onBuffer = ((get_flashcycle_ticks()&0b11) < flash_fill/4);
-		current.merge_overlay(
-				bufferedTarget.bMod(onBuffer ? 230 : 80)
-				, onBuffer ? 180 : 130);
-	break;
+		return (get_flashcycle_tick()) % 2 == 0 ? 255 : 0;
 
 	case VAL_RISING:
-		if((get_flashcycle_ticks()&0b111) == 0)
-			current.merge_overlay(bufferedTarget.bMod(60), 100);
-		else
-			current.merge_overlay(bufferedTarget.bMod(130), 10);
-	break;
-
+		return ((get_flashcycle_tick() / 4) % 4 * 255) / 4;
+	
 	case VAL_FALLING:
-		if((get_flashcycle_ticks()&0b111) == 0)
-			current.merge_overlay(bufferedTarget.bMod(130), 100);
-		else
-			current.merge_overlay(bufferedTarget.bMod(60), 10);
-	break;
+		return 255 - ((get_flashcycle_tick() / 4) % 4 * 255) / 4;
 	}
+}
 
+int IndicatorBulb::switch_tick() {
+	auto next_brightness = pattern_brightness();
+	if(next_brightness == current_brightness)
+		return 0;
 
-	return current;
+	last_brightness = current_brightness;
+	current_brightness = next_brightness;
+
+	if(next_brightness > last_brightness)
+		return 1;
+	if(next_brightness < last_brightness)
+		return -1;
+
+	return 0;
+}
+
+Color IndicatorBulb::color_tick() {
+	auto c_copy = target;
+	c_copy.alpha = uint16_t(c_copy.alpha) * current_brightness / 255; 
+
+	if(last_brightness < current_brightness)
+		return current.merge_transition(c_copy, 200*255);
+	else
+		return current.merge_transition(c_copy, 120*255);
 }
 
 Color IndicatorBulb::get_color() {

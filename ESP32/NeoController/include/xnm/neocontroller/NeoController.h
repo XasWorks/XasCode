@@ -17,8 +17,8 @@
 #include "freertos/task.h"
 
 
-namespace Xasin {
-namespace NeoController {
+namespace XNM {
+namespace Neo {
 
 class NeoController {
 public:

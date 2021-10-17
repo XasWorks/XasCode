@@ -5,13 +5,13 @@
  *      Author: xasin
  */
 
-#include "xasin/neocontroller/NeoController.h"
+#include "xnm/neocontroller.h"
 
 #define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
 #include <esp_log.h>
 
-namespace Xasin {
-namespace NeoController {
+namespace XNM {
+namespace Neo {
 
 rmt_item32_t bits[2] = {};
 

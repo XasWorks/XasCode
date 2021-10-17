@@ -8,14 +8,16 @@
 #ifndef MAIN_CORE_INDICATORBULB_H_
 #define MAIN_CORE_INDICATORBULB_H_
 
-#include "xasin/neocontroller.h"
+#include "xnm/neocontroller.h"
 
-namespace Xasin {
-namespace NeoController {
+namespace XNM {
+namespace Neo {
 
 enum bulb_mode_t {
 	OFF,
 	IDLE,
+	RUNNING,
+	ON,
 	HFLASH,
 	FLASH,
 	DFLASH,
@@ -42,6 +44,9 @@ protected:
 	Color current;
 	TickType_t deactivateAfter;
 
+	uint8_t last_brightness;
+	uint8_t current_brightness;
+
 public:
 	Color target;
 
@@ -49,12 +54,16 @@ public:
 	uint8_t flash_fill;
 
 	IndicatorBulb();
-	IndicatorBulb& operator=(const IndicatorBulb &other);
 	IndicatorBulb& operator=(const bulb_config_t &config);
 
 	void set(Color target, bulb_mode_t mode, uint8_t fill = 8, TickType_t deactivateTicks = 0);
 
-	Color tick();
+
+	uint8_t pattern_brightness();
+
+	Color color_tick();
+	int   switch_tick();
+
 	Color get_color();
 
 	void deactivate_after(TickType_t ticks);

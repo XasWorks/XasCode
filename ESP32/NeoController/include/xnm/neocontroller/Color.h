@@ -30,8 +30,8 @@ enum Material : uint32_t {
 	DEEP_ORANGE = 0xFF4700
 };
 
-namespace Xasin {
-namespace NeoController {
+namespace XNM {
+namespace Neo {
 
 class Color {
 public:

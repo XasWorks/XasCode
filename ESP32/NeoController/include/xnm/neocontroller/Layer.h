@@ -12,8 +12,8 @@
 
 #include "Color.h"
 
-namespace Xasin {
-namespace NeoController {
+namespace XNM {
+namespace Neo {
 
 	class Layer {
 	public:

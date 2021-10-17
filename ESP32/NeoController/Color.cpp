@@ -5,7 +5,7 @@
  *      Author: xasin
  */
 
-#include "xasin/neocontroller/Color.h"
+#include "xnm/neocontroller.h"
 
 #include <algorithm>
 #include <math.h>
@@ -18,8 +18,8 @@
 #define RAW_TO_U8(v)   uint8_t(v/257)
 
 
-namespace Xasin {
-namespace NeoController {
+namespace XNM {
+namespace Neo {
 
 Color Color::HSV(int16_t H, uint8_t S, uint8_t V) {
 	H %= 360;
@@ -51,7 +51,7 @@ Color Color::HSV(int16_t H, uint8_t S, uint8_t V) {
 #define MIN_B_TEMP (9)
 #define MAX_B_TEMP (20)
 Color Color::Temperature(float temperature, float brightness) {
-	Xasin::NeoController::Color out = 0;
+	Color out = 0;
 
     float r_temp = 0;
     float g_temp = 0;

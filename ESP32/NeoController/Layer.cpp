@@ -1,8 +1,8 @@
 
-#include "xasin/neocontroller/Layer.h"
+#include "xnm/neocontroller.h"
 
-namespace Xasin {
-namespace NeoController {
+namespace XNM {
+namespace Neo {
 
 Layer::Layer(const int length) : colors(length) {
 	alpha = 255;

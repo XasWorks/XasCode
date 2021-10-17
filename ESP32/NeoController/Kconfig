@@ -1,0 +1,8 @@
+menu "XNM Neopixel Settings"
+	config XNM_NEO_IND_SPEED
+		int "Time in FreeRTOS Ticks for one indicator tick"
+		default 100
+	config XNM_NEO_IND_IDLE_REPEAT
+		int "Flash cycle ticks before repeating idle patterns"
+		default 8
+endmenu
