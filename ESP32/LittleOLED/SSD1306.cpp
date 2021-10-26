@@ -13,45 +13,58 @@ namespace OLED {
 #include "fonttype.h"
 
 void SSD1306::call_raw_update(void *args) {
-	puts("Started updater thread!");
-
 	uint32_t dummy;
 	while(true) {
-		xTaskNotifyWait(0, 0, &dummy, 200/portTICK_PERIOD_MS);
+		xTaskNotifyWait(0, 0, &dummy, 1000/portTICK_PERIOD_MS);
 
 		reinterpret_cast<SSD1306 *>(args)->raw_update();
-
-		vTaskDelay(100/portTICK_PERIOD_MS);
 	}
 }
 
 SSD1306::SSD1306() :
-		DrawBox(128, 32),
+		DrawBox(64, 32),
 		currentAction(nullptr), cmdBuffer(),
 		screenBuffer(),
 		updateTask(nullptr) {
 }
 
 void SSD1306::initialize() {
+	vTaskDelay(100);
+
 	start_cmd_set();
 
-	send_cmd(SET_MUX_RATIO, 31);
-	send_cmd(SET_DISPLAY_OFFSET, 0);
-	send_cmd(0x40);
-	send_cmd(0xA0);
-	send_cmd(0xC0);
-	send_cmd(SET_COM_PIN_MAP, 0x02);
-	send_cmd(SET_CONTRAST, 0x7F);
-	send_cmd(DISPLAY_RAM);
-	send_cmd(DISPLAY_NONINV);
-	send_cmd(SET_CLK_DIV, 0x80);
+	send_cmd(DISPLAY_OFF);
+	
+	/// HARDWARE CONFIGS
+	send_cmd(SET_SEG_REMAP);
 	send_cmd(SET_CHARGE_PUMP, 0x14);
+	send_cmd(SET_MUX_RATIO, 0x1F);
+	send_cmd(SET_CLK_DIV, 0x80);
+	send_cmd(SET_PRECHARGE, 0x1F);
+	send_cmd(SET_COM_PIN_MAP, 0x12);
+	send_cmd(0xDB, 0x40);
+
+	end_cmd_set();
+
+	vTaskDelay(100/portTICK_PERIOD_MS);
+
+	start_cmd_set();
+	send_cmd(SET_MEMORY_ADDR_MODE, 2);
+
+	send_cmd(0xC0);
+	send_cmd(0x40);
+
+	// DISPLAY CONFIGS
+	send_cmd(SET_DISPLAY_OFFSET, 0);
+	send_cmd(SET_CONTRAST, 0x4F);
+
+	send_cmd(DISPLAY_NONINV);
 	send_cmd(DISPLAY_ON);
 	send_cmd(DISPLAY_RAM);
 
-	send_cmd(SET_MEMORY_ADDR_MODE, 0);
-
 	end_cmd_set();
+
+	vTaskDelay(100/portTICK_PERIOD_MS);
 
 	push_entire_screen();
 
@@ -102,11 +115,14 @@ void SSD1306::data_write(void *data, size_t length) {
 	currentAction = nullptr;
 }
 
-void SSD1306::set_coordinates(uint8_t column, uint8_t page, uint8_t maxColumn, uint8_t maxPage) {
+void SSD1306::set_page(uint8_t page) {
 	this->currentAction = start_cmd_set();
 
-	const char oData[] = {SET_COLUMN_RANGE, column, maxColumn, SET_PAGE_RANGE, page, maxPage};
-	for(uint8_t i=0; i<6; i++)
+	const uint8_t oData[] = {
+		uint8_t(0xB0 + page),
+		4, 0x12
+	};
+	for(uint8_t i=0; i<sizeof(oData); i++)
 		cmdBuffer.push_back(oData[i]);
 
 	end_cmd_set();
@@ -119,9 +135,8 @@ void SSD1306::clear() {
 	}
 }
 void SSD1306::push_entire_screen() {
-	set_coordinates();
-
 	for(uint8_t page = 0; page < screenBuffer.size(); page++) {
+		set_page(page);
 		data_write(screenBuffer[page].begin(), screenBuffer[page].size());
 	}
 }
@@ -133,6 +148,7 @@ void SSD1306::request_redraw() {
 void SSD1306::raw_update() {
 	this->clear();
 	this->redraw();
+
 	this->push_entire_screen();
 }
 

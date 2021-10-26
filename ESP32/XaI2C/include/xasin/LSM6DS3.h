@@ -35,6 +35,17 @@ enum LSM6DS3_Reg : uint8_t {
 	STEP_CNT	= 0x4B,
 };
 
+union tap_src_t {
+	uint8_t raw;
+	struct {
+		uint8_t tapAxis:3;
+		uint8_t tapDir:1;
+		uint8_t doubleTap:1;
+		uint8_t singleTap:1;
+		uint8_t tapDetect:1;
+	};
+};
+
 class LSM6DS3 {
 private:
 	uint8_t  maxGReading;
@@ -57,6 +68,8 @@ public:
 
 	void init();
 	void update();
+
+	tap_src_t get_tap();
 };
 
 } /* namespace I2C */

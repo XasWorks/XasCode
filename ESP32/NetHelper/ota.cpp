@@ -229,10 +229,9 @@ namespace OTA {
 		ota_pull_delay += (1000*3*60)/portTICK_PERIOD_MS;
 
 		if(OTA::get_state() == OTA::UPDATE_AVAILABLE) {
-			ESP_LOGW("OTA", "Going to restart to run the update!");
-
-			vTaskDelay(100);
+			vTaskDelay(100/portTICK_PERIOD_MS);
 			
+			ESP_LOGW("OTA", "Going to restart to run the update!");
 			esp_restart();
       }
 	}

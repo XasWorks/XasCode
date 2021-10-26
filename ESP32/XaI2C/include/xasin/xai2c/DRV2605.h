@@ -101,7 +101,8 @@ public:
 	esp_err_t autocalibrate_lra();
 
 	void rtp_mode();
-	void sequence_mode();
+	void sequence_mode(uint8_t library_num = 6);
+	
 	void trig_sequence(uint8_t seq_num);
 
 	void send_rtp(uint8_t value);

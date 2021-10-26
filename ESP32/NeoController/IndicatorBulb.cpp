@@ -9,7 +9,7 @@
 #include "freertos/FreeRTOS.h"
 
 #undef CONFIG_XNM_NEO_IND_IDLE_REPEAT
-#define CONFIG_XNM_NEO_IND_IDLE_REPEAT 64
+#define CONFIG_XNM_NEO_IND_IDLE_REPEAT 24
 
 namespace XNM {
 namespace Neo {

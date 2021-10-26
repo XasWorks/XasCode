@@ -84,7 +84,8 @@ void LittleConsole::put_string(const char *input, size_t length) {
 	for(int i=0; i < lineStrings.size(); i++) {
 		auto str = lineStrings[i];
 
-		int lineCount = (str.size()/lineWidth);
+		int lineCount = ((int32_t(str.size())-1)/lineWidth);
+
 		for(int lNum = lineCount; lNum >= 0; lNum--) {
 			currentLines[lastLinePosition++].set(str.substr(lNum*lineWidth, lineWidth), false);
 

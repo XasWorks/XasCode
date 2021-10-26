@@ -16,18 +16,18 @@ namespace Neo {
 rmt_item32_t bits[2] = {};
 
 void init_onoff_bits() {
-	bits[0].duration0 = 0.35 * 80 + 2; bits[0].level0 = 1;
-	bits[0].duration1 = 1.05 * 80; bits[0].level1 = 0;
+	bits[0].duration0 = 0.2 * 80 + 2; bits[0].level0 = 1;
+	bits[0].duration1 = 1 * 80; bits[0].level1 = 0;
 
-	bits[1].duration0 = 0.9  * 80 + 2; bits[1].level0 = 1;
-	bits[1].duration1 = 0.5 * 80; bits[1].level1 = 0;
+	bits[1].duration0 = 1  * 80 + 2; bits[1].level0 = 1;
+	bits[1].duration1 = 1 * 80; bits[1].level1 = 0;
 }
 
 static void IRAM_ATTR u8_to_WS2812(const void* source, rmt_item32_t* destination,
 	size_t source_size, size_t wanted_elements,
 	size_t* translated_size, size_t* translated_items) {
 
-	const int8_t *srcPointer = reinterpret_cast<const int8_t*>(source);
+	const uint8_t *srcPointer = reinterpret_cast<const uint8_t*>(source);
 
 	*translated_size  = 0;
 	*translated_items = 0;
@@ -52,7 +52,7 @@ NeoController::NeoController(gpio_num_t pin, rmt_channel_t channel, uint8_t leng
 
 	ESP_LOGD("neocontroller", "Early init");
 
-	rawColors = new uint8_t[length*3];
+	rawColors = nullptr;
 
 	init_onoff_bits();
 
@@ -72,13 +72,11 @@ NeoController::NeoController(gpio_num_t pin, rmt_channel_t channel, uint8_t leng
 	cfg.rmt_mode = RMT_MODE_TX;
 	cfg.clk_div  = 1;
 	cfg.gpio_num = pinNo;
-	cfg.mem_block_num = 1;
+	cfg.mem_block_num = 2;
 
 	rmt_config(&cfg);
 	rmt_driver_install(channel, 0, 0);
 	rmt_translator_init(channel, u8_to_WS2812);
-
-	gpio_set_drive_capability(pin, GPIO_DRIVE_CAP_3);
 
 	esp_pm_lock_create(ESP_PM_APB_FREQ_MAX, 0, NULL, &powerLock);
 }
@@ -86,11 +84,15 @@ NeoController::NeoController(gpio_num_t pin, rmt_channel_t channel, uint8_t leng
 void NeoController::update() {
 	esp_pm_lock_acquire(powerLock);
 
+
+	if(rawColors == nullptr)
+		rawColors = new uint8_t[length*3];
+
 	for(uint8_t i=0; i<length; i++)
 		*reinterpret_cast<Color::ColorData*>(rawColors + i*3) = colors[i].getLEDValue();
 
 	ESP_ERROR_CHECK(rmt_write_sample(channel, reinterpret_cast<const unsigned char *>(rawColors), length*3, true));
-	rmt_wait_tx_done(channel, 1000);
+	rmt_wait_tx_done(channel, portMAX_DELAY);
 
 	esp_pm_lock_release(powerLock);
 }

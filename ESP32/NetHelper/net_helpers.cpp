@@ -23,6 +23,10 @@ namespace NetHelpers {
 net_state_t net_state = UNINITIALIZED;
 std::string device_id = "";
 
+net_state_t get_state() {
+    return net_state;
+}
+
 #ifdef CONFIG_XNM_NETHELP_MQTT_ENABLE
 Xasin::MQTT::Handler mqtt = Xasin::MQTT::Handler();
 #endif

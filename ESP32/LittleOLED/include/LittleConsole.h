@@ -30,8 +30,8 @@ private:
 
 	DrawBox &display;
 
-	std::array<std::string, 16>		lineStrings;
-	std::array<StringPrimitive, 16> currentLines;
+	std::array<std::string, 4>		lineStrings;
+	std::array<StringPrimitive, 4> currentLines;
 	uint8_t lineShift;
 
 	bool lastCharWasNewline;

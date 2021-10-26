@@ -51,9 +51,9 @@ esp_err_t DRV2605::autocalibrate_lra()
 	i2c.write(MODE, &mode, 1);
 
 	reg_feedback_t feedback = {};
-	feedback.bemf_gain = 0;
-	feedback.loop_gain = 2;
-	feedback.fb_brake_factor = 2;
+	feedback.bemf_gain = 2;
+	feedback.loop_gain = 1;
+	feedback.fb_brake_factor = 3;
 	feedback.erm_lra_mode = 1;
 
 	i2c.write(FEEDBACK_CTRL, &feedback, 1);
@@ -77,7 +77,7 @@ esp_err_t DRV2605::autocalibrate_lra()
 	if (ret != ESP_OK)
 		return ret;
 
-	vTaskDelay(100/portTICK_PERIOD_MS);
+	vTaskDelay(2000/portTICK_PERIOD_MS);
 
 	return ESP_OK;
 }
@@ -105,18 +105,20 @@ void DRV2605::rtp_mode() {
 	rtp_enabled = true;
 }
 
-void DRV2605::sequence_mode() {
+void DRV2605::sequence_mode(uint8_t library_no) {
 	uint8_t mode = 0;
 
 	auto i2c = XaI2C::MasterAction(addr);
 	i2c.write(MODE, &mode, 1);
 
-	reg_ctrl3_t ctrl3 = {};
-	ctrl3.rtp_signed = 1;
-	ctrl3.erm_mode = 1;
-	i2c.write(CTRL3, &ctrl3, 1);
+	
+	if(library_no != 6) {
+		reg_ctrl3_t ctrl3 = {};
+		ctrl3.erm_mode = 1;
+		i2c.write(CTRL3, &ctrl3, 1);
+	};
 
-	uint8_t lib_sel = 4;
+	uint8_t lib_sel = library_no;
 	i2c.write(0x03, &lib_sel, 1);
 
 	i2c.execute();

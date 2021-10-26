@@ -7,6 +7,7 @@
 
 #include "xasin/LSM6DS3.h"
 
+#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
 #include "esp_log.h"
 
 namespace Xasin {
@@ -32,7 +33,7 @@ void LSM6DS3::init() {
 
 	esp_err_t ret = ESP_OK;
 
-	CHECK_ERR(send_cmd(CTRL1_XL, 0b01000011 | (FS_XLs[maxGReading] << 2)));
+	CHECK_ERR(send_cmd(CTRL1_XL, 0b01100011 | (FS_XLs[maxGReading] << 2)));
 
 	CHECK_ERR(send_cmd(CTRL2_G, 0b01000000 | (maxDPSReading << 2)));
 	CHECK_ERR(send_cmd(CTRL7_G, 0b01000000));	// Enable Highpass at 0.0324Hz
@@ -40,6 +41,13 @@ void LSM6DS3::init() {
 	CHECK_ERR(send_cmd(CTRL3, 0b00110100));	// INT pins Active Low & OD
 
 	CHECK_ERR(send_cmd(CTRL10, 0b00111100));	// Enable extra functions
+
+	CHECK_ERR(send_cmd(TAP_CFG, 0b00001111)); // Enable tap detection XYZ
+	CHECK_ERR(send_cmd(TAP_THR, 0b001<<5 | 17));
+
+	CHECK_ERR(send_cmd(0x5B, 0b1<<7));
+
+	CHECK_ERR(send_cmd(0x5A, 0b00111111));
 
 	if(ret != ESP_OK) {
 		ESP_LOGE("LSM6DS3", "Failed to initialize %0X. Error: %s", addr, esp_err_to_name(ret));
@@ -88,10 +96,29 @@ void LSM6DS3::update() {
 
 	float gMax[] = {2, 4, 8, 16};
 	float DPSMax[] = {250, 500, 1000, 2000};
+	
 	for(uint8_t i=0; i<3; i++) {
-		axes[i] = (bufferAxis[3+i]*gMax[maxGReading])/32767;
-		axes[3+i] = (bufferAxis[i]*DPSMax[maxDPSReading])/32767;
+		axes[i] = (bufferAxis[3+i]*gMax[maxGReading])/32767.0F;
+		axes[3+i] = (bufferAxis[i]*DPSMax[maxDPSReading])/32767.0F;
 	}
+}
+
+tap_src_t LSM6DS3::get_tap() {
+	tap_src_t tap_reg = {};
+	
+	auto i2c = XaI2C::MasterAction(addr);
+	i2c.read(TAP_SRC, &tap_reg, 1);
+	i2c.execute();
+
+	if(tap_reg.tapDetect || tap_reg.singleTap) {
+		ESP_LOGD("LSM6DS3", "Tap data is: %c (Axis %d, dir %c, type %c)",
+		tap_reg.tapDetect ? 'Y' : 'N', tap_reg.tapAxis, 
+		tap_reg.tapDir ? '+' : '-', 
+		tap_reg.doubleTap ? 'D' : 'S'
+		);
+	}
+
+	return tap_reg;
 }
 
 } /* namespace I2C */
