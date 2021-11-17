@@ -28,6 +28,8 @@ public:
 	Layer nextColors;
 
 private:
+	bool is_initialized;
+
 	const gpio_num_t pinNo;
 	const rmt_channel_t channel;
 
@@ -37,6 +39,15 @@ private:
 
 public:
 	NeoController(gpio_num_t pin, rmt_channel_t channel, uint8_t length);
+
+	/**
+	 * @brief Initialize the NeoController module
+	 * 
+	 * @note It is suggested to init the NeoController ISR from a different core than Core0
+	 * 	Core0 should be reserved for networking functions, with Core 1 being for critical
+	 * 	and RMT options.
+	 */
+	void init();
 
 	void update();
 

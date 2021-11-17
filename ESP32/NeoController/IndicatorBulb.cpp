@@ -34,7 +34,7 @@ IndicatorBulb& IndicatorBulb::operator =(const bulb_config_t &config) {
 	return *this;
 }
 
-void IndicatorBulb::set(Color target, bulb_mode_t mode, uint8_t fill, TickType_t deactivateTicks) {
+void IndicatorBulb::set(Color target, bulb_mode_t mode, TickType_t deactivateTicks, uint8_t fill) {
 	this->target = target;
 	this->mode = mode;
 	this->flash_fill = fill;

@@ -48,9 +48,8 @@ static void IRAM_ATTR u8_to_WS2812(const void* source, rmt_item32_t* destination
 NeoController::NeoController(gpio_num_t pin, rmt_channel_t channel, uint8_t length) :
 		length(length),
 		colors(length), nextColors(length),
+		is_initialized(false),
 		pinNo(pin), channel(channel) {
-
-	ESP_LOGD("neocontroller", "Early init");
 
 	rawColors = nullptr;
 
@@ -58,8 +57,10 @@ NeoController::NeoController(gpio_num_t pin, rmt_channel_t channel, uint8_t leng
 
 	clear();
 	apply();
+}
 
-	gpio_reset_pin(pin);
+void NeoController::init() {
+	gpio_reset_pin(pinNo);
 
 	rmt_config_t cfg = {};
 	rmt_tx_config_t tx_cfg = {};
@@ -79,9 +80,14 @@ NeoController::NeoController(gpio_num_t pin, rmt_channel_t channel, uint8_t leng
 	rmt_translator_init(channel, u8_to_WS2812);
 
 	esp_pm_lock_create(ESP_PM_APB_FREQ_MAX, 0, NULL, &powerLock);
+
+	is_initialized = true;
 }
 
 void NeoController::update() {
+	if(!is_initialized)
+		return;
+
 	esp_pm_lock_acquire(powerLock);
 
 

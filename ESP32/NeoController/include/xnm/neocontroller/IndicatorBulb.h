@@ -56,7 +56,7 @@ public:
 	IndicatorBulb();
 	IndicatorBulb& operator=(const bulb_config_t &config);
 
-	void set(Color target, bulb_mode_t mode, uint8_t fill = 8, TickType_t deactivateTicks = 0);
+	void set(Color target, bulb_mode_t mode, TickType_t deactivateTicks = 0, uint8_t fill = 0);
 
 
 	uint8_t pattern_brightness();
