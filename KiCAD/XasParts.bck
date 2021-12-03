@@ -9,6 +9,15 @@ $CMP AP7354x-xxxFS4
 D LDO, Ultra-Low Iq, Tiny footprint
 $ENDCMP
 #
+$CMP AW9201
+D AW9201 I2C capacitive touch sensor
+K Touch sensor, capacitive touch
+$ENDCMP
+#
+$CMP BH1721FVC
+D Ambient Light Sensor I2C
+$ENDCMP
+#
 $CMP BQ25157
 D Tiny BGA I2C LiPo charger, LDO, Load Switch
 K LDO, Load Switch, Battery Charger
@@ -23,6 +32,10 @@ $ENDCMP
 $CMP DRV2605
 D DRV2605 Haptic Feedback Driver
 K DRV2605, Motor Driver, Haptic
+$ENDCMP
+#
+$CMP ESP32-C3-MINI-1-N4
+D ESP32 C3 Mini WIFI BLE Module
 $ENDCMP
 #
 $CMP MIC94066
@@ -47,6 +60,12 @@ $ENDCMP
 $CMP UJC-HP-3-SMT-TR
 D USB C Power Only connector
 K USB-C, USB C, Power Only
+$ENDCMP
+#
+$CMP VCNL4040
+D Ambient light and proximity sensor
+K AMBIENT,PROXIMITY
+F https://www.vishay.com/docs/84274/vcnl4040.pdf
 $ENDCMP
 #
 #End Doc Library
