@@ -2,15 +2,15 @@
  * LSM6DS3.cpp
  *
  *  Created on: 1 May 2019
- *      Author: xasin
+ *      Author: XNM
  */
 
-#include "xasin/LSM6DS3.h"
+#include "xnm/i2c/LSM6DS3.h"
 
 #define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
 #include "esp_log.h"
 
-namespace Xasin {
+namespace XNM {
 namespace I2C {
 
 LSM6DS3::LSM6DS3(uint8_t address)
@@ -22,7 +22,7 @@ LSM6DS3::LSM6DS3(uint8_t address)
 }
 
 esp_err_t LSM6DS3::send_cmd(uint8_t cmd, uint8_t value) {
-	auto i2c = XaI2C::MasterAction(addr);
+	auto i2c = MasterAction(addr);
 	i2c.write(cmd, &value, 1);
 	return i2c.execute();
 }
@@ -90,7 +90,7 @@ void LSM6DS3::set_dps_max(uint8_t num) {
 void LSM6DS3::update() {
 	int16_t bufferAxis[6] = {};
 
-	auto i2c = XaI2C::MasterAction(addr);
+	auto i2c = MasterAction(addr);
 	i2c.read(OUTX_L_G, bufferAxis, sizeof(bufferAxis));
 	i2c.execute();
 
@@ -106,7 +106,7 @@ void LSM6DS3::update() {
 tap_src_t LSM6DS3::get_tap() {
 	tap_src_t tap_reg = {};
 	
-	auto i2c = XaI2C::MasterAction(addr);
+	auto i2c = MasterAction(addr);
 	i2c.read(TAP_SRC, &tap_reg, 1);
 	i2c.execute();
 
@@ -122,4 +122,4 @@ tap_src_t LSM6DS3::get_tap() {
 }
 
 } /* namespace I2C */
-} /* namespace Xasin */
+} /* namespace XNM */

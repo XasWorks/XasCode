@@ -2,12 +2,13 @@
  * MasterAction.cpp
  *
  *  Created on: 24 Nov 2018
- *      Author: xasin
+ *      Author: XNM
  */
 
-#include "MasterAction.h"
+#include "xnm/i2c/MasterAction.h"
 
-namespace XaI2C {
+namespace XNM {
+namespace I2C {
 
 void MasterAction::init(gpio_num_t sda, gpio_num_t scl, i2c_port_t port, uint32_t speed) {
 	gpio_set_direction(sda, GPIO_MODE_INPUT);
@@ -27,8 +28,6 @@ void MasterAction::init(gpio_num_t sda, gpio_num_t scl, i2c_port_t port, uint32_
 	i2c_param_config(port, &i2c_cfg);
 
 	i2c_driver_install(port, I2C_MODE_MASTER, 0, 0, 0);
-
-	i2c_set_timeout(port, 60000);
 }
 
 MasterAction::MasterAction(uint8_t slave) :
@@ -87,4 +86,5 @@ esp_err_t MasterAction::poke(uint8_t addr, i2c_port_t port) {
 	return i2c.execute(port);
 }
 
-} /* namespace XaI2C */
+} /* namespace XI2C */
+}

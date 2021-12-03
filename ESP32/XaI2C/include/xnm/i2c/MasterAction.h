@@ -2,15 +2,16 @@
  * MasterAction.h
  *
  *  Created on: 24 Nov 2018
- *      Author: xasin
+ *      Author: XNM
  */
 
-#ifndef COMPONENTS_XAI2C_MASTERACTION_H_
-#define COMPONENTS_XAI2C_MASTERACTION_H_
+#ifndef COMPONENTS_XI2C_MASTERACTION_H_
+#define COMPONENTS_XI2C_MASTERACTION_H_
 
 #include "driver/i2c.h"
 
-namespace XaI2C {
+namespace XNM {
+namespace I2C {
 
 class MasterAction {
 private:
@@ -37,6 +38,7 @@ public:
 	esp_err_t execute(i2c_port_t port = I2C_NUM_0);
 };
 
-} /* namespace XaI2C */
+} /* namespace XI2C */
+}
 
-#endif /* COMPONENTS_XAI2C_MASTERACTION_H_ */
+#endif /* COMPONENTS_XI2C_MASTERACTION_H_ */

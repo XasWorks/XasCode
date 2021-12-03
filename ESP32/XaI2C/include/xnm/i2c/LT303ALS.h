@@ -6,7 +6,7 @@
 
 #include <freertos/FreeRTOS.h>
 
-namespace Xasin {
+namespace XNM {
 namespace I2C {
 
 #pragma pack(1)

@@ -2,6 +2,7 @@
 list(APPEND srcs "MasterAction.cpp"
 				"MAX11613.cpp"
 				"AS1115.cpp"
+				"AW9201.cpp"
 				"BME680.cpp"
 				"LSM6DS3.cpp"
 				"LT303ALS.cpp"

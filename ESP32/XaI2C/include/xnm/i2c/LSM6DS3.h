@@ -2,16 +2,16 @@
  * LSM6DS3.h
  *
  *  Created on: 1 May 2019
- *      Author: xasin
+ *      Author: XNM
  */
 
-#ifndef ESP32_XAI2C_LSM6DS3_H_
-#define ESP32_XAI2C_LSM6DS3_H_
+#ifndef ESP32_XI2C_LSM6DS3_H_
+#define ESP32_XI2C_LSM6DS3_H_
 
 #include "MasterAction.h"
 #include <array>
 
-namespace Xasin {
+namespace XNM {
 namespace I2C {
 
 enum LSM6DS3_Reg : uint8_t {
@@ -73,6 +73,6 @@ public:
 };
 
 } /* namespace I2C */
-} /* namespace Xasin */
+} /* namespace XNM */
 
-#endif /* ESP32_XAI2C_LSM6DS3_H_ */
+#endif /* ESP32_XI2C_LSM6DS3_H_ */

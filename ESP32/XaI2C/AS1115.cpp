@@ -2,12 +2,12 @@
  * AS11115.cpp
  *
  *  Created on: 3 Apr 2019
- *      Author: xasin
+ *      Author: XNM
  */
 
-#include "xasin/AS1115.h"
+#include "xnm/i2c/AS1115.h"
 
-namespace Xasin {
+namespace XNM {
 namespace I2C {
 
 AS1115::AS1115(uint8_t address, i2c_port_t i2c_port)
@@ -18,7 +18,7 @@ AS1115::AS1115(uint8_t address, i2c_port_t i2c_port)
 
 void AS1115::send_self_addressing(i2c_port_t i2c_port) {
 	for(int8_t addr=0b11 + 16; addr >= 0; addr--) {
-		auto i2c_cmd = XaI2C::MasterAction(addr & 0b11);
+		auto i2c_cmd = MasterAction(addr & 0b11);
 
 		uint8_t payload = 0;
 		i2c_cmd.write(0x0C, &payload, 1); // Power up and reset devices
@@ -30,7 +30,7 @@ void AS1115::send_self_addressing(i2c_port_t i2c_port) {
 }
 
 void AS1115::send_cmd(uint8_t cmd, uint8_t val) {
-	auto i2c_cmd = XaI2C::MasterAction(address);
+	auto i2c_cmd = MasterAction(address);
 
 	i2c_cmd.write(cmd, &val, 1);
 	i2c_cmd.execute(i2c_port);
@@ -53,7 +53,7 @@ void AS1115::set_segment(uint8_t id, uint8_t code) {
 uint16_t AS1115::get_buttons() {
 	uint16_t outVal = 0;
 
-	auto i2c_cmd = XaI2C::MasterAction(address);
+	auto i2c_cmd = MasterAction(address);
 	i2c_cmd.read(0x1C, &outVal, 2);
 	auto ret = i2c_cmd.execute();
 
@@ -64,11 +64,11 @@ uint16_t AS1115::get_buttons() {
 }
 
 void AS1115::update_segments() {
-	auto i2c_cmd = XaI2C::MasterAction(address);
+	auto i2c_cmd = MasterAction(address);
 
 	i2c_cmd.write(1, segments.data(), 8);
 	i2c_cmd.execute(i2c_port);
 }
 
 } /* namespace I2C */
-} /* namespace Xasin */
+} /* namespace XNM */

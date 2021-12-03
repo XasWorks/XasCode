@@ -2,15 +2,15 @@
  * BME680.h
  *
  *  Created on: 11 May 2019
- *      Author: xasin
+ *      Author: Xasin
  */
 
-#ifndef ESP32_XAI2C_BME680_H_
-#define ESP32_XAI2C_BME680_H_
+#ifndef ESP32_XI2C_BME680_H_
+#define ESP32_XI2C_BME680_H_
 
 #include "MasterAction.h"
 
-namespace Xasin {
+namespace XNM {
 namespace I2C {
 
 enum BME680_Reg : uint8_t {
@@ -113,6 +113,6 @@ public:
 };
 
 } /* namespace I2C */
-} /* namespace Xasin */
+} /* namespace XNM */
 
-#endif /* ESP32_XAI2C_BME680_H_ */
+#endif /* ESP32_XI2C_BME680_H_ */

@@ -4,12 +4,12 @@
 #include <stdint.h>
 #include <esp_err.h>
 
-#include <MasterAction.h>
+#include "MasterAction.h"
 
 #define DRV2605_DEFAULT_ADDR 0x5A
 #define DRV2605_RATED_V_30   140
 
-namespace Xasin {
+namespace XNM {
 namespace I2C {
 
 class DRV2605 {

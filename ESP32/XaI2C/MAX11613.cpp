@@ -2,19 +2,19 @@
  * MAX11613.cpp
  *
  *  Created on: 19 Apr 2019
- *      Author: xasin
+ *      Author: XNM
  */
 
-#include "xasin/MAX11613.h"
+#include "xnm/i2c/MAX11613.h"
 
-namespace Xasin {
+namespace XNM {
 namespace I2C {
 
 MAX11613::MAX11613(i2c_port_t port) : port(port) {
 }
 
 void MAX11613::init() {
-	auto i2c = XaI2C::MasterAction(0b110100);
+	auto i2c = MasterAction(0b110100);
 
 	i2c.write(0b11010000);
 	i2c.write(0b00000111);
@@ -22,7 +22,7 @@ void MAX11613::init() {
 }
 
 void MAX11613::update() {
-	auto i2c = XaI2C::MasterAction(0b110100);
+	auto i2c = MasterAction(0b110100);
 
 	i2c.read(readings.data(), readings.size()*2);
 	i2c.execute(port);
@@ -43,4 +43,4 @@ float MAX11613::get_reading(uint8_t i) {
 }
 
 } /* namespace I2C */
-} /* namespace Xasin */
+} /* namespace XNM */

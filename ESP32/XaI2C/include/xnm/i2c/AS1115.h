@@ -2,16 +2,16 @@
  * AS11115.h
  *
  *  Created on: 3 Apr 2019
- *      Author: xasin
+ *      Author: XNM
  */
 
-#ifndef ESP32_XAI2C_AS1115_H_
-#define ESP32_XAI2C_AS1115_H_
+#ifndef ESP32_XI2C_AS1115_H_
+#define ESP32_XI2C_AS1115_H_
 
 #include <array>
 #include "MasterAction.h"
 
-namespace Xasin {
+namespace XNM {
 namespace I2C {
 
 class AS1115 {
@@ -37,6 +37,6 @@ public:
 };
 
 } /* namespace I2C */
-} /* namespace Xasin */
+} /* namespace XNM */
 
-#endif /* ESP32_XAI2C_AS1115_H_ */
+#endif /* ESP32_XI2C_AS1115_H_ */

@@ -1,8 +1,8 @@
 
 
-#include <xasin/xai2c/DRV2605.h>
+#include "xnm/i2c/DRV2605.h"
 
-namespace Xasin {
+namespace XNM {
 namespace I2C {
 
 DRV2605::DRV2605(uint8_t address) : 
@@ -11,7 +11,7 @@ DRV2605::DRV2605(uint8_t address) :
 }
 
 esp_err_t DRV2605::autocalibrate_erm() {
-	auto i2c = XaI2C::MasterAction(addr);
+	auto i2c = MasterAction(addr);
 
 	uint8_t mode = 0x07;
 	i2c.write(MODE, &mode, 1);
@@ -45,7 +45,7 @@ esp_err_t DRV2605::autocalibrate_erm() {
 
 esp_err_t DRV2605::autocalibrate_lra()
 {
-	auto i2c = XaI2C::MasterAction(addr);
+	auto i2c = MasterAction(addr);
 
 	uint8_t mode = 0x07;
 	i2c.write(MODE, &mode, 1);
@@ -85,7 +85,7 @@ esp_err_t DRV2605::autocalibrate_lra()
 void DRV2605::rtp_mode() {
 	uint8_t mode = 0x5;
 
-	auto i2c = XaI2C::MasterAction(addr);
+	auto i2c = MasterAction(addr);
 	i2c.write(MODE, &mode, 1);
 
 	reg_ctrl3_t ctrl3 = {};
@@ -108,7 +108,7 @@ void DRV2605::rtp_mode() {
 void DRV2605::sequence_mode(uint8_t library_no) {
 	uint8_t mode = 0;
 
-	auto i2c = XaI2C::MasterAction(addr);
+	auto i2c = MasterAction(addr);
 	i2c.write(MODE, &mode, 1);
 
 	
@@ -127,7 +127,7 @@ void DRV2605::sequence_mode(uint8_t library_no) {
 void DRV2605::trig_sequence(uint8_t seq_num) {
 	uint8_t go = 1;
 
-	auto i2c = XaI2C::MasterAction(addr);
+	auto i2c = MasterAction(addr);
 	i2c.write(0x04, &seq_num, 1);
 	i2c.write(GO, &go, 1);
 
@@ -143,7 +143,7 @@ void DRV2605::send_rtp(uint8_t rtp_val) {
 
 	last_rtp = rtp_val;
 
-	auto i2c = XaI2C::MasterAction(addr);
+	auto i2c = MasterAction(addr);
 	i2c.write(RTP, &rtp_val, 1);
 
 	i2c.execute();

@@ -2,16 +2,16 @@
  * MAX11613.h
  *
  *  Created on: 19 Apr 2019
- *      Author: xasin
+ *      Author: XNM
  */
 
-#ifndef ESP32_XAI2C_MAX11613_H_
-#define ESP32_XAI2C_MAX11613_H_
+#ifndef ESP32_XI2C_MAX11613_H_
+#define ESP32_XI2C_MAX11613_H_
 
 #include "MasterAction.h"
 #include <array>
 
-namespace Xasin {
+namespace XNM {
 namespace I2C {
 
 class MAX11613 {
@@ -30,6 +30,6 @@ public:
 };
 
 } /* namespace I2C */
-} /* namespace Xasin */
+} /* namespace XNM */
 
-#endif /* ESP32_XAI2C_MAX11613_H_ */
+#endif /* ESP32_XI2C_MAX11613_H_ */

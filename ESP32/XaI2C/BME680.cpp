@@ -2,17 +2,17 @@
  * BME680.cpp
  *
  *  Created on: 11 May 2019
- *      Author: xasin
+ *      Author: XNM
  */
 
-#include "xasin/BME680.h"
+#include "xnm/i2c/BME680.h"
 
 #include <cmath>
 
 #define LOG_LOCAL_LEVEL ESP_LOG_INFO
 #include "esp_log.h"
 
-namespace Xasin {
+namespace XNM {
 namespace I2C {
 
 #define SWAP_BYTES(inData) (((inData & 0xFF00) >> 8) | ((inData & 0xFF) << 8))
@@ -24,7 +24,7 @@ BME680::BME680(uint8_t addr) :
 }
 
 esp_err_t BME680::send_cmd(uint8_t reg, uint8_t value) {
-	auto i2c = XaI2C::MasterAction(addr);
+	auto i2c = MasterAction(addr);
 
 	i2c.write(reg, &value, 1);
 	return i2c.execute();
@@ -33,15 +33,15 @@ esp_err_t BME680::send_cmd(uint8_t reg, uint8_t value) {
 
 #define PTR_SIZE(ptr1, ptr2) (reinterpret_cast<size_t>(ptr1) - reinterpret_cast<size_t>(ptr2))
 void BME680::load_calibration() {
-	auto i2c_1 = XaI2C::MasterAction(addr);
+	auto i2c_1 = MasterAction(addr);
 	i2c_1.read(COEFF1, calibData.coeff1, 25);
 	i2c_1.execute();
 
-	auto i2c_2 = XaI2C::MasterAction(addr);
+	auto i2c_2 = MasterAction(addr);
 	i2c_2.read(COEFF2, calibData.coeff2, 16);
 	i2c_2.execute();
 
-	auto i2c_3 = XaI2C::MasterAction(addr);
+	auto i2c_3 = MasterAction(addr);
 	i2c_3.read(SW_ERR, &calibData.bits.SW_ERR, 1);
 
 	calibData.bits.SW_ERR >>= 4;
@@ -79,7 +79,7 @@ bme680_data_t BME680::fetch_data() {
 	};
 
 	for(uint8_t i=0; i<4; i++) {
-		auto i2c = XaI2C::MasterAction(addr);
+		auto i2c = MasterAction(addr);
 
 		i2c.read(registers[i], &dataBuffer[i], 2);
 		i2c.execute();
@@ -213,4 +213,4 @@ float BME680::get_air_quality() {
 }
 
 } /* namespace I2C */
-} /* namespace Xasin */
+} /* namespace XNM */
