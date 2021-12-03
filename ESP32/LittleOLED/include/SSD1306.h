@@ -14,7 +14,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-#include "MasterAction.h"
+#include "xnm/i2c/MasterAction.h"
 
 #include "DrawBox.h"
 
@@ -61,7 +61,7 @@ public:
 private:
 	static void call_raw_update(void *args);
 
-	XaI2C::MasterAction *currentAction;
+	XNM::I2C::MasterAction *currentAction;
 
 	std::vector<char> cmdBuffer;
 
@@ -69,7 +69,7 @@ private:
 
 	TaskHandle_t updateTask;
 
-	XaI2C::MasterAction* start_cmd_set();
+	XNM::I2C::MasterAction* start_cmd_set();
 
 	void send_cmd(uint8_t cmdVal);
 	void send_cmd(uint8_t cmdVal, uint8_t extraByte);

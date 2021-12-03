@@ -72,9 +72,9 @@ void SSD1306::initialize() {
 	puts("SSD initialized!");
 }
 
-XaI2C::MasterAction* SSD1306::start_cmd_set() {
+XNM::I2C::MasterAction* SSD1306::start_cmd_set() {
 	assert(currentAction == nullptr);
-	this->currentAction = new XaI2C::MasterAction(0b0111100);
+	this->currentAction = new XNM::I2C::MasterAction(0b0111100);
 
 	return currentAction;
 }
@@ -106,7 +106,7 @@ void SSD1306::end_cmd_set() {
 void SSD1306::data_write(void *data, size_t length) {
 	assert(currentAction == nullptr);
 
-	currentAction = new XaI2C::MasterAction(0b0111100);
+	currentAction = new XNM::I2C::MasterAction(0b0111100);
 
 	currentAction->write(DATA_STREAM, data, length);
 	currentAction->execute();

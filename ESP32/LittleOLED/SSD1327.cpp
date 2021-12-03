@@ -54,9 +54,9 @@ void SSD1327::initialize() {
 	puts("SSD1327 initialized!");
 }
 
-XaI2C::MasterAction* SSD1327::start_cmd_set() {
+XNM::I2C::MasterAction* SSD1327::start_cmd_set() {
 	assert(currentAction == nullptr);
-	this->currentAction = new XaI2C::MasterAction(0b0111101);
+	this->currentAction = new XNM::I2C::MasterAction(0b0111101);
 
 	return currentAction;
 }
@@ -90,7 +90,7 @@ void SSD1327::end_cmd_set() {
 void SSD1327::data_write(void *data, size_t length) {
 	assert(currentAction == nullptr);
 
-	currentAction = new XaI2C::MasterAction(0b0111101);
+	currentAction = new XNM::I2C::MasterAction(0b0111101);
 
 	currentAction->write(DATA_STREAM, data, length);
 	currentAction->execute();
