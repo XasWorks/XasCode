@@ -15,7 +15,9 @@
 
 #include <cstring>
 
+#define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE
 #include <esp_log.h>
+
 
 namespace XNM {
 namespace NetHelpers {
@@ -40,6 +42,10 @@ XNM::BLE::Server ble = XNM::BLE::Server();
 XNM::PropertyPoint::Handler propp = XNM::PropertyPoint::Handler();
 
 XNM::PropertyPoint::CustomProperty system_property(propp, "_system");
+
+#ifdef CONFIG_XNM_NETHELP_PROPP_UART
+XNM::PropertyPoint::UARTOutput propp_uart_out(propp);
+#endif
 
 #ifdef CONFIG_XNM_NETHELP_MQTT_ENABLE
 XNM::PropertyPoint::MQTTOutput propp_mqtt_out(propp, mqtt);
@@ -269,6 +275,9 @@ void init_propp() {
 #ifdef CONFIG_XNM_NETHELP_MQTT_ENABLE
     propp_mqtt_out.init();
 #endif
+#ifdef CONFIG_XNM_NETHELP_PROPP_UART
+    propp_uart_out.init();
+#endif
 
     system_property.on_get_state = system_property_get_json;
     system_property.on_process   = system_property_set_json;
@@ -290,6 +299,8 @@ void propp_housekeep_tick() {}
 #endif
 
 void nethelp_housekeep_tick(void *arg) {
+    ESP_LOGI("XNM::NetHelp", "Housekeeping task started!");
+
     while(true) {
         vTaskDelay(1000/portTICK_PERIOD_MS);
 
@@ -300,7 +311,7 @@ void nethelp_housekeep_tick(void *arg) {
     }
 }
 
-void init() {    
+void init() {
     xTaskCreate(nethelp_housekeep_tick, "XNM::Housekeep",
         4096, nullptr, 3, nullptr);
 
@@ -324,6 +335,9 @@ void init() {
             net_state = WIFI_CONNECTED;
             init_sntp();
         }
+    }
+    else {
+        ESP_LOGI("XNM::NetHelp", "No autostart of WiFi is being performed...");
     }
 
 #ifdef CONFIG_XNM_NETHELP_BLE_NONETWORK

@@ -13,6 +13,7 @@
 
 #include "nvs_flash.h"
 
+#define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE
 #include "esp_log.h"
 
 namespace XNM {
@@ -252,9 +253,11 @@ void load_nvs() {
 }
 
 bool init(bool blocking) {
+	ESP_LOGI(wifi_tag, "Initializing wifi...");
+
 	esp_netif_init();
 
-   esp_netif_create_default_wifi_sta();
+	esp_netif_create_default_wifi_sta();
 
 	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 
@@ -286,8 +289,10 @@ bool init(bool blocking) {
 
 	if(sta_ssid[0] != 0)
 		try_connect_sta();
-	else
+	else {
+		ESP_LOGW(wifi_tag, "No SSID configured, not starting wifi!");
 		return false;
+	}
 
 	if(!blocking)
 		return true;

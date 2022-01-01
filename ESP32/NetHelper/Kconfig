@@ -6,9 +6,14 @@ menu "XNM NetHelpers"
         bool "Autostart WiFi"
         default 1
 
-    config XNM_NETHELP_INCLUDE_PROPP
+    menuconfig XNM_NETHELP_INCLUDE_PROPP
         bool "Include a NetHelper global property-point core?"
         default 1
+    if XNM_NETHELP_INCLUDE_PROPP
+        config XNM_NETHELP_PROPP_UART
+            bool "Add a UART PropP instance and enable it."
+            default 1
+    endif
 
     menuconfig XNM_NETHELP_BLE_ENABLE
         bool "Activate a global BLE instance"
