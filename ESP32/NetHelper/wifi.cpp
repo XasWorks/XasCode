@@ -222,6 +222,7 @@ void set_nvs(const char *ssid, const char *password) {
 }
 
 void load_nvs() {
+	ESP_LOGI(wifi_tag, "Lodaing connection from NVS");
 	if(nvs_data_loaded)
 		return;
 
@@ -267,6 +268,8 @@ bool init(bool blocking) {
 
 #if CONFIG_XNM_WIFI_LOAD_NVS
 	load_nvs();
+#else
+	ESP_LOGI(wifi_tag, "Not loading NVS WiFi parameters!");
 #endif
 
 	if(strlen(CONFIG_XNM_WIFI_DEFAULT_SSID) 
